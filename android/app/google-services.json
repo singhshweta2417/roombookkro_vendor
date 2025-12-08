@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "943821563103",
+    "project_id": "roombookkaro-38438",
+    "storage_bucket": "roombookkaro-38438.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:943821563103:android:06241b3903709f15dab56a",
+        "android_client_info": {
+          "package_name": "com.fc.roomBookKaro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "943821563103-sgj9o1isqtk2v0cmu8rag34v7hrlpnhv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fc.roomBookKaro",
+            "certificate_hash": "0043375f08a4c4b3af424c959be5abd22e7067d0"
+          }
+        },
+        {
+          "client_id": "943821563103-1f6qi2u4b6v178a8hq12iqpotgk1cbn6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4E9oRhonLH9i6whDgw2UeiAan1iVAR4s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "943821563103-1f6qi2u4b6v178a8hq12iqpotgk1cbn6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "943821563103-bafg39rh2p7alld2r4b0sps27nnasg7v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.fc.roomBookKaro"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:943821563103:android:88bee677ddddc5c0dab56a",
+        "android_client_info": {
+          "package_name": "com.fc.roombookkaro_vendor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "943821563103-1f6qi2u4b6v178a8hq12iqpotgk1cbn6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4E9oRhonLH9i6whDgw2UeiAan1iVAR4s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "943821563103-1f6qi2u4b6v178a8hq12iqpotgk1cbn6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "943821563103-bafg39rh2p7alld2r4b0sps27nnasg7v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.fc.roomBookKaro"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

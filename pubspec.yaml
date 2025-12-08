@@ -1,0 +1,68 @@
+name: room_book_kro_vendor
+description: "A new Flutter project."
+
+
+publish_to: 'none'
+
+
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+
+
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+
+
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^3.0.3
+  shared_preferences: ^2.5.3
+  syncfusion_flutter_charts: ^31.2.10
+  http: ^1.6.0
+  carousel_slider: ^5.1.1
+  timeago: ^3.7.1
+  geolocator: ^14.0.2
+  flutter_widget_from_html: ^0.17.1
+  dio: ^5.9.0
+  geocoding: ^4.0.0
+  google_maps_flutter: ^2.14.0
+  image_picker: ^1.2.1
+  cached_network_image: ^3.4.1
+  connectivity_plus: ^7.0.0
+  firebase_auth: ^6.1.2
+  google_sign_in: ^7.2.0
+  firebase_core: ^4.2.1
+  flutter_local_notifications: ^19.5.0
+  permission_handler: ^12.0.1
+  firebase_messaging: ^16.0.4
+  flutter_cashfree_pg_sdk: ^2.2.9+47
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+
+  flutter_lints: ^5.0.0
+
+
+
+flutter:
+
+
+  uses-material-design: true
+  assets:
+    - assets/
+    - assets/icon/
+    - assets/logo/
+    - assets/fonts/
+    - assets/images/
+
+
+
