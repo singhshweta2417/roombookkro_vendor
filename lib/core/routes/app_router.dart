@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:room_book_kro_vendor/features/home/bank/add_bank_screen.dart';
+import 'package:room_book_kro_vendor/features/home/bank/bank_list_screen.dart';
+import 'package:room_book_kro_vendor/features/home/bank/edit_bank_screen.dart';
+import 'package:room_book_kro_vendor/features/home/wallet_screen/ticket_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/otp_view.dart';
 import '../../features/auth/register_screen.dart';
 import '../../features/bookings/booking_details.dart';
 import '../../features/bottom/bottom_screen.dart';
+import '../../features/home/wallet_screen/walllet_screen.dart';
 import '../../features/map/map_screen_view.dart';
 import '../../features/no_internet_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
@@ -25,7 +30,6 @@ Route<dynamic> generateRoute(RouteSettings settings) {
     // ---------- Splash / Auth ----------
     case AppRoutes.splash:
       return MaterialPageRoute(builder: (_) => const SplashScreen());
-
     // ---------- Bottom Navigation ----------
     case AppRoutes.bottomNavigationPage:
       return MaterialPageRoute(builder: (_) => const BottomNavigationPage(),settings: settings);
@@ -36,13 +40,11 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         builder: (_) => const LoginScreen(),
         settings: settings,
       );
-
     case AppRoutes.registerScreen:
       return MaterialPageRoute(
         builder: (_) => const RegisterScreen(),
         settings: settings,
       );
-
     case AppRoutes.oTPFields:return MaterialPageRoute(
         builder: (_) => const OTPFields(),
         settings: settings,
@@ -60,18 +62,37 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         builder: (_) =>  PropertyDetailsScreen(),
         settings: settings,
       );
-
-    case AppRoutes.chooseLocation:
-      return MaterialPageRoute(
+    case AppRoutes.chooseLocation:return MaterialPageRoute(
         builder: (_) => const ChooseLocation(),
         settings: settings,
       );
+    case AppRoutes.topUpWalletPage:return MaterialPageRoute(
+        builder: (_) => const TopUpWalletPage(),
+        settings: settings,
+      );
+
+    case AppRoutes.walletScreen:return MaterialPageRoute(
+        builder: (_) => const WalletScreen(),
+        settings: settings,
+      );
     case AppRoutes.addRoom:return MaterialPageRoute(
-        builder: (_) => AddPropertyScreen(),
+        builder: (_) => AddPropertyScreen1(),
+        settings: settings,
+      );
+    case AppRoutes.editBankAccountScreen:return MaterialPageRoute(
+        builder: (_) => EditBankAccountScreen(),
         settings: settings,
       );
     case AppRoutes.addPropertyRoom2:return MaterialPageRoute(
         builder: (_) => AddPropertyRoom2(),
+        settings: settings,
+      );
+    case AppRoutes.addBankAccountScreen:return MaterialPageRoute(
+        builder: (_) => AddBankAccountScreen(),
+        settings: settings,
+      );
+    case AppRoutes.bankListScreen:return MaterialPageRoute(
+        builder: (_) => BankListScreen(),
         settings: settings,
       );
     case AppRoutes.notificationScreen:
@@ -101,7 +122,6 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         builder: (_) => const FinalEditScreenProperty(),
         settings: settings,
       );
-
     case AppRoutes.noInternetConnection:return MaterialPageRoute(
         builder: (_) => const NoInternetConnection(),
         settings: settings,

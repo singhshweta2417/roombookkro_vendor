@@ -15,6 +15,10 @@ class AppRoutes {
   static const String walletScreen = '/walletScreen';
   static const String profileScreen = '/profileScreen';
   static const String chooseLocation = '/chooseLocation';
+  static const String topUpWalletPage = '/topUpWalletPage';
+  static const String bankListScreen = '/bankListScreen';
+  static const String editBankAccountScreen = '/editBankAccountScreen';
+  static const String addBankAccountScreen = '/addBankAccountScreen';
   static const String addPropertyRoom2 = '/addPropertyRoom2';
   static const String addRoomProperty = '/addRoomProperty';
   static const String addRoom = '/add_room';

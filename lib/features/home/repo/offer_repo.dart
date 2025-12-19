@@ -10,7 +10,6 @@ class CreateCouponRepository {
   CreateCouponRepository(this.apiServices, this.apiUrl);
 
   Future<dynamic> createCouponApi(data) async {
-    // Use POST request for creating coupons
     final response = await apiServices.getPostApiResponse(
       apiUrl.createCoupon!,
       data,

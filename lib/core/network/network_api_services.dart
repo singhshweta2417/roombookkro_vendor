@@ -26,7 +26,45 @@ class NetworkApiServices extends BaseApiServices {
       throw FetchDataException("Request timed out");
     }
   }
+  @override
+  Future<dynamic> getDeleteApiResponse(String url) async {
+    try {
+      if (kDebugMode) print("GET -> $url");
 
+      final response = await http
+          .delete(Uri.parse(url))
+          .timeout(const Duration(seconds: 30));
+
+      return _returnResponse(response);
+    } on SocketException {
+      throw FetchDataException("No Internet Connection");
+    } on TimeoutException {
+      throw FetchDataException("Request timed out");
+    }
+  }
+  @override
+  Future<dynamic> getPutApiResponse(String url, dynamic data) async {
+    try {
+      if (kDebugMode) {
+        print("POST -> $url");
+        print("Body: $data");
+      }
+
+      final response = await http
+          .put(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(data),
+      )
+          .timeout(const Duration(seconds: 30));
+
+      return _returnResponse(response);
+    } on SocketException {
+      throw FetchDataException("No Internet Connection");
+    } on TimeoutException {
+      throw FetchDataException("Request timed out");
+    }
+  }
   @override
   Future<dynamic> getPostApiResponse(String url, dynamic data) async {
     try {
@@ -92,7 +130,6 @@ class NetworkApiServices extends BaseApiServices {
     }
 
   }
-///put
   @override
   Future<dynamic> getPutFormDataApiResponse(String url, FormData formData) async {
     try {

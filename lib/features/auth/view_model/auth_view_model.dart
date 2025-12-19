@@ -38,10 +38,12 @@ class AuthViewModel extends StateNotifier<AuthState> {
     String? password,
     String? phone,
     String? date,
-    context
+    context,
   }) async {
     state = const AuthLoading();
-    final fcmToken = await ref.read(notificationServiceProvider).getDeviceToken();
+    final fcmToken = await ref
+        .read(notificationServiceProvider)
+        .getDeviceToken();
     final Map<String, dynamic> data = {
       "action": actionType,
       "name": name,
@@ -53,37 +55,32 @@ class AuthViewModel extends StateNotifier<AuthState> {
       "fcmToken": fcmToken,
     };
     try {
-      // Print debug logs only in debug mode
-      if (const bool.fromEnvironment('dart.vm.product') == false) {
-        print("Request Data: $data");
-      }
       final value = await _authRepo.signUpApi(data);
-
       if (value.status == 200) {
-        final userPref = ref.read(userViewModelProvider);
-        await userPref.saveToken(value.loginToken ?? '');
-        await userPref.saveUserId(value.user?.userId?.toString() ?? '');
-        await userPref.saveUserType(value.user?.userType ?? '');
-        final navigatorKey = ref.read(navigatorKeyProvider);
         state = AuthSuccess(
           message: value.message ?? 'Login successful',
           userId: value.user?.userId?.toString() ?? '',
           userType: value.user?.userType ?? '',
         );
-        Utils.show(value.message.toString(), context);
+        final userPref = ref.read(userViewModelProvider);
+        await userPref.saveToken(value.loginToken ?? '');
+        await userPref.saveUserId(value.user?.userId?.toString() ?? '');
+        await userPref.saveUserType(value.user?.userType ?? '');
+        final navigatorKey = ref.read(navigatorKeyProvider);
+        final errorMsg = extractMessage(value.message);
+        Utils.show(errorMsg, context);
         Future.delayed(const Duration(milliseconds: 300), () {
           final currentState = navigatorKey.currentState;
           if (currentState != null) {
-            currentState.pushNamed(
-              AppRoutes.bottomNavigationPage,
-            );
+            currentState.pushNamed(AppRoutes.bottomNavigationPage);
           }
         });
       } else {
-        Utils.show(value.message.toString(), context);
         state = AuthError(value.message ?? "Unknown error occurred");
+        Utils.show(value.message.toString(), context);
       }
     } on FetchNotFoundException catch (e) {
+      state = AuthError(e.message.toString());
       final navigatorKey = ref.read(navigatorKeyProvider);
       Future.delayed(const Duration(milliseconds: 300), () {
         final currentState = navigatorKey.currentState;
@@ -94,11 +91,9 @@ class AuthViewModel extends StateNotifier<AuthState> {
           );
         }
       });
-      state = AuthError(e.message.toString());
-      Utils.show(e.message.toString(), context);
-    }
-    on BadRequestException catch (e)
-    {
+      final errorMsg = extractMessage(e.message);
+      Utils.show(errorMsg, context);
+    } on BadRequestException catch (e) {
       state = AuthError("${e.message}");
       final errorMsg = extractMessage(e.message);
       Utils.show(errorMsg, context);
@@ -115,8 +110,8 @@ class AuthViewModel extends StateNotifier<AuthState> {
       final errorMsg = extractMessage(e.message);
       Utils.show(errorMsg, context);
     } catch (e) {
-      Utils.show(e.toString(), context);
       state = AuthError("Unexpected error: $e");
+      Utils.show(e.toString(), context);
     }
   }
 }
@@ -124,6 +119,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
 /// --------------------
 /// Auth States
 /// --------------------
+///
 abstract class AuthState {
   final bool isLoading;
   const AuthState({this.isLoading = false});

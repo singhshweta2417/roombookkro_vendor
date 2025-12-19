@@ -12,6 +12,7 @@ class CustomTextField extends ConsumerStatefulWidget {
   final String? hintText;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
+  final TextCapitalization? textCapitalization;
   final FontType? labelFontType;
   final bool obscureText;
   final double? labelFontSize;
@@ -33,13 +34,14 @@ class CustomTextField extends ConsumerStatefulWidget {
   final TextEditingController? controller;
   final List<String>? suggestions;
   final Function(String)? onSuggestionSelected;
-  final FieldType? fieldType; // ✅ new fieldType support
+  final FieldType? fieldType;
 
   const CustomTextField({
     super.key,
     this.labelText,
     this.hintText,
     this.prefixIcon,
+    this.textCapitalization,
     this.suffixIcon,
     this.labelFontType,
     this.obscureText = false,
@@ -194,8 +196,6 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
           final day = int.parse(parts[0]);
           final month = int.parse(parts[1]);
           final year = int.parse(parts[2]);
-
-          // Validate real date (to catch 31/02 etc.)
           final dob = DateTime(year, month, day);
           if (dob.year != year || dob.month != month || dob.day != day) {
             return "Invalid date";
@@ -311,6 +311,7 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
           errorBorder: widget.customBorder ?? errorBorder,
           focusedErrorBorder: widget.customBorder ?? errorBorder,
         ),
+        textCapitalization: widget.textCapitalization ?? TextCapitalization.none,
       ),
     );
   }

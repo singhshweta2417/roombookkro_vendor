@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:room_book_kro_vendor/core/constants/app_fonts.dart';
@@ -10,6 +11,7 @@ import 'package:room_book_kro_vendor/core/widgets/primary_button.dart';
 import 'package:room_book_kro_vendor/features/property/property_model.dart';
 import '../../core/widgets/app_text.dart';
 import '../../core/widgets/slider_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PropertyDetailsScreen extends ConsumerStatefulWidget {
   const PropertyDetailsScreen({super.key});
@@ -20,7 +22,7 @@ class PropertyDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
-  Data? propertyData;
+  AddPropertyListData? propertyData;
 
   @override
   void didChangeDependencies() {
@@ -29,7 +31,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
     // ✅ Receive arguments
     final args = ModalRoute.of(context)?.settings.arguments;
 
-    if (args != null && args is Data) {
+    if (args != null && args is AddPropertyListData) {
       setState(() {
         propertyData = args;
       });
@@ -73,7 +75,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
       pinned: true,
       backgroundColor: AppColors.secondary(ref),
       leading: IconButton(
-        icon: Icon(Icons.arrow_back_ios, color: AppColors.iconColor(ref)),
+        icon: Icon(Icons.arrow_back_ios, color: AppColors.text(ref)),
         onPressed: () => Navigator.pop(context),
       ),
       flexibleSpace: FlexibleSpaceBar(
@@ -90,42 +92,6 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
             borderRadius: BorderRadius.circular(0),
           ),
         ),
-      ),
-    );
-  }
-
-  SliverToBoxAdapter _buildImageSlider() {
-    final images = propertyData?.images ?? [];
-    final mainImage = propertyData?.mainImage?.toString();
-    final allImages = [
-      if (mainImage != null && mainImage.isNotEmpty) mainImage,
-      ...images,
-    ];
-
-    return SliverToBoxAdapter(
-      child: TCustomContainer(
-        height: 250,
-        child: allImages.isEmpty
-            ? Center(
-                child: Icon(
-                  Icons.image_not_supported,
-                  size: 80,
-                  color: Colors.grey[400],
-                ),
-              )
-            : PageView.builder(
-                itemCount: allImages.length,
-                itemBuilder: (context, index) {
-                  return TCustomContainer(
-                    margin: const EdgeInsets.all(8),
-                    borderRadius: BorderRadius.circular(12),
-                    backgroundImage: DecorationImage(
-                      image: NetworkImage(allImages[index]),
-                      fit: BoxFit.cover,
-                    ),
-                  );
-                },
-              ),
       ),
     );
   }
@@ -151,11 +117,12 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
             const SizedBox(height: 8),
             AppText(
               text: propertyData?.name?.toString() ?? '',
-              fontSize: 24,
+              fontSize: context.sh * 0.03,
               fontType: FontType.bold,
             ),
             const SizedBox(height: 4),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(Icons.location_on, size: 16, color: Colors.grey),
                 const SizedBox(width: 4),
@@ -164,11 +131,18 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                     text:
                         '${propertyData?.address ?? ''}, ${propertyData?.city ?? ''}, ${propertyData?.state ?? ''} - ${propertyData?.pincode ?? ''}',
                     color: Colors.grey[600],
+                    fontSize: context.sh * 0.015,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
+            AppText(
+              text: 'Description',
+              fontSize: context.sh * 0.02,
+              fontType: FontType.bold,
+            ),
+            const SizedBox(height: 4),
             AppText(
               text:
                   propertyData?.description?.toString() ??
@@ -212,12 +186,10 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
     final pricePerDay = propertyData?.pricePerDay ?? 0;
     final pricePerMonth = propertyData?.pricePerMonth ?? 0;
     final pricePerNight = propertyData?.pricePerNight ?? 0;
-
-    // ✅ Convert to int/double first
     final discountValue =
         int.tryParse(propertyData?.discount?.toString() ?? '0') ?? 0;
 
-    final isHotel = propertyData?.type?.toString().toLowerCase() == 'hotel';
+    final isHotel = propertyData?.propertyTypeId?.toString() == '1';
 
     return TCustomContainer(
       padding: const EdgeInsets.all(16),
@@ -245,28 +217,42 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
               Row(
                 children: [
                   AppText(
-                    text: isHotel ? '₹$pricePerNight' : '₹$pricePerDay',
+                    text: isHotel
+                        ? '₹$pricePerNight'
+                        : propertyData?.propertyTypeId.toString() == "3" ||
+                              propertyData?.propertyTypeId.toString() == "4"
+                        ? ""
+                        : '₹$pricePerDay',
                     fontSize: 24,
                     fontType: FontType.bold,
                     color: AppColors.secondary(ref),
                   ),
                   const SizedBox(width: 8),
                   AppText(
-                    text: isHotel ? '/night' : '/day',
+                    text: isHotel
+                        ? '/night'
+                        : propertyData?.propertyTypeId.toString() == "3" ||
+                              propertyData?.propertyTypeId.toString() == "4"
+                        ? ""
+                        : '/day',
                     color: Colors.grey[600],
                   ),
                 ],
               ),
               if (!isHotel) ...[
                 const SizedBox(height: 4),
-                AppText(
-                  text: '₹$pricePerMonth/month',
-                  color: AppColors.secondary(ref),
+                Row(
+                  children: [
+                    AppText(
+                      text: '₹$pricePerMonth',
+                      color: AppColors.secondary(ref),
+                    ),
+                    AppText(text: '/month', color: AppColors.text(ref)),
+                  ],
                 ),
               ],
             ],
           ),
-          // ✅ Use converted value
           if (discountValue > 0)
             TCustomContainer(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -295,22 +281,23 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const AppText(
-              text: 'Amenities',
+              text: 'Facilities',
               fontSize: 20,
               fontType: FontType.bold,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: context.sh * 0.015),
             amenities.isEmpty
                 ? const Center(
                     child: Padding(
                       padding: EdgeInsets.all(20),
                       child: AppText(
-                        text: 'No amenities available',
+                        text: 'No facilities available',
                         fontType: FontType.medium,
                       ),
                     ),
                   )
                 : GridView.builder(
+                    padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate:
@@ -329,11 +316,13 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
-                              color: AppColors.secondary(ref),
                               borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.secondary(ref),
+                              ),
                             ),
-                            child: Icon(
-                              _getAmenityIcon(amenity.name?.toString() ?? ''),
+                            child: ImageIcon(
+                              NetworkImage(amenity.icon?.toString() ?? ''),
                               color: AppColors.secondary(ref),
                               size: 30,
                             ),
@@ -390,11 +379,10 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
   }
 
   Widget _buildRoomCard(Rooms room) {
+    final propertyType = propertyData?.propertyTypeId ?? [];
     final roomImages = room.images ?? [];
     final roomAmenities = room.amenities ?? [];
     final isAvailable = room.isAvailable ?? false;
-print(room.roomPricePerDay);
-print("room.roomPricePerDay");
     return TCustomContainer(
       margin: const EdgeInsets.only(bottom: 12),
       lightColor: Colors.white,
@@ -408,7 +396,6 @@ print("room.roomPricePerDay");
       ],
       child: Column(
         children: [
-          // ✅ Room Image
           TCustomContainer(
             height: 120,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
@@ -422,11 +409,13 @@ print("room.roomPricePerDay");
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.symmetric(
+              horizontal: context.sw * 0.015,
+              vertical: context.sh * 0.015,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ✅ Room Type & Availability
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -464,8 +453,6 @@ print("room.roomPricePerDay");
                   ],
                 ),
                 const SizedBox(height: 8),
-
-                // ✅ Occupancy & Images count
                 Row(
                   children: [
                     const Icon(Icons.person, size: 16, color: Colors.grey),
@@ -478,48 +465,107 @@ print("room.roomPricePerDay");
                   ],
                 ),
                 const SizedBox(height: 8),
-
-                // ✅ Room Amenities
                 if (roomAmenities.isNotEmpty)
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 5,
+                    runSpacing: 5,
                     children: roomAmenities.map((amenity) {
-                      print(amenity.name);
-                      print("amenity.name");
-                      return Chip(
-                        label: AppText(
-                          text: amenity.name?.toString() ?? '',
-                          fontSize: 12,
+                      return SizedBox(
+                        width: context.sw * 0.25,
+                        child: Chip(
+                          labelPadding: EdgeInsets.zero,
+                          label: Row(
+                            children: [
+                              ImageIcon(
+                                CachedNetworkImageProvider(
+                                  amenity.icon.toString(),
+                                ),
+                                size: 20,
+                                color: Colors.black,
+                              ),
+                              SizedBox(width: context.sw * 0.01),
+                              AppText(
+                                text: amenity.name?.toString() ?? '',
+                                fontSize: context.sh * 0.015,
+                                fontType: FontType.semiBold,
+                              ),
+                            ],
+                          ),
+                          backgroundColor: AppColors.secondary(ref),
+                          visualDensity: VisualDensity.compact,
                         ),
-                        backgroundColor: AppColors.secondary(ref),
-                        visualDensity: VisualDensity.compact,
                       );
                     }).toList(),
                   ),
                 const SizedBox(height: 12),
-
-                // ✅ Price & Book Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AppText(
-                          text: '₹${room.roomPricePerDay ?? 0}/day',
-                          fontSize: 18,
-                          fontType: FontType.bold,
-                          color: AppColors.secondary(ref),
-                        ),
-                        AppText(
-                          text: '₹${room.price ?? 0}/month',
-                          color: AppColors.secondary(ref),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                propertyType.toString() == "1"
+                    ? Row(
+                        children: [
+                          AppText(
+                            text: '₹${room.price ?? 0}',
+                            fontType: FontType.bold,
+                            color: AppColors.secondary(ref),
+                          ),
+                          AppText(
+                            text: ' /night',
+                            color: AppColors.text(ref),
+                            fontType: FontType.bold,
+                            fontSize: context.sh * 0.015,
+                          ),
+                        ],
+                      )
+                    : propertyType.toString() == "3" || propertyType.toString() == "4"
+                    ? Row(
+                        children: [
+                          AppText(
+                            text: '₹${room.price ?? 0}',
+                            fontType: FontType.bold,
+                            color: AppColors.secondary(ref),
+                          ),
+                          AppText(
+                            text: ' /month',
+                            color: AppColors.text(ref),
+                            fontType: FontType.bold,
+                            fontSize: context.sh * 0.015,
+                          ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              AppText(
+                                text: '₹${room.roomPricePerDay ?? 0}',
+                                fontSize: 18,
+                                fontType: FontType.bold,
+                                color: AppColors.secondary(ref),
+                              ),
+                              AppText(
+                                text: ' /day',
+                                fontSize: context.sh * 0.015,
+                                fontType: FontType.bold,
+                                color: AppColors.text(ref),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              AppText(
+                                text: '₹${room.price ?? 0}',
+                                fontType: FontType.bold,
+                                color: AppColors.secondary(ref),
+                              ),
+                              AppText(
+                                text: ' /month',
+                                color: AppColors.text(ref),
+                                fontType: FontType.bold,
+                                fontSize: context.sh * 0.015,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
               ],
             ),
           ),
@@ -550,7 +596,7 @@ print("room.roomPricePerDay");
                     ),
                   )
                 : Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: AppColors.background(ref),
                       borderRadius: BorderRadius.circular(12),
@@ -564,24 +610,22 @@ print("room.roomPricePerDay");
                     ),
                     child: Column(
                       children: rules.map((rule) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.check_circle_outline,
-                                size: 16,
-                                color: Colors.grey,
+                        return Row(
+                          children: [
+                            const Icon(
+                              Icons.check_circle_outline,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: AppText(
+                                text: rule.toString(),
+                                fontSize: context.sh * 0.02,
+                                fontType: FontType.bold,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: AppText(
-                                  text: rule.toString(),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         );
                       }).toList(),
                     ),
@@ -677,9 +721,7 @@ print("room.roomPricePerDay");
                 title == 'Contact' ? Icons.phone : Icons.open_in_new,
                 color: AppColors.secondary(ref),
               ),
-              onPressed: () {
-                // Handle contact action
-              },
+              onPressed: () => makePhoneCall(value),
             ),
         ],
       ),
@@ -687,8 +729,9 @@ print("room.roomPricePerDay");
   }
 
   Widget _buildBottomBar() {
-    final pricePerDay = propertyData?.pricePerDay ?? 0;
-
+    final pricePerDay = propertyData?.pricePerMonth ?? 0;
+    final pricePerNight = propertyData?.pricePerNight ?? 0;
+    final type = propertyData?.propertyTypeId ?? 0;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -714,65 +757,47 @@ print("room.roomPricePerDay");
                   fontSize: 12,
                   color: Colors.grey[600],
                 ),
-                AppText(
-                  text: '₹$pricePerDay/day',
-                  fontSize: 18,
-                  fontType: FontType.bold,
-                  color: AppColors.secondary(ref),
+                Row(
+                  children: [
+                    AppText(
+                      text:
+                          '₹${type.toString() == "1" ? pricePerNight.toStringAsFixed(2) : pricePerDay.toStringAsFixed(2)}',
+                      fontSize: context.sh * 0.02,
+                      fontType: FontType.bold,
+                      color: AppColors.secondary(ref),
+                    ),
+                    AppText(
+                      text: type.toString() == "1" ? '/night' : "/month",
+                      fontSize: context.sh * 0.015,
+                      fontType: FontType.bold,
+                      color: AppColors.secondary(ref),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          Expanded(
-            flex: 3,
-            child: PrimaryButton(
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  AppRoutes.editPropertyScreen1,
-                  arguments: propertyData,
-                );
-              },
-              label: "Edit Property",
-            ),
+          PrimaryButton(
+            width: context.sw * 0.5,
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.editPropertyScreen1,
+                arguments: propertyData,
+              );
+            },
+            label: "Edit Property",
           ),
         ],
       ),
     );
   }
 
-  IconData _getAmenityIcon(String amenity) {
-    switch (amenity.toLowerCase()) {
-      case 'car parking':
-      case 'parking':
-        return Icons.local_parking;
-      case 'laundary':
-      case 'laundry':
-        return Icons.local_laundry_service;
-      case 'wine':
-        return Icons.local_bar;
-      case 'resturant':
-      case 'restaurant':
-        return Icons.restaurant;
-      case 'swimming':
-      case 'swimming pool':
-      case 'pool':
-        return Icons.pool;
-      case 'gym':
-      case 'fitness':
-        return Icons.fitness_center;
-      case 'wifi':
-        return Icons.wifi;
-      case 'ac':
-      case 'air conditioning':
-        return Icons.ac_unit;
-      case 'tv':
-      case 'television':
-        return Icons.tv;
-      case 'pets':
-        return Icons.pets;
-      default:
-        return Icons.check_circle;
+  Future<void> makePhoneCall(String phoneNumber) async {
+    if (phoneNumber.isEmpty) return;
+    final Uri callUri = Uri(scheme: 'tel', path: phoneNumber);
+    if (await canLaunchUrl(callUri)) {
+      await launchUrl(callUri);
     }
   }
 }

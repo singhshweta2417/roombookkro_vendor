@@ -1,6 +1,6 @@
 class ProfileModel {
   String? message;
-  int? status;
+  dynamic status;
   Profile? profile;
 
   ProfileModel({this.message, this.status, this.profile});
@@ -9,22 +9,23 @@ class ProfileModel {
     message = json['message'];
     status = json['status'];
     profile =
-    json['profile'] != null ? new Profile.fromJson(json['profile']) : null;
+    json['profile'] != null ? Profile.fromJson(json['profile']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['message'] = this.message;
-    data['status'] = this.status;
-    if (this.profile != null) {
-      data['profile'] = this.profile!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['message'] = message;
+    data['status'] = status;
+    if (profile != null) {
+      data['profile'] = profile!.toJson();
     }
     return data;
   }
 }
 
 class Profile {
-  int? userId;
+  dynamic userId;
+  String? userType;
   String? username;
   String? email;
   String? dOB;
@@ -32,18 +33,21 @@ class Profile {
   String? userImage;
   String? gender;
   String? maritalStatus;
-  int? walletBalance;
-  dynamic occupation;
-  int? userStatus;
+  dynamic walletBalance;
+  dynamic adminDue;
+  Null? occupation;
+  dynamic userStatus;
   String? fcmToken;
   String? token;
   bool? isVendor;
-  int? vendorRevenue;
-  int? vendorOrderCount;
+  dynamic vendorRevenue;
+  dynamic vendorOrderCount;
   VendorCounts? vendorCounts;
+  bool? vendorVerify;
 
   Profile(
       {this.userId,
+        this.userType,
         this.username,
         this.email,
         this.dOB,
@@ -52,6 +56,7 @@ class Profile {
         this.gender,
         this.maritalStatus,
         this.walletBalance,
+        this.adminDue,
         this.occupation,
         this.userStatus,
         this.fcmToken,
@@ -59,10 +64,12 @@ class Profile {
         this.isVendor,
         this.vendorRevenue,
         this.vendorOrderCount,
-        this.vendorCounts});
+        this.vendorCounts,
+        this.vendorVerify});
 
   Profile.fromJson(Map<String, dynamic> json) {
     userId = json['userId'];
+    userType = json['userType'];
     username = json['username'];
     email = json['email'];
     dOB = json['DOB'];
@@ -71,6 +78,7 @@ class Profile {
     gender = json['gender'];
     maritalStatus = json['maritalStatus'];
     walletBalance = json['walletBalance'];
+    adminDue = json['adminDue'];
     occupation = json['occupation'];
     userStatus = json['userStatus'];
     fcmToken = json['fcmToken'];
@@ -79,31 +87,35 @@ class Profile {
     vendorRevenue = json['vendorRevenue'];
     vendorOrderCount = json['vendorOrderCount'];
     vendorCounts = json['vendorCounts'] != null
-        ? new VendorCounts.fromJson(json['vendorCounts'])
+        ? VendorCounts.fromJson(json['vendorCounts'])
         : null;
+    vendorVerify = json['vendorVerify'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['userId'] = this.userId;
-    data['username'] = this.username;
-    data['email'] = this.email;
-    data['DOB'] = this.dOB;
-    data['contact'] = this.contact;
-    data['userImage'] = this.userImage;
-    data['gender'] = this.gender;
-    data['maritalStatus'] = this.maritalStatus;
-    data['walletBalance'] = this.walletBalance;
-    data['occupation'] = this.occupation;
-    data['userStatus'] = this.userStatus;
-    data['fcmToken'] = this.fcmToken;
-    data['token'] = this.token;
-    data['isVendor'] = this.isVendor;
-    data['vendorRevenue'] = this.vendorRevenue;
-    data['vendorOrderCount'] = this.vendorOrderCount;
-    if (this.vendorCounts != null) {
-      data['vendorCounts'] = this.vendorCounts!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['userId'] = userId;
+    data['userType'] = userType;
+    data['username'] = username;
+    data['email'] = email;
+    data['DOB'] = dOB;
+    data['contact'] = contact;
+    data['userImage'] = userImage;
+    data['gender'] = gender;
+    data['maritalStatus'] = maritalStatus;
+    data['walletBalance'] = walletBalance;
+    data['adminDue'] = adminDue;
+    data['occupation'] = occupation;
+    data['userStatus'] = userStatus;
+    data['fcmToken'] = fcmToken;
+    data['token'] = token;
+    data['isVendor'] = isVendor;
+    data['vendorRevenue'] = vendorRevenue;
+    data['vendorOrderCount'] = vendorOrderCount;
+    if (vendorCounts != null) {
+      data['vendorCounts'] = vendorCounts!.toJson();
     }
+    data['vendorVerify'] = vendorVerify;
     return data;
   }
 }
@@ -116,29 +128,29 @@ class VendorCounts {
 
   VendorCounts.fromJson(Map<String, dynamic> json) {
     paymentStatusWise = json['paymentStatusWise'] != null
-        ? new PaymentStatusWise.fromJson(json['paymentStatusWise'])
+        ? PaymentStatusWise.fromJson(json['paymentStatusWise'])
         : null;
     timeWise = json['timeWise'] != null
-        ? new TimeWise.fromJson(json['timeWise'])
+        ? TimeWise.fromJson(json['timeWise'])
         : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.paymentStatusWise != null) {
-      data['paymentStatusWise'] = this.paymentStatusWise!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (paymentStatusWise != null) {
+      data['paymentStatusWise'] = paymentStatusWise!.toJson();
     }
-    if (this.timeWise != null) {
-      data['timeWise'] = this.timeWise!.toJson();
+    if (timeWise != null) {
+      data['timeWise'] = timeWise!.toJson();
     }
     return data;
   }
 }
 
 class PaymentStatusWise {
-  int? pending;
-  int? completed;
-  int? rejected;
+  dynamic pending;
+  dynamic completed;
+  dynamic rejected;
 
   PaymentStatusWise({this.pending, this.completed, this.rejected});
 
@@ -149,19 +161,19 @@ class PaymentStatusWise {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['pending'] = this.pending;
-    data['completed'] = this.completed;
-    data['rejected'] = this.rejected;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['pending'] = pending;
+    data['completed'] = completed;
+    data['rejected'] = rejected;
     return data;
   }
 }
 
 class TimeWise {
-  int? upcoming;
-  int? currentStay;
-  int? past;
-  int? canceled;
+  dynamic upcoming;
+  dynamic currentStay;
+  dynamic past;
+  dynamic canceled;
 
   TimeWise({this.upcoming, this.currentStay, this.past, this.canceled});
 
@@ -173,11 +185,11 @@ class TimeWise {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['upcoming'] = this.upcoming;
-    data['currentStay'] = this.currentStay;
-    data['past'] = this.past;
-    data['canceled'] = this.canceled;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['upcoming'] = upcoming;
+    data['currentStay'] = currentStay;
+    data['past'] = past;
+    data['canceled'] = canceled;
     return data;
   }
 }

@@ -9,11 +9,11 @@ import '../../../core/widgets/custom_app_bar.dart';
 import '../../../core/widgets/custom_container.dart';
 import '../../../core/widgets/custom_scaffold.dart';
 import '../../../core/utils/context_extensions.dart';
+import '../../core/utils/utils.dart';
 import '../bottom/bottom_screen.dart';
 import '../profile/view_model/profile_view_model.dart';
 import '../property/view_model/property_list_view_model.dart';
 import 'home_widgets/chart_screen.dart';
-
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -61,6 +61,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final userImage = (authState is ProfileSuccess && authState.profile != null)
         ? authState.profile!.userImage
         : "";
+    final vendorVerify = (authState is ProfileSuccess && authState.profile != null)
+        ? authState.profile!.vendorVerify ?? false
+        : false;
 
     return CustomScaffold(
       appBar: _buildAppBar(username.toString(), userImage.toString()),
@@ -70,12 +73,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: ListView(
           children: [
             SizedBox(height: context.sh * 0.02),
+
             /// WELCOME CARD
             _buildWelcomeCard(username.toString()),
             SizedBox(height: context.sh * 0.025),
+
             /// QUICK ACTIONS
-            _buildQuickActions(context),
+            _buildQuickActions(context,vendorVerify),
             SizedBox(height: context.sh * 0.025),
+
             /// SECTION TITLE
             AppText(
               text: "Overview",
@@ -83,6 +89,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               fontType: FontType.bold,
             ),
             SizedBox(height: context.sh * 0.015),
+
             /// PROPERTY STATS GRID
             _buildStatsGrid(context),
             SizedBox(height: context.sh * 0.015),
@@ -140,10 +147,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  getGreetingEmoji(),
-                  style: TextStyle(fontSize: 32),
-                ),
+                child: Text(getGreetingEmoji(), style: TextStyle(fontSize: 32)),
               ),
             ],
           ),
@@ -159,12 +163,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   /// QUICK ACTION BUTTONS
-  Widget _buildQuickActions(BuildContext context) {
+  Widget _buildQuickActions(BuildContext context,bool vendorVerify) {
     List<Map<String, dynamic>> items = [
       {
         "icon": Icons.add_business_rounded,
-        "title": "Add Room",
-        "onTap": () => Navigator.pushNamed(context, AppRoutes.addRoom),
+        "title": "Add Property",
+        "onTap": () {
+          if (vendorVerify) {
+            // ✅ Verified - Allow navigation
+            Navigator.pushNamed(context, AppRoutes.addRoom);
+          } else {
+            Utils.show(
+              "Please wait for vendor verification to add properties",
+              context,
+            );
+          }
+        },
         "color": Colors.blue,
       },
       {
@@ -195,10 +209,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               width: 90,
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: (item["color"] as Color).withAlpha(40), // Fixed: using withAlpha instead of withValues
+                color: (item["color"] as Color).withAlpha(40),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: (item["color"] as Color).withAlpha(80), // Fixed: using withAlpha instead of withValues
+                  color: (item["color"] as Color).withAlpha(80),
                   width: 1,
                 ),
               ),
@@ -211,11 +225,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: item["color"],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
-                      item["icon"],
-                      size: 24,
-                      color: Colors.white,
-                    ),
+                    child: Icon(item["icon"], size: 24, color: Colors.white),
                   ),
                   SizedBox(height: 8),
                   AppText(
@@ -242,8 +252,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     int totalRooms = 0;
 
     if (propertyState is GetPropertySuccess) {
-      propertyCount =
-          propertyState.propertyLists.availablePropertiesCount ?? 0;
+      propertyCount = propertyState.propertyLists.availablePropertiesCount ?? 0;
       totalRooms = propertyState.propertyLists.overallRoomCount ?? 0;
     }
 
@@ -251,7 +260,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final booking = (authState is ProfileSuccess && authState.profile != null)
         ? authState.profile!.vendorOrderCount
         : "0";
-    final totalRevenue = (authState is ProfileSuccess && authState.profile != null)
+    final totalRevenue =
+        (authState is ProfileSuccess && authState.profile != null)
         ? authState.profile!.vendorRevenue
         : "0";
 
@@ -310,21 +320,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   /// SINGLE STAT BOX
   Widget _statBox(
-      BuildContext context, {
-        required String title,
-        required String value,
-        required IconData icon,
-        required Color color,
-      }) {
+    BuildContext context, {
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,11 +347,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 child: Icon(icon, color: Colors.white, size: 20),
               ),
-              Icon(
-                Icons.trending_up_rounded,
-                color: color,
-                size: 16,
-              ),
+              Icon(Icons.trending_up_rounded, color: color, size: 16),
             ],
           ),
           SizedBox(height: 12),
@@ -373,10 +376,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.secondary(ref),
-              width: 2,
-            ),
+            border: Border.all(color: AppColors.secondary(ref), width: 2),
           ),
           child: CircleAvatar(
             radius: 20,
@@ -387,9 +387,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 fit: BoxFit.cover,
                 width: 36,
                 height: 36,
-                placeholder: (_, __) => const CircularProgressIndicator(
-                  strokeWidth: 2,
-                ),
+                placeholder: (_, __) =>
+                    const CircularProgressIndicator(strokeWidth: 2),
                 errorWidget: (_, __, ___) => const Icon(
                   Icons.person_rounded,
                   size: 20,
@@ -436,4 +435,5 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
+
 }

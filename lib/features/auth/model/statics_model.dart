@@ -1,8 +1,8 @@
 class StaticsModel {
-  int? status;
+  dynamic status;
   String? vendorId;
-  int? year;
-  int? totalVendorRevenue;
+  dynamic year;
+  dynamic totalVendorRevenue;
   List<MonthData>? months;
 
   StaticsModel({
@@ -20,9 +20,7 @@ class StaticsModel {
       year: json['year'],
       totalVendorRevenue: json['totalVendorRevenue'],
       months: json['months'] != null
-          ? (json['months'] as List)
-          .map((e) => MonthData.fromJson(e))
-          .toList()
+          ? (json['months'] as List).map((e) => MonthData.fromJson(e)).toList()
           : [],
     );
   }
@@ -37,6 +35,7 @@ class StaticsModel {
     };
   }
 }
+
 class MonthData {
   String? key;
   MonthDetails? details;
@@ -52,16 +51,15 @@ class MonthData {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      key!: details!.toJson(),
-    };
+    return {key!: details!.toJson()};
   }
 }
+
 class MonthDetails {
   String? month;
-  int? vendorRevenue;
-  int? commission;
-  int? totalAmount;
+  dynamic vendorRevenue;
+  dynamic commission;
+  dynamic totalAmount;
 
   MonthDetails({
     this.month,

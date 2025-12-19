@@ -29,19 +29,18 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
   void initState() {
     super.initState();
     _debouncer = Debouncer(milliseconds: 500);
+
+    // ✅ Pass context to setInitialLocation
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(mapProvider.notifier).setInitialLocation();
-      print("dsjbcjsb");
+      ref.read(mapProvider.notifier).setInitialLocation(context);
     });
+
     searchAddress.addListener(() {
-      print("yaha tk aa raha h");
       _debouncer.run(() async {
         String query = searchAddress.text;
         if (query.isNotEmpty) {
-          print("635 aa raha h");
           await ref.read(mapProvider.notifier).getAddressSuggestions(query);
         } else {
-          print("08029 aa raha h");
           ref.read(mapProvider.notifier).clearSuggestions();
         }
       });
@@ -67,55 +66,103 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
   @override
   Widget build(BuildContext context) {
     final mapState = ref.watch(mapProvider);
-    print(mapState.addressText);
-    print(searchAddress.text);
-    print("searchAddress.text");
+
     return CustomScaffold(
       padding: EdgeInsets.zero,
       backgroundColor: AppColors.background(ref),
+
+      // ✅ Updated FloatingActionButton with loading indicator
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ref.read(mapProvider.notifier).setLocation();
+        onPressed: mapState.isLoadingLocation
+            ? null
+            : () async {
+          await ref.read(mapProvider.notifier).setLocation(context);
         },
-        backgroundColor: AppColors.secondary(ref),
-        child: Icon(Icons.my_location),
+        backgroundColor: mapState.isLoadingLocation
+            ? Colors.grey
+            : AppColors.secondary(ref),
+        child: mapState.isLoadingLocation
+            ? SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.white,
+          ),
+        )
+            : const Icon(Icons.my_location),
       ),
+
       bottomNavigationBar: SizedBox(
         height: context.sh * 0.16,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(height: context.sh * 0.01),
+
+            // ✅ Show loading or city
             AppText(
-              text: 'City: ${mapState.cityText}',
+              text: mapState.isLoadingLocation
+                  ? 'Fetching location...'
+                  : 'City: ${mapState.cityText.isNotEmpty ? mapState.cityText : "Select location"}',
               fontSize: 16,
               fontType: FontType.bold,
             ),
+
             SizedBox(height: context.sh * 0.01),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                const Icon(Icons.location_on, color: Colors.green),
-                SizedBox(width: 8),
+                Icon(
+                  Icons.location_on,
+                  color: mapState.isLoadingLocation ? Colors.grey : Colors.green,
+                ),
+                const SizedBox(width: 8),
                 TCustomContainer(
                   width: context.sw * 0.9,
                   padding: EdgeInsets.symmetric(horizontal: context.sw * 0.01),
-                  child: AppText(
+                  child: mapState.isLoadingLocation
+                      ? Center(
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.secondary(ref),
+                      ),
+                    ),
+                  )
+                      : AppText(
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
                     text: mapState.addressText.isNotEmpty
                         ? mapState.addressText
-                        : (searchAddress.text.isNotEmpty
-                              ? searchAddress.text
-                              : "Enter Location"),
+                        : "Tap on map or search location",
                     fontSize: 16,
                   ),
                 ),
               ],
             ),
+
             SizedBox(height: context.sh * 0.01),
+
             PrimaryButton(
+              isLoading: mapState.isLoadingLocation,
               onTap: () {
+                // Validate data
+                if (mapState.addressText.isEmpty ||
+                    mapState.cityText.isEmpty ||
+                    mapState.currentLatLng == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please select a location first'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                // Return data
                 Navigator.pop(context, {
                   'address': mapState.addressText,
                   'city': mapState.cityText,
@@ -135,6 +182,7 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
           ],
         ),
       ),
+
       appBar: CustomAppBar(
         backgroundColor: AppColors.secondary(ref),
         leadingIconColor: Colors.white,
@@ -143,7 +191,7 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
           controller: searchAddress,
           focusNode: _searchFocusNode,
           fillColor: AppColors.background(ref),
-          hints: [
+          hints: const [
             "Search Your Location",
             "Enter city or locality",
             "e.g., New Delhi",
@@ -151,6 +199,7 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
           ],
         ),
       ),
+
       child: Stack(
         children: [
           GoogleMap(
@@ -162,14 +211,16 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             markers: mapState.markers,
-            onTap: (LatLng position) {
+            onTap: (LatLng position) async {
               ref.read(mapProvider.notifier).addMarker(position);
               ref.read(mapProvider.notifier).moveToLocation(position);
-              ref
+              await ref
                   .read(mapProvider.notifier)
                   .getAddressFromLatLngDirect(position);
             },
           ),
+
+          // Suggestions list
           if (mapState.addressSuggestions.isNotEmpty)
             Positioned(
               top: 0,
@@ -186,23 +237,62 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
                       title: Text(mapState.addressSuggestions[index]),
                       onTap: () async {
                         String selectedAddress =
-                            mapState.addressSuggestions[index];
-                        ref
-                            .read(mapProvider.notifier)
-                            .updateAddressText(selectedAddress);
+                        mapState.addressSuggestions[index];
+
+                        searchAddress.text = selectedAddress;
+
                         var coordinates = await ref
                             .read(mapProvider.notifier)
                             .getCoordinatesFromAddress(selectedAddress);
+
                         if (coordinates != null) {
                           ref
                               .read(mapProvider.notifier)
                               .moveToLocation(coordinates);
+
+                          ref.read(mapProvider.notifier).addMarker(coordinates);
+
+                          await ref
+                              .read(mapProvider.notifier)
+                              .getAddressFromLatLngDirect(coordinates);
                         }
+
                         ref.read(mapProvider.notifier).clearSuggestions();
                         _searchFocusNode.unfocus();
                       },
                     );
                   },
+                ),
+              ),
+            ),
+
+          // ✅ Loading overlay when fetching location
+          if (mapState.isLoadingLocation)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black26,
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          color: AppColors.secondary(ref),
+                        ),
+                        SizedBox(height: 15),
+                        AppText(
+                          text: "Fetching your location...",
+                          fontSize: 14,
+                          fontType: FontType.medium,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

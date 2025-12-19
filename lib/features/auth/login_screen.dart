@@ -7,7 +7,6 @@ import 'package:room_book_kro_vendor/core/utils/context_extensions.dart';
 import 'package:room_book_kro_vendor/core/widgets/app_text.dart';
 import 'package:room_book_kro_vendor/core/widgets/custom_scaffold.dart';
 import 'package:room_book_kro_vendor/core/widgets/primary_button.dart';
-import 'package:room_book_kro_vendor/features/auth/view_model/auth_view_model.dart';
 import 'package:room_book_kro_vendor/features/auth/view_model/otp_view_model.dart';
 import '../../core/google_services/google_auth.dart';
 import '../../core/theme/app_colors.dart';
@@ -29,62 +28,9 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
   TextEditingController phoneCont = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    // ✅ Check if user is already signed in
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(googleSignInProvider.notifier).getCurrentUser();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final otpState = ref.watch(otpRepoProvider);
-    final googleState = ref.watch(googleSignInProvider);
-    final googleNotifier = ref.read(googleSignInProvider.notifier);
-    final authNotifier = ref.read(authViewModelProvider.notifier);
-
-    // ✅ Listen to Google state changes and call API when user signs in
-    ref.listen<GoogleUserState>(googleSignInProvider, (previous, next) {
-      // When user successfully signs in
-      if (next.user != null && previous?.user == null && !next.isLoading) {
-        print("🟢 User signed in successfully, calling backend API...");
-
-        // Call your backend API
-        authNotifier.signUpApi(
-          actionType: "login",
-          mail: next.user!.email,
-          name: next.user!.displayName ?? '',
-          context: context,
-        ).then((_) {
-          print("🟢 Backend API call completed");
-        }).catchError((error) {
-          print("🔴 Backend API error: $error");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: AppText(
-                text: 'Login failed: $error',
-                color: Colors.white,
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        });
-      }
-
-      // Show error if any
-      if (next.error != null && previous?.error != next.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: AppText(
-              text: 'Google Sign-In failed: ${next.error}',
-              color: Colors.white,
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    });
+    final googleState = ref.watch(googleAuthProvider);
 
     return PopScope(
       canPop: false,
@@ -137,7 +83,8 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                   await ref
                       .read(otpRepoProvider.notifier)
                       .sentOtpApi(context, phoneCont.text.toString());
-                } else {
+                }
+                else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: AppText(
@@ -161,29 +108,20 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
               color: AppColors.text(ref),
             ),
             SizedBox(height: context.sh * 0.01),
-
-            // ✅ Google Sign-In Button - FIXED VERSION
             InkWell(
               onTap: googleState.isLoading
                   ? null
                   : () async {
-                print("🔵 Google Sign-In button tapped");
-
-                // Call the simplified sign-in method
-                await googleNotifier.signIn();
-
-                // Note: The API call will be triggered automatically
-                // by the ref.listen above when user signs in successfully
-              },
+                      await ref
+                          .read(googleAuthProvider.notifier)
+                          .signInWithGoogle(context);
+                    },
               child: TCustomContainer(
                 padding: EdgeInsets.symmetric(
                   horizontal: context.sw * 0.015,
                   vertical: context.sh * 0.015,
                 ),
-                border: Border.all(
-                  color: AppColors.borderColor(ref),
-                  width: 2,
-                ),
+                border: Border.all(color: AppColors.borderColor(ref), width: 2),
                 height: context.sh * 0.07,
                 shape: BoxShape.circle,
                 lightColor: googleState.isLoading
@@ -192,48 +130,18 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                 borderRadius: BorderRadius.circular(10),
                 child: googleState.isLoading
                     ? Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.secondary(ref),
-                    ),
-                  ),
-                )
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.secondary(ref),
+                          ),
+                        ),
+                      )
                     : Image.asset(Assets.iconGoogleIcon),
               ),
             ),
-
-            // ✅ Show current signed-in user (for debugging)
-            if (googleState.user != null) ...[
-              SizedBox(height: context.sh * 0.02),
-              Container(
-                padding: EdgeInsets.all(context.sw * 0.03),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.green.shade200),
-                ),
-                child: Column(
-                  children: [
-                    AppText(
-                      text: "Signed in as:",
-                      fontSize: 12,
-                      color: Colors.green.shade700,
-                    ),
-                    SizedBox(height: 5),
-                    AppText(
-                      text: googleState.user!.email,
-                      fontSize: 14,
-                      fontType: FontType.semiBold,
-                      color: Colors.green.shade900,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-
             SizedBox(height: context.sh * 0.01),
             InkWell(
               onTap: () {

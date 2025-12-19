@@ -9,7 +9,6 @@ import '../../../core/widgets/custom_scaffold.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../core/widgets/app_text.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/widgets/custom_container.dart';
 
 class PropertyScreen extends ConsumerStatefulWidget {
   const PropertyScreen({super.key});
@@ -40,7 +39,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
       child: Consumer(
         builder: (context, ref, _) {
           final state = ref.watch(getPropertyProvider);
-
           if (state is GetPropertyLoading) {
             return Center(
               child: Column(
@@ -68,7 +66,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
               ),
             );
           }
-
           if (state is GetPropertyError) {
             return Center(
               child: Container(
@@ -113,7 +110,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
               ),
             );
           }
-
           if (state is GetPropertySuccess) {
             if (state.propertyLists.data?.isEmpty ?? true) {
               return Center(
@@ -157,7 +153,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                       SizedBox(height: 24),
                       ElevatedButton.icon(
                         onPressed: () {
-                          // Add property action
+                          Navigator.pushNamed(context, AppRoutes.addRoom);
                         },
                         icon: Icon(Icons.add_rounded),
                         label: Text("Add Property"),
@@ -181,7 +177,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
             }
             return _buildPropertyContent(context, ref, state);
           }
-
           return const SizedBox();
         },
       ),
@@ -193,15 +188,13 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
     WidgetRef ref,
     GetPropertySuccess state,
   ) {
-    return Column(
+    return ListView(
+      shrinkWrap: true,
+      padding: EdgeInsets.symmetric(vertical: context.sh * 0.02),
       children: [
-        // Enhanced Stats Section
         _buildEnhancedStatsSection(context, ref, state),
-
         SizedBox(height: context.sh * 0.02),
-
-        // Properties Grid
-        Expanded(child: _gridPropertyList(context, ref, state)),
+        _gridPropertyList(context, ref, state),
       ],
     );
   }
@@ -271,7 +264,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                   context,
                   ref,
                   icon: Icons.meeting_room_rounded,
-                  label: "Total Rooms",
+                  label: "Types of Rooms",
                   value:
                       state.propertyLists.overallRoomCount?.toString() ?? "0",
                   color: Colors.orange,
@@ -353,8 +346,9 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
     GetPropertySuccess state,
   ) {
     return GridView.builder(
-      physics: const BouncingScrollPhysics(),
+      physics: NeverScrollableScrollPhysics(),
       itemCount: state.propertyLists.data?.length ?? 0,
+      shrinkWrap: true,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 1,
         crossAxisSpacing: 2,
@@ -369,20 +363,14 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
   }
 
   Widget _buildEnhancedPropertyCard(
-    Data hotel,
+    AddPropertyListData hotel,
     WidgetRef ref,
     BuildContext context,
   ) {
     final isAvailable = hotel.isAvailable ?? false;
     final isVerified = hotel.verifyProperty ?? false;
-    final discountPercent = hotel.oldMrp != null && hotel.oldMrp != 0
-        ? (((hotel.oldMrp! -
-                          (hotel.pricePerNight ?? hotel.pricePerMonth ?? 0)) /
-                      hotel.oldMrp!) *
-                  100)
-              .toInt()
-        : 0;
-
+    print(hotel.pricePerNight);
+    print("hotel.pricePerNight");
     return InkWell(
       onTap: () {
         Navigator.pushNamed(
@@ -413,7 +401,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Enhanced Image Section
             Stack(
               children: [
                 ClipRRect(
@@ -467,8 +454,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                     ),
                   ),
                 ),
-
-                // Enhanced Gradient Overlay
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
@@ -489,8 +474,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                     ),
                   ),
                 ),
-
-                // Verified Badge
                 if (isVerified)
                   Positioned(
                     top: 10,
@@ -530,8 +513,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                       ),
                     ),
                   ),
-
-                // Rating Badge
                 Positioned(
                   top: 10,
                   right: 10,
@@ -567,9 +548,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                     ),
                   ),
                 ),
-
-                // Discount Badge
-                if (discountPercent > 0)
+                if (hotel.discount != 0)
                   Positioned(
                     bottom: 10,
                     right: 10,
@@ -590,7 +569,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                         ],
                       ),
                       child: AppText(
-                        text: "$discountPercent% OFF",
+                        text: "${hotel.discount}% OFF",
                         color: Colors.white,
                         fontType: FontType.bold,
                         fontSize: 11,
@@ -598,7 +577,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                     ),
                   ),
 
-                // Availability Status
                 Positioned(
                   bottom: 10,
                   left: 10,
@@ -672,12 +650,12 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: hotel.type == "Hotel"
+                            color: hotel.propertyTypeId == "1"
                                 ? Colors.blue.shade50
                                 : Colors.purple.shade50,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: hotel.type == "Hotel"
+                              color: hotel.propertyTypeId == "1"
                                   ? Colors.blue.shade300
                                   : Colors.purple.shade300,
                               width: 1,
@@ -687,7 +665,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                             text: hotel.type?.toUpperCase() ?? "TYPE",
                             fontSize: 9,
                             fontType: FontType.bold,
-                            color: hotel.type == "Hotel"
+                            color: hotel.propertyTypeId == "1"
                                 ? Colors.blue.shade700
                                 : Colors.purple.shade700,
                           ),
@@ -730,17 +708,16 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                         ),
                         SizedBox(width: 4),
                         AppText(
-                          text:
-                              "${hotel.availableRooms ?? 0} / ${hotel.totalRooms ?? 0}",
+                          text: "${hotel.availableRooms ?? 0}",
                           fontSize: 11,
                           fontType: FontType.semiBold,
                           color: Colors.grey.shade700,
                         ),
                         SizedBox(width: 3),
                         AppText(
-                          text: "rooms",
+                          text: "Rooms",
                           fontSize: 11,
-                          color: Colors.grey.shade500,
+                          color: AppColors.text(ref),
                         ),
                       ],
                     ),
@@ -768,7 +745,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                                 children: [
                                   AppText(
                                     text:
-                                        "₹${hotel.type == "hotel" ? (hotel.pricePerNight ?? 0) : (hotel.pricePerMonth ?? 0)}",
+                                        "₹${hotel.propertyTypeId.toString() == "1" ? (hotel.pricePerNight.toString()) : (hotel.pricePerMonth.toString())}",
                                     fontSize: 16,
                                     fontType: FontType.bold,
                                     color: Colors.green.shade700,
@@ -776,7 +753,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                                   if ((hotel.oldMrp ?? 0) > 0) ...[
                                     SizedBox(width: 6),
                                     AppText(
-                                      text: "₹${hotel.oldMrp}",
+                                      text: "₹${hotel.oldMrp.toString()}",
                                       decoration: TextDecoration.lineThrough,
                                       fontSize: 10,
                                       color: Colors.grey.shade500,
@@ -785,9 +762,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                                 ],
                               ),
                               AppText(
-                                text: hotel.type == "hotel"
-                                    ? "/night"
-                                    : "/month",
+                                text: hotel.propertyTypeId.toString() == "1" ? "/night" : "/month",
                                 fontSize: 9,
                                 color: Colors.grey.shade600,
                               ),

@@ -78,7 +78,6 @@ class ProfileViewModel extends StateNotifier<AuthState> {
           message: response.message ?? "Profile fetched successfully",
           profile: profileData,
         );
-        // Utils.show(response.message.toString(), context);
       } else {
         state = AuthError(response.message ?? "Something went wrong");
       }
@@ -86,6 +85,7 @@ class ProfileViewModel extends StateNotifier<AuthState> {
       state = AuthError(error.toString());
     }
   }
+
 }
 
 /// ---- Auth States ----

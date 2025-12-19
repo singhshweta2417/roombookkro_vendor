@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,6 +10,7 @@ import 'package:room_book_kro_vendor/core/widgets/custom_scaffold.dart';
 import 'package:room_book_kro_vendor/core/widgets/primary_button.dart';
 import 'package:room_book_kro_vendor/features/auth/view_model/register_view_model.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/utils.dart';
 import '../../core/widgets/custom_container.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../generated/assets.dart';
@@ -44,17 +44,6 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
   String? aadharBackBase64;
   String? panBase64;
 
-  Future<void> pickImage(String type) async {
-    final XFile? pickedFile = await picker.pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      setState(() {
-        panImage = File(pickedFile.path);
-      });
-    }
-  }
-
   Future<void> pickSingleImage(String type) async {
     final XFile? pickedFile = await picker.pickImage(
       source: ImageSource.gallery,
@@ -85,7 +74,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args =
-          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       final name = args?['name'] ?? '';
       final email = args?['email'] ?? '';
       final phone = args?['phone'] ?? '';
@@ -101,7 +90,6 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
         ref.read(mobileFieldProvider.notifier).updateValue(phone);
         phoneCont.text = phone;
       }
-
       setState(() {
         rememberMe = phone.isNotEmpty;
       });
@@ -110,7 +98,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   bool _validateStep(int step) {
     switch (step) {
-      case 0: // Basic info
+      case 0:
         if (nameCont.text.isEmpty ||
             mailCont.text.isEmpty ||
             dobCont.text.isEmpty ||
@@ -133,13 +121,22 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
         }
         break;
 
-      case 1: // Documents validation
+      case 1:
         if (aadharCont.text.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Please enter Aadhar Number")),
           );
           return false;
         }
+
+        final aadharValid = RegExp(r'^[0-9]{12}$').hasMatch(aadharCont.text);
+        if (!aadharValid) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Aadhar must be 12 digits")),
+          );
+          return false;
+        }
+
         if (aadharFront == null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Please upload Aadhar Front Image")),
@@ -158,6 +155,19 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
           return false;
         }
+
+        final panValid = RegExp(
+          r'^[A-Z]{5}[0-9]{4}[A-Z]{1}$',
+        ).hasMatch(panCont.text.toUpperCase());
+        if (!panValid) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Invalid PAN format. Example: ABCDE1234F"),
+            ),
+          );
+          return false;
+        }
+
         if (panImage == null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Please upload PAN Card Image")),
@@ -191,24 +201,28 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _submitForm() async {
     FocusScope.of(context).unfocus();
-    await ref
-        .read(registerProvider.notifier)
-        .signUpApi(
-          name: nameCont.text.trim(),
-          mail: mailCont.text.trim(),
-          phone: phoneCont.text.trim(),
-          date: dobCont.text.trim(),
-          adharNumber: aadharCont.text.trim(),
-          panNumber: panCont.text.trim(),
-          adharFront: aadharFrontBase64.toString(),
-          adharBack:aadharBackBase64.toString(),
-          panImage:panBase64.toString(),
-          context: context,
-        );
+    if (rememberMe == false) {
+      Utils.show("Please Accept Privacy Policy", context);
+      return;
+    }
+    await ref.read(registerProvider.notifier).signUpApi(
+      name: nameCont.text.trim(),
+      mail: mailCont.text.trim(),
+      phone: phoneCont.text.trim(),
+      date: dobCont.text.trim(),
+      adharNumber: aadharCont.text.trim(),
+      panNumber: panCont.text.trim(),
+      adharFront: aadharFrontBase64.toString(),
+      adharBack: aadharBackBase64.toString(),
+      panImage: panBase64.toString(),
+      context: context,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final registerState = ref.watch(registerProvider);
+
     return CustomScaffold(
       child: ListView(
         shrinkWrap: true,
@@ -259,11 +273,11 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                 child: isCompleted
                     ? Icon(Icons.check, color: Colors.white, size: 16)
                     : Center(
-                        child: AppText(
-                          text: "${index + 1}",
-                          fontSize: AppConstants.twelve,
-                        ),
-                      ),
+                  child: AppText(
+                    text: "${index + 1}",
+                    fontSize: AppConstants.twelve,
+                  ),
+                ),
               );
             },
             controlsBuilder: (context, details) {
@@ -275,7 +289,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                     Expanded(
                       child: PrimaryButton(
                         label: isLastStep ? 'Sign Up' : 'Next',
-                        isLoading: ref.watch(registerProvider).isLoading,
+                        isLoading: registerState.isLoading,
                         onTap: details.onStepContinue,
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -295,9 +309,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                 title: AppText(text: 'Basic Info', fontType: FontType.semiBold),
                 isActive: _currentStep >= 0,
                 stepStyle: StepStyle(color: AppColors.secondary(ref)),
-                state: _currentStep > 0
-                    ? StepState.complete
-                    : StepState.indexed,
+                state: _currentStep > 0 ? StepState.complete : StepState.indexed,
                 content: Column(
                   children: [
                     CustomTextField(
@@ -307,10 +319,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                       hintText: "Enter Owner's Name",
                       labelFontType: FontType.regular,
                       customBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.grey, // Default border color
-                          width: 1.4,
-                        ),
+                        borderSide: const BorderSide(color: Colors.grey, width: 1.4),
                       ),
                       fillColor: AppColors.background(ref),
                     ),
@@ -320,10 +329,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                       controller: mailCont,
                       hintText: "Enter Owner's Email",
                       customBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.grey,
-                          width: 1.4,
-                        ),
+                        borderSide: const BorderSide(color: Colors.grey, width: 1.4),
                       ),
                       labelFontType: FontType.regular,
                       keyboardType: TextInputType.emailAddress,
@@ -337,10 +343,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                       labelFontType: FontType.regular,
                       readOnly: true,
                       customBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.grey, // Default border color
-                          width: 1.4,
-                        ),
+                        borderSide: const BorderSide(color: Colors.grey, width: 1.4),
                       ),
                       suffixIcon: InkWell(
                         onTap: () async {
@@ -351,23 +354,40 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                             firstDate: DateTime(1980),
                             lastDate: DateTime.now(),
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  colorScheme: ColorScheme.light(
+                                    primary: Colors.green,
+                                    onPrimary: Colors.white,
+                                    onSurface: Colors.black,
+                                    surface: Colors.white,
+                                  ),
+                                  textButtonTheme: TextButtonThemeData(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.green,
+                                    ),
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
                           );
                           if (selectedDate != null) {
                             final formattedDate =
                                 "${selectedDate.day.toString().padLeft(2, '0')}/"
                                 "${selectedDate.month.toString().padLeft(2, '0')}/"
                                 "${selectedDate.year}";
-                            ref
-                                .read(dobFieldProvider.notifier)
-                                .updateValue(formattedDate);
+                            ref.read(dobFieldProvider.notifier).updateValue(formattedDate);
                             setState(() {
                               dobCont.text = formattedDate;
                             });
                           }
                         },
-                        child: const Icon(
-                          Icons.calendar_today,
-                          color: Colors.grey,
+                        child: Icon(
+                          Icons.calendar_today_rounded,
+                          color: Colors.green,
+                          size: 20,
                         ),
                       ),
                       fillColor: AppColors.background(ref),
@@ -382,48 +402,35 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                       maxLength: 10,
                       readOnly: rememberMe,
                       customBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.grey, // Default border color
-                          width: 1.4,
-                        ),
+                        borderSide: const BorderSide(color: Colors.grey, width: 1.4),
                       ),
                       fillColor: AppColors.background(ref),
                     ),
                   ],
                 ),
               ),
-              // -------------------------------
-              // STEP 2 – DOCUMENTS
-              // -------------------------------
               Step(
                 title: AppText(text: "Documents", fontType: FontType.semiBold),
+                isActive: _currentStep >= 1,
+                stepStyle: StepStyle(color: AppColors.secondary(ref)),
+                state: _currentStep > 1 ? StepState.complete : StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppText(
-                      text: "Enter Your Aadhar*",
-                      fontType: FontType.semiBold,
-                    ),
+                    AppText(text: "Enter Your Aadhar*", fontType: FontType.semiBold),
                     SizedBox(height: context.sh * 0.01),
                     CustomTextField(
                       controller: aadharCont,
                       hintText: "Enter Aadhar Number",
                       maxLength: 12,
                       customBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.grey, // Default border color
-                          width: 1.4,
-                        ),
+                        borderSide: const BorderSide(color: Colors.grey, width: 1.4),
                       ),
                       fillColor: AppColors.background(ref),
                       keyboardType: TextInputType.number,
                     ),
                     SizedBox(height: context.sh * 0.01),
-                    // Aadhar Front
-                    AppText(
-                      text: "Upload Aadhar Front*",
-                      fontType: FontType.semiBold,
-                    ),
+                    AppText(text: "Upload Aadhar Front*", fontType: FontType.semiBold),
                     SizedBox(height: context.sh * 0.01),
                     _imageBox(
                       width: context.sw,
@@ -432,11 +439,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                       onTap: () => pickSingleImage("aadharFront"),
                     ),
                     SizedBox(height: context.sh * 0.01),
-                    // Aadhar Back
-                    AppText(
-                      text: "Upload Aadhar Back*",
-                      fontType: FontType.semiBold,
-                    ),
+                    AppText(text: "Upload Aadhar Back*", fontType: FontType.semiBold),
                     _imageBox(
                       width: context.sw,
                       imageFile: aadharBack,
@@ -444,28 +447,32 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                       onTap: () => pickSingleImage("aadharBack"),
                     ),
                     SizedBox(height: context.sh * 0.015),
-                    AppText(
-                      text: "Your PAN Number*",
-                      fontType: FontType.semiBold,
-                    ),
+                    AppText(text: "Your PAN Number*", fontType: FontType.semiBold),
                     SizedBox(height: context.sh * 0.01),
                     CustomTextField(
                       controller: panCont,
                       hintText: "Enter PAN Number",
                       maxLength: 10,
                       customBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                          color: Colors.grey, // Default border color
-                          width: 1.4,
-                        ),
+                        borderSide: const BorderSide(color: Colors.grey, width: 1.4),
                       ),
                       fillColor: AppColors.background(ref),
+                      keyboardType: TextInputType.text,
+                      textCapitalization: TextCapitalization.characters,
+                      onChanged: (value) {
+                        final upperCaseValue = value.toUpperCase();
+                        if (value != upperCaseValue) {
+                          panCont.value = panCont.value.copyWith(
+                            text: upperCaseValue,
+                            selection: TextSelection.collapsed(
+                              offset: upperCaseValue.length,
+                            ),
+                          );
+                        }
+                      },
                     ),
                     SizedBox(height: context.sh * 0.01),
-                    AppText(
-                      text: "Upload PAN Card*",
-                      fontType: FontType.semiBold,
-                    ),
+                    AppText(text: "Upload PAN Card*", fontType: FontType.semiBold),
                     SizedBox(height: context.sh * 0.01),
                     _imageBox(
                       width: context.sw,
@@ -480,6 +487,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                 title: AppText(text: 'Privacy', fontType: FontType.semiBold),
                 stepStyle: StepStyle(color: AppColors.secondary(ref)),
                 isActive: _currentStep >= 2,
+                state: _currentStep > 2 ? StepState.complete : StepState.indexed,
                 content: InkWell(
                   onTap: () {
                     setState(() {
@@ -501,10 +509,10 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                             : Colors.white,
                         child: rememberMe
                             ? Icon(
-                                Icons.check,
-                                size: context.sw * 0.03,
-                                color: Colors.white,
-                              )
+                          Icons.check,
+                          size: context.sw * 0.03,
+                          color: Colors.white,
+                        )
                             : null,
                       ),
                       SizedBox(width: context.sw * 0.01),
@@ -545,9 +553,11 @@ Widget _imageBox({
         image: imageFile != null
             ? DecorationImage(image: FileImage(imageFile), fit: BoxFit.fill)
             : DecorationImage(
-                image: AssetImage(assets.toString()),
-                fit: BoxFit.fill,
-              ),
+          image: AssetImage(assets.toString()),
+          fit: BoxFit.fill,
+          filterQuality: FilterQuality.low,
+            colorFilter:ColorFilter.linearToSrgbGamma()
+        ),
       ),
       child: imageFile == null
           ? Center(child: Icon(Icons.add_a_photo, size: 40, color: Colors.grey))

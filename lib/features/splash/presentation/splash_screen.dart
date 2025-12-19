@@ -21,13 +21,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   String displayedText = "";
   int charIndex = 0;
   Timer? _timer;
-  bool _hasNavigated = false; // Add this flag to prevent multiple navigations
+  bool _hasNavigated = false;
 
   @override
   void initState() {
     super.initState();
     _startTyping();
-    // Initialize the splash view model
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(splashViewModelProvider.notifier).initialize();
     });
@@ -55,12 +54,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     final splashState = ref.watch(splashViewModelProvider);
-
     ref.listen(splashViewModelProvider, (prev, next) {
-      // Only navigate if ready, has a route, and hasn't navigated yet
       if (next.isReady && next.nextRoute != null && !_hasNavigated) {
-        _hasNavigated = true; // Set flag to prevent multiple navigations
-
+        _hasNavigated = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             ref.read(navigatorKeyProvider).currentState
@@ -98,7 +94,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             AppText(
               text: "RoomBookKaro! 👋",
               fontType: FontType.semiBold,
-              fontSize: AppConstants.fortyFive,
+              fontSize: AppConstants.forty,
               color: Colors.white,
             ),
             AppText(

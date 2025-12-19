@@ -11,7 +11,7 @@ class UpdatePropertyRepository {
 
   UpdatePropertyRepository(this.apiServices, this.apiUrl);
 
-  Future<dynamic> updatePropertyApi(FormData  data,residenceId) async {
+  Future<dynamic> updatePropertyApi(FormData data,residenceId) async {
 
     final response = await apiServices.getPutFormDataApiResponse(apiUrl.updateProperty!+residenceId, data);
     return response;

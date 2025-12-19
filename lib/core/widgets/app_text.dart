@@ -47,6 +47,7 @@ class AppText extends ConsumerWidget {
 
 class AppConstants {
   static const double fortyFive = 45.0;
+  static const double forty = 40.0;
   static const double thirty = 30.0;
   static const double thirtyFive = 35.0;
   static const double twentyFive = 25.0;

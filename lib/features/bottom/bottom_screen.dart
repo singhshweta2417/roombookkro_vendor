@@ -11,7 +11,7 @@ import '../../core/widgets/primary_button.dart';
 import '../bookings/booking_screen.dart';
 import '../home/home_screen.dart';
 import '../profile/profile_Screen.dart';
-import '../property/rooms_screen.dart';
+import '../property/added_property_list.dart';
 
 
 // =================== State ===================

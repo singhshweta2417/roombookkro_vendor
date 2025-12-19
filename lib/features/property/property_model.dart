@@ -4,7 +4,7 @@ class AddPropertyListModel {
   dynamic overallRoomCount;
   dynamic availablePropertiesCount;
   dynamic verifiedPropertiesCount;
-  List<Data>? data;
+  List<AddPropertyListData>? data;
 
   AddPropertyListModel({
     this.success,
@@ -22,9 +22,9 @@ class AddPropertyListModel {
     availablePropertiesCount = json['availablePropertiesCount'];
     verifiedPropertiesCount = json['verifiedPropertiesCount'];
     if (json['data'] != null) {
-      data = <Data>[];
+      data = <AddPropertyListData>[];
       json['data'].forEach((v) {
-        data!.add(Data.fromJson(v));
+        data!.add(AddPropertyListData.fromJson(v));
       });
     }
   }
@@ -43,7 +43,7 @@ class AddPropertyListModel {
   }
 }
 
-class Data {
+class AddPropertyListData {
   dynamic sId;
   dynamic userId;
   dynamic userType;
@@ -59,6 +59,7 @@ class Data {
   List<String>? images;
   dynamic pricePerNight;
   dynamic pricePerMonth;
+  dynamic propertyTypeId;
   dynamic pricePerDay;
   dynamic depositAmount;
   List<Rooms>? rooms;
@@ -84,7 +85,7 @@ class Data {
   dynamic iV;
   dynamic totalRooms;
 
-  Data({
+  AddPropertyListData({
     this.sId,
     this.userId,
     this.userType,
@@ -106,6 +107,7 @@ class Data {
     this.amenities,
     this.rules,
     this.contactNumber,
+    this.propertyTypeId,
     this.email,
     this.website,
     this.rating,
@@ -126,7 +128,7 @@ class Data {
     this.totalRooms,
   });
 
-  Data.fromJson(Map<String, dynamic> json) {
+  AddPropertyListData.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     userId = json['userId'];
     userType = json['userType'];
@@ -136,6 +138,7 @@ class Data {
     address = json['address'];
     city = json['city'];
     state = json['state'];
+    propertyTypeId = json['propertyTypeId'];
     pincode = json['pincode'];
     coordinates = json['coordinates'] != null
         ? Coordinates.fromJson(json['coordinates'])
@@ -195,6 +198,7 @@ class Data {
     data['type'] = type;
     data['address'] = address;
     data['city'] = city;
+    data['propertyTypeId'] = propertyTypeId;
     data['state'] = state;
     data['pincode'] = pincode;
     if (coordinates != null) {
@@ -260,6 +264,7 @@ class Coordinates {
 class Rooms {
   dynamic roomId;
   dynamic roomType;
+  dynamic roomTypeId;
   dynamic furnished;
   dynamic occupancy;
   dynamic price;
@@ -273,6 +278,7 @@ class Rooms {
   Rooms({
     this.roomId,
     this.roomType,
+    this.roomTypeId,
     this.furnished,
     this.occupancy,
     this.price,
@@ -287,6 +293,7 @@ class Rooms {
   Rooms.fromJson(Map<String, dynamic> json) {
     roomId = json['roomId'];
     roomType = json['roomType'];
+    roomTypeId = json['roomTypeId'];
     furnished = json['furnished'];
     occupancy = json['occupancy'];
     price = json['price'];
@@ -307,6 +314,7 @@ class Rooms {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['roomId'] = roomId;
     data['roomType'] = roomType;
+    data['roomTypeId'] = roomTypeId;
     data['furnished'] = furnished;
     data['occupancy'] = occupancy;
     data['price'] = price;

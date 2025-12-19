@@ -10,27 +10,39 @@ import '../../../core/constants/app_fonts.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text.dart';
+import '../view_model/get_property_type_view_model.dart';
+import '../../auth/model/get_enum_model.dart';
 
-class AddPropertyScreen extends ConsumerStatefulWidget {
-  const AddPropertyScreen({super.key});
+class AddPropertyScreen1 extends ConsumerStatefulWidget {
+  const AddPropertyScreen1({super.key});
 
   @override
-  ConsumerState<AddPropertyScreen> createState() => _AddPropertyScreenState();
+  ConsumerState<AddPropertyScreen1> createState() => _AddPropertyScreenState();
 }
 
-class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
+class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen1> {
   final picker = ImagePicker();
 
   // Controllers
   final _titleController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
-  final _flatNoController = TextEditingController();
   final _additionalController = TextEditingController();
   final _pincodeController = TextEditingController();
   final _addressCont = TextEditingController();
+
   int _currentStep = 0;
   String? selectedPropertyType;
+  int? selectedPropertyTypeId;
+
+  @override
+  void initState() {
+    super.initState();
+    // Call API when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(getPropertyTypeProvider.notifier).propertyTypeApi();
+    });
+  }
 
   void _error(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -43,7 +55,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
 
   bool _validateStep(int step) {
     switch (step) {
-      case 0: // Basic info
+      case 0:
         if (selectedPropertyType == null) {
           _error("Please select property type");
           return false;
@@ -54,7 +66,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
         }
         break;
 
-      case 1: // Documents validation
+      case 1: // Address validation
         if (_addressCont.text.trim().isEmpty) {
           _error("Please enter Address");
           return false;
@@ -87,7 +99,6 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
         });
       }
     } else {
-      // This is the last step, handle form submission
       _submitForm();
     }
   }
@@ -113,20 +124,23 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
         arguments: {
           "name": _titleController.text.trim(),
           "coordinates": coordinates,
-          "selectedPropertyType": selectedPropertyType,
+          "selectedPropertyTypeId": selectedPropertyTypeId,
           "pincode": _pincodeController.text.trim(),
           "state": _stateController.text.trim(),
           "city": _cityController.text.trim(),
           "address": _addressCont.text.trim(),
-          "flatNo":_flatNoController.text.trim(),
-          "additionalAddress":_additionalController.text.trim(),
+          "additionalAddress": _additionalController.text.trim(),
         },
       );
+      print(selectedPropertyTypeId);
+      print("selectedPropertyTypeId");
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final propertyTypeState = ref.watch(getPropertyTypeProvider);
+
     return CustomScaffold(
       appBar: CustomAppBar(
         middle: AppText(
@@ -169,11 +183,11 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                 child: isCompleted
                     ? Icon(Icons.check, color: Colors.white, size: 16)
                     : Center(
-                  child: AppText(
-                    text: "${index + 1}",
-                    fontSize: AppConstants.twelve,
-                  ),
-                ),
+                        child: AppText(
+                          text: "${index + 1}",
+                          fontSize: AppConstants.twelve,
+                        ),
+                      ),
               );
             },
             controlsBuilder: (context, details) {
@@ -189,6 +203,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
+                    if (_currentStep > 0) SizedBox(width: 12),
                     if (_currentStep > 0)
                       Expanded(
                         child: OutlinedButton(
@@ -201,28 +216,81 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
               );
             },
             steps: [
+              // ================================
+              // STEP 1 - PROPERTY DETAILS
+              // ================================
               Step(
-                title: AppText(text: 'Property Details*', fontType: FontType.semiBold),
+                title: AppText(
+                  text: 'Property Details*',
+                  fontType: FontType.semiBold,
+                ),
                 isActive: _currentStep >= 0,
                 stepStyle: StepStyle(color: AppColors.secondary(ref)),
-                state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+                state: _currentStep > 0
+                    ? StepState.complete
+                    : StepState.indexed,
                 content: Column(
                   children: [
                     SizedBox(height: 10),
-                    _dropdown(
-                      title: "Select Property Type",
-                      value: selectedPropertyType,
-                      items: ["Hotel", "Resort", "Apartment", "PG","Dormitory"],
-                      onChange: (v) => setState(() {
-                        selectedPropertyType = v;
-                      }),
-                    ),
+
+                    // ⭐ PROPERTY TYPE DROPDOWN
+                    if (propertyTypeState is GetPropertyTypeLoading)
+                      Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.secondary(ref),
+                        ),
+                      )
+                    else if (propertyTypeState is GetPropertyTypeError)
+                      Column(
+                        children: [
+                          AppText(
+                            text: propertyTypeState.error,
+                            color: Colors.red,
+                          ),
+                          SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () {
+                              ref
+                                  .read(getPropertyTypeProvider.notifier)
+                                  .propertyTypeApi();
+                            },
+                            child: AppText(text: "Retry"),
+                          ),
+                        ],
+                      )
+                    else if (propertyTypeState is GetPropertyTypeSuccess)
+                      _dropdownWithId(
+                        title: "Select Property Type",
+                        value: selectedPropertyType,
+                        options:
+                            propertyTypeState
+                                .propertyType
+                                .data!
+                                .propertyType!
+                                .options ??
+                            [],
+                        onChange: (value, id) => setState(() {
+                          selectedPropertyType = value;
+                          selectedPropertyTypeId = id;
+                        }),
+                      )
+                    else
+                      _dropdownWithId(
+                        title: "Select Property Type",
+                        value: selectedPropertyType,
+                        options: [],
+                        onChange: (value, id) => setState(() {
+                          selectedPropertyType = value;
+                          selectedPropertyTypeId = id;
+                        }),
+                      ),
 
                     /// PROPERTY TITLE
                     field(
                       "Property Title",
                       _titleController,
                       keyboard: TextInputType.name,
+                      textCapitalization: TextCapitalization.words,
                       suffixIcon: IconButton(
                         onPressed: () {},
                         icon: Icon(Icons.home_work_outlined),
@@ -232,15 +300,23 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                   ],
                 ),
               ),
-              // -------------------------------
-              // STEP 2 – DOCUMENTS
-              // -------------------------------
+
+              // ================================
+              // STEP 2 - ADDRESS
+              // ================================
               Step(
                 title: AppText(text: "Address*", fontType: FontType.semiBold),
+                isActive: _currentStep >= 1,
+                stepStyle: StepStyle(color: AppColors.secondary(ref)),
+                state: _currentStep > 1
+                    ? StepState.complete
+                    : StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: context.sh*0.01),
+                    SizedBox(height: context.sh * 0.01),
+
+                    // Address field with location picker
                     GestureDetector(
                       onTap: _selectLocation,
                       child: AbsorbPointer(
@@ -254,6 +330,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                         ),
                       ),
                     ),
+
                     field(
                       readOnly: true,
                       "City",
@@ -261,6 +338,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                       suffixIcon: Icon(Icons.location_city_outlined),
                       suffix: true,
                     ),
+
                     field(
                       readOnly: true,
                       "State",
@@ -268,6 +346,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                       suffixIcon: Icon(Icons.map_outlined),
                       suffix: true,
                     ),
+
                     field(
                       readOnly: true,
                       "Pincode",
@@ -275,29 +354,13 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
                       suffixIcon: Icon(Icons.pin_outlined),
                       suffix: true,
                     ),
-                    if (selectedPropertyType != null) ...[
-                      if (selectedPropertyType == "Hotel" ||
-                          selectedPropertyType == "Resort" ||
-                          selectedPropertyType == "PG") ...[
-                        field(
-                          "Additional Address",
-                          _additionalController,
-                          suffixIcon: IconButton(
-                            onPressed: () {},
-                            icon: Icon(Icons.flag_circle_outlined),
-                          ),
-                          suffix: true,
-                        ),
-                      ] else if (selectedPropertyType == "Flat") ...[
-                        field(
-                          "Flat No.",
-                          _flatNoController,
-                          suffixIcon:Icon(Icons.flag_circle_outlined),
-                          suffix: true,
-                          keyboard: TextInputType.number
-                        ),
-                      ]
-                    ],
+                    field(
+                      "Additional Address (Optional)",
+                      _additionalController,
+                      suffixIcon: Icon(Icons.flag_circle_outlined),
+                      suffix: true,
+                    ),
+
                     SizedBox(height: 10),
                   ],
                 ),
@@ -312,16 +375,15 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
 
   String? latitude;
   String? longitude;
+
   Future<void> _selectLocation() async {
     final result = await Navigator.pushNamed(context, AppRoutes.chooseLocation);
-
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _addressCont.text = result['address'] ?? '';
         _cityController.text = result['city'] ?? '';
         _stateController.text = result['state'] ?? '';
         _pincodeController.text = result['pincode'] ?? '';
-
         latitude = result['latitude']?.toString() ?? '';
         longitude = result['longitude']?.toString() ?? '';
       });
@@ -330,59 +392,111 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen> {
 
   /// TextField Builder
   Widget field(
-      String label,
-      TextEditingController c, {
-        Widget? suffixIcon,
-        bool multi = false,
-        bool suffix = false,
-        TextInputType keyboard = TextInputType.text,
-        bool readOnly = false,
-      }) {
+    String label,
+    TextEditingController c, {
+    Widget? suffixIcon,
+    bool multi = false,
+    bool suffix = false,
+    TextInputType keyboard = TextInputType.text,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    bool readOnly = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: CustomTextField(
         controller: c,
-        maxLength: multi ? 10 : 40,
+        maxLength: multi ? 10 : 100,
         keyboardType: keyboard,
         labelText: label,
         readOnly: readOnly,
         suffixIcon: suffix && suffixIcon != null ? suffixIcon : null,
+        textCapitalization: textCapitalization,
         customBorder: OutlineInputBorder(
-          borderSide: const BorderSide(
-            color: Colors.grey,
-            width: 1.4,
-          ),
+          borderSide: const BorderSide(color: Colors.grey, width: 1.4),
         ),
         fillColor: AppColors.background(ref),
       ),
     );
   }
 
-  Widget _dropdown({
+  /// ⭐ DROPDOWN WITH ID - Fixed to use PropertyTypeOption
+  Widget _dropdownWithId({
     required String title,
     required String? value,
-    required List<String> items,
-    required Function(String?) onChange,
+    required List<PropertyTypeOption> options,
+    required Function(String?, int?) onChange,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: DropdownButtonFormField(
+      child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
           labelText: title,
+          labelStyle: TextStyle(color: Colors.grey),
+          filled: true,
           border: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: Colors.grey, // Default border color
-              width: 1.4,
-            ),
+            borderSide: const BorderSide(color: Colors.grey, width: 1.4),
           ),
           fillColor: AppColors.background(ref),
+          enabledBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.grey, width: 1.4),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.secondary(ref), width: 1.4),
+          ),
         ),
         initialValue: value,
-        items: items
-            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-            .toList(),
-        onChanged: onChange,
+        items: options.isEmpty
+            ? null
+            : options
+                  .where(
+                    (option) =>
+                        option.isActive == true &&
+                        (option.value?.isNotEmpty ?? false),
+                  )
+                  .map(
+                    (option) => DropdownMenuItem<String>(
+                      value: option.value,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.home_work_outlined,
+                            size: 18,
+                            color: AppColors.secondary(ref),
+                          ),
+                          SizedBox(width: 8),
+                          AppText(
+                            text: option.label ?? option.value ?? '',
+                            fontSize: AppConstants.fourteen,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+        onChanged: options.isEmpty
+            ? null
+            : (selectedValue) {
+                final selectedOption = options.firstWhere(
+                  (option) => option.value == selectedValue,
+                  orElse: () => PropertyTypeOption(),
+                );
+                onChange(selectedValue, selectedOption.id);
+              },
+        hint: options.isEmpty
+            ? AppText(text: "Loading...")
+            : AppText(text: "Choose property type"),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _additionalController.dispose();
+    _pincodeController.dispose();
+    _addressCont.dispose();
+    super.dispose();
   }
 }

@@ -78,6 +78,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _menuTile(ref, Icons.notifications_none, () {
             Navigator.pushNamed(context, AppRoutes.notificationScreen);
           }, "My Notification"),
+          _menuTile(ref, Icons.wallet, () {
+            Navigator.pushNamed(context, AppRoutes.walletScreen);
+          }, "My Wallet"),
+          _menuTile(ref, Icons.notifications_none, () {
+            Navigator.pushNamed(context, AppRoutes.addBankAccountScreen);
+          }, "Add Bank"),
           _menuTile(ref, Icons.person_outline, () {
             Navigator.of(
               context,
@@ -222,7 +228,7 @@ void _showLogoutDialog(BuildContext context, WidgetRef ref) {
               PrimaryButton(
                 margin: EdgeInsets.symmetric(horizontal: context.sw * 0.025),
                 onTap: () async {
-                  await ref.read(googleSignInProvider.notifier).signOut();
+                  await ref.read(googleAuthProvider.notifier).signOut(ref);
                 },
                 width: context.sw * 0.43,
                 label: "Yes, Logout",
