@@ -7,6 +7,7 @@ import 'package:room_book_kro_vendor/features/home/dialog_widget.dart';
 import 'package:room_book_kro_vendor/features/profile/repo/profile_repo.dart';
 import '../../../core/network/app_exception.dart';
 import '../../../core/utils/utils.dart';
+import '../profile/view_model/profile_view_model.dart';
 
 
 class TopUpViewModel extends StateNotifier<AuthState> {
@@ -29,6 +30,7 @@ class TopUpViewModel extends StateNotifier<AuthState> {
       final userID = await userPref.getUserId();
       final response = await _profileRepo.profileUpdateApi(userID, data);
       if (response["status"] == 200) {
+        ref.read(updateProvider.notifier).profileViewApi(context);
         state = ProfileSuccess(
           message: response["message"] ?? "Profile updated successfully",
         );

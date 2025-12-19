@@ -60,12 +60,8 @@ class PaymentSuccessDialog extends ConsumerWidget {
           const SizedBox(height: 30),
           PrimaryButton(
             onTap: () {
-              ref.read(bottomNavProvider.notifier).setIndex(1);
-              // Navigator.pushNamedAndRemoveUntil(
-              //   context,
-              //   AppRoutes.bottomNavigationPage,
-              //       (route) => false,
-              // );
+             Navigator.pop(context);
+
             },
             label: "Continue",
           ),

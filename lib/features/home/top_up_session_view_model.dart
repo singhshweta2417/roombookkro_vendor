@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cferrorresponse/cferrorresponse.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfpayment/cfwebcheckoutpayment.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfpaymentgateway/cfpaymentgatewayservice.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:room_book_kro_vendor/features/auth/data/user_view.dart';
 import 'package:room_book_kro_vendor/features/auth/model/create_session_model.dart';
 import 'package:room_book_kro_vendor/features/home/call_back_view_model.dart';
+import 'package:room_book_kro_vendor/features/home/dialog_widget.dart';
 import 'package:room_book_kro_vendor/features/home/repo/top_up_session_repo.dart';
 import '../../../core/network/app_exception.dart';
 
@@ -25,13 +27,18 @@ class TopUpCreateSessionViewModel extends StateNotifier<CreateSessionState> {
     cfPaymentGatewayService.setCallback(
       (String? orderId) async {
         debugPrint("✅ Cashfree payment verified: $orderId");
-
-        await ref
-            .read(topUpEWalletProvider.notifier)
-            .profileUpdateApi(
-              walletBalance: finalPrice.toString(),
-              context: context,
-            );
+        showDialog(
+          context: context,
+          builder: (ctx) => PaymentSuccessDialog(
+            message: "You have successfully made a payment",
+          ),
+        );
+        // await ref
+        //     .read(topUpEWalletProvider.notifier)
+        //     .profileUpdateApi(
+        //       walletBalance: finalPrice.toString(),
+        //       context: context,
+        //     );
       },
       (CFErrorResponse errorResponse, String? orderId) {
         debugPrint(
@@ -56,10 +63,8 @@ class TopUpCreateSessionViewModel extends StateNotifier<CreateSessionState> {
       final value = await _createSessionRepo.getCreateSessionApi(data);
       state = CreateSessionSuccess(createSessionList: value);
 
-      final String orderId = value.orderId.toString();
-      final String paymentSessionId = value.paymentSessionId.toString();
-
-      // ✅ Pass context when setting up callbacks
+      final String orderId = value.data?.orderId.toString()??'';
+      final String paymentSessionId = value.data?.paymentSessionId.toString()??'';
       _setupCashfreeCallbacks(finalPrice, context);
 
       await startPayment(orderId, paymentSessionId);

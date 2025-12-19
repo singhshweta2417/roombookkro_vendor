@@ -107,7 +107,8 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                         AppText(
                           text: username.toString(),
                           color: Colors.white,
-                          fontSize: context.sh * 0.03,
+                          fontSize: context.sh * 0.025,
+                          fontType: FontType.bold,
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -180,7 +181,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   AppText(
-                    text: "Deposit History",
+                    text: "Transaction History",
                     fontSize: 18,
                     fontType: FontType.bold,
                   ),
