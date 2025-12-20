@@ -9,15 +9,85 @@ import 'package:room_book_kro_vendor/core/widgets/custom_app_bar.dart';
 import 'package:room_book_kro_vendor/core/widgets/custom_scaffold.dart';
 import 'package:room_book_kro_vendor/features/home/bank/bank_valid_provider.dart';
 import 'package:room_book_kro_vendor/features/profile/view_model/add_bank_view_model.dart';
+import 'package:room_book_kro_vendor/features/home/ifsc_view_model.dart';
 
-class AddBankAccountScreen extends ConsumerWidget {
+class AddBankAccountScreen extends ConsumerStatefulWidget {
   const AddBankAccountScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AddBankAccountScreen> createState() => _AddBankAccountScreenState();
+}
+
+class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
+  bool _hasAutoFilled = false;
+
+  @override
+  Widget build(BuildContext context) {
     final formState = ref.watch(bankAccountFormProvider);
     final formNotifier = ref.read(bankAccountFormProvider.notifier);
     final accountNumberFormatter = ref.read(accountNumberFormatterProvider);
+    final ifscState = ref.watch(getIfscProvider);
+
+    // Listen to IFSC API response and auto-fill
+    ref.listen<IfscState>(getIfscProvider, (previous, next) {
+      if (next is IfscSuccess && !_hasAutoFilled) {
+        final ifscData = next.ifscList.data;
+        if (ifscData != null) {
+          // Auto-fill bank name
+          if (ifscData.bANK != null && ifscData.bANK!.isNotEmpty) {
+            formNotifier.updateBankName(ifscData.bANK!);
+          }
+
+          // Auto-fill branch name
+          if (ifscData.bRANCH != null && ifscData.bRANCH!.isNotEmpty) {
+            formNotifier.updateBranchName(ifscData.bRANCH!);
+          }
+
+          _hasAutoFilled = true;
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Bank details fetched: ${ifscData.bANK ?? ""}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else if (next is IfscError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Invalid IFSC code or service unavailable',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    });
 
     return CustomScaffold(
       appBar: CustomAppBar(
@@ -38,7 +108,7 @@ class AddBankAccountScreen extends ConsumerWidget {
       child: formState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        padding: EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -58,7 +128,7 @@ class AddBankAccountScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            _buildIFSCField(formState, formNotifier, ref),
+            _buildIFSCField(formState, formNotifier, ref, ifscState),
             const SizedBox(height: 20),
 
             _buildBankNameField(formState, formNotifier, ref),
@@ -86,7 +156,7 @@ class AddBankAccountScreen extends ConsumerWidget {
           gradient: LinearGradient(
             colors: [
               AppColors.secondary(ref),
-              AppColors.secondary(ref).withValues(alpha:0.8),
+              AppColors.secondary(ref).withValues(alpha: 0.8),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -98,7 +168,7 @@ class AddBankAccountScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha:0.25),
+                color: Colors.white.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
@@ -121,7 +191,7 @@ class AddBankAccountScreen extends ConsumerWidget {
                   const SizedBox(height: 4),
                   AppText(
                     text: 'Your information is encrypted and secure',
-                    color: Colors.white.withValues(alpha:0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 13,
                   ),
                 ],
@@ -328,8 +398,10 @@ class AddBankAccountScreen extends ConsumerWidget {
       BankAccountFormState formState,
       BankAccountFormNotifier formNotifier,
       WidgetRef ref,
+      IfscState ifscState,
       ) {
     final error = formNotifier.getIfscCodeError();
+    final isLoadingIfsc = ifscState is IfscLoading;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,6 +419,14 @@ class AddBankAccountScreen extends ConsumerWidget {
               color: Colors.red,
               fontSize: 15,
             ),
+            if (isLoadingIfsc) ...[
+              const SizedBox(width: 8),
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 8),
@@ -358,10 +438,22 @@ class AddBankAccountScreen extends ConsumerWidget {
               color: error != null ? Colors.red : AppColors.secondary(ref),
               size: 22,
             ),
+            suffixIcon: formState.ifscCode.length == 11
+                ? Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 22,
+            )
+                : null,
             hintText: 'e.g., SBIN0000123',
             hintStyle: TextStyle(
               color: Colors.grey[400],
               fontSize: 14,
+            ),
+            helperText: 'Bank details will auto-fill after entering valid IFSC',
+            helperStyle: TextStyle(
+              color: Colors.blue[700],
+              fontSize: 11,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -405,7 +497,17 @@ class AddBankAccountScreen extends ConsumerWidget {
             LengthLimitingTextInputFormatter(11),
           ],
           onTap: () => formNotifier.markIfscCodeTouched(),
-          onChanged: formNotifier.updateIfscCode,
+          onChanged: (value) {
+            formNotifier.updateIfscCode(value);
+
+            // Reset auto-fill flag when IFSC changes
+            _hasAutoFilled = false;
+
+            // Auto-fetch bank details when IFSC is 11 characters
+            if (value.length == 11) {
+              ref.read(getIfscProvider.notifier).ifscApi(value);
+            }
+          },
         ),
       ],
     );
@@ -438,6 +540,7 @@ class AddBankAccountScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          key: ValueKey(formState.bankName), // Force rebuild on value change
           initialValue: formState.bankName,
           textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
@@ -521,6 +624,7 @@ class AddBankAccountScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          key: ValueKey(formState.branchName), // Force rebuild on value change
           initialValue: formState.branchName,
           textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
@@ -576,7 +680,6 @@ class AddBankAccountScreen extends ConsumerWidget {
       ],
     );
   }
-
 
   Widget _buildSubmitButton(
       BankAccountFormState formState,

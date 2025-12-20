@@ -62,6 +62,8 @@ class AddPropertyListData {
   dynamic propertyTypeId;
   dynamic pricePerDay;
   dynamic depositAmount;
+  dynamic checkIn;
+  dynamic checkOut;
   List<Rooms>? rooms;
   List<Amenities>? amenities;
   List<String>? rules;
@@ -72,6 +74,7 @@ class AddPropertyListData {
   List<Reviews>? reviews;
   bool? verifyProperty;
   dynamic commision;
+  dynamic payAtProperty;
   dynamic description;
   dynamic availableRooms;
   bool? isAvailable;
@@ -108,6 +111,9 @@ class AddPropertyListData {
     this.rules,
     this.contactNumber,
     this.propertyTypeId,
+    this.payAtProperty,
+    this.checkIn,
+    this.checkOut,
     this.email,
     this.website,
     this.rating,
@@ -138,6 +144,9 @@ class AddPropertyListData {
     address = json['address'];
     city = json['city'];
     state = json['state'];
+    payAtProperty = json['payAtProperty'];
+    checkIn = json['checkIn'];
+    checkOut = json['checkOut'];
     propertyTypeId = json['propertyTypeId'];
     pincode = json['pincode'];
     coordinates = json['coordinates'] != null
@@ -196,6 +205,9 @@ class AddPropertyListData {
     data['residencyId'] = residencyId;
     data['name'] = name;
     data['type'] = type;
+    data['payAtProperty'] = payAtProperty;
+    data['checkIn'] = checkIn;
+    data['checkOut'] = checkOut;
     data['address'] = address;
     data['city'] = city;
     data['propertyTypeId'] = propertyTypeId;

@@ -11,15 +11,19 @@ class OnboardRepository {
   OnboardRepository(this.apiServices, this.apiUrl);
 
   Future<OnboardModel> onboardApi() async {
-    final response = await apiServices.getGetApiResponse(apiUrl.getOnboardPage!);
-    return OnboardModel.fromJson(response);
+    try {
+      final response = await apiServices.getGetApiResponse(
+        apiUrl.getOnboardPage!,
+      );
+      return OnboardModel.fromJson(response);
+    } catch (e) {
+      // Re-throw with more context if needed
+      throw Exception('Failed to fetch onboarding data: $e');
+    }
   }
 }
 
-// In your get_property_repo.dart file, change this:
-final onboardRepoProvider = Provider<OnboardRepository>((
-    ref,
-    ) {
+final onboardRepoProvider = Provider<OnboardRepository>((ref) {
   final api = ref.read(networkApiProvider);
   final apiUrl = ref.read(apiUrlProvider);
   return OnboardRepository(api, apiUrl);

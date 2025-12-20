@@ -37,12 +37,9 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
   final _propertyNightController = TextEditingController();
   final _propertyDayController = TextEditingController();
 
-  // ✅ Rules Controllers
   final _ruleController = TextEditingController();
   List<String> propertyRules = [];
-
   String? selectedPricingType;
-
   List<File> mainImage = [];
   List<File> propertyImages = [];
 
@@ -53,66 +50,42 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
   @override
   void initState() {
     super.initState();
-    // Get this once during init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = ModalRoute.of(context)?.settings.arguments as Map?;
       selectedPropertyType = args?["selectedPropertyTypeId"] ?? 2;
-
       ref
           .read(getAmenitiesPropertyProvider.notifier)
           .getAmenitiesPropertyViewApi();
     });
-
     _oldMrpController.addListener(_calculatePrice);
     _discountCont.addListener(_calculatePrice);
   }
 
-  // VALIDATION FOR STEP
   bool _validateStep(int step) {
-    if (step == 0) {
-      // Price validation
-      if (_oldMrpController.text.isEmpty || _discountCont.text.isEmpty) {
-        _showSnackBar("Please fill MRP and Discount fields");
-        return false;
-      }
-      final args = ModalRoute.of(context)?.settings.arguments as Map?;
-      final selectedPropertyType = args?["selectedPropertyTypeId"];
-
-      if (selectedPropertyType == 1 && _propertyNightController.text.isEmpty) {
-        _showSnackBar("Please fill Price / Night");
-        return false;
-      } else if ((selectedPropertyType == 3 || selectedPropertyType == 4) &&
-          _propertyMonthController.text.isEmpty) {
-        _showSnackBar("Please fill Price / Month and Deposit Amount");
-        return false;
-      }
-    } else if (step == 1) {
-      // Image validation
-      if (mainImage.isEmpty) {
-        _showSnackBar("Please select a main image");
-        return false;
-      }
-      if (propertyImages.isEmpty) {
-        _showSnackBar("Please add at least one property image");
-        return false;
-      }
-      if (_descriptionController.text.isEmpty) {
-        _showSnackBar("Please add a description");
-        return false;
-      }
-    } else if (step == 2) {
-      // Facilities validation (optional but recommended)
+      if (step == 0) {
+        if (mainImage.isEmpty) {
+          _showSnackBar("Please select a main image");
+          return false;
+        }
+        if (propertyImages.isEmpty) {
+          _showSnackBar("Please add at least one property image");
+          return false;
+        }
+        if (_descriptionController.text.isEmpty) {
+          _showSnackBar("Please add a description");
+          return false;
+        }
+      } else if (step == 1) {
       if (selectedAmenities.isEmpty) {
         _showSnackBar("Please select at least one facility");
         return false;
       }
     }
-    // Step 3 (Rules) can be optional
     return true;
   }
 
   void _onStepContinue() {
-    if (_currentStep < 3) { // Changed from 2 to 3 (since you have 4 steps: 0,1,2,3)
+    if (_currentStep < 2) {
       if (_validateStep(_currentStep)) {
         setState(() => _currentStep++);
       }
@@ -124,7 +97,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: AppText(text:message,fontType: FontType.medium),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.red.shade700,
       ),
@@ -137,7 +110,6 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
     }
   }
 
-  // ✅ Add Rule Function
   void _addRule() {
     if (_ruleController.text.trim().isNotEmpty) {
       setState(() {
@@ -166,7 +138,6 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
     }
   }
 
-  // ✅ Remove Rule Function
   void _removeRule(int index) {
     setState(() {
       propertyRules.removeAt(index);
@@ -288,7 +259,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
               return Colors.grey;
             }),
             controlsBuilder: (context, details) {
-              final isLast = _currentStep == 3;
+              final isLast = _currentStep == 2;
               return Padding(
                 padding: const EdgeInsets.only(top: 20),
                 child: Row(
@@ -327,36 +298,11 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
             steps: [
               Step(
                 title: AppText(
-                  text: "Show Price For User*",
-                  fontType: FontType.semiBold,
-                ),
-                isActive: _currentStep >= 0,
-                state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-                content: Column(
-                  children: [
-                    const SizedBox(height: 10),
-                    _field("MRP", _oldMrpController, num: true),
-                    _field("Discount %", _discountCont, num: true),
-                    if (selectedPropertyType == 1)
-                      _field("Price / Night", _propertyNightController, num: true)
-                    else if (selectedPropertyType == 3 || selectedPropertyType == 4) ...[
-                      _field("Price / Month", _propertyMonthController, num: true),
-                      _field("Deposit Amount", _depositCont, num: true),
-                    ] else ...[
-                      _field("Price / Day", _propertyDayController, num: true),
-                      _field("Price / Month", _propertyMonthController, num: true),
-                      _field("Deposit Amount", _depositCont, num: true),
-                    ],
-                  ],
-                ),
-              ),
-              Step(
-                title: AppText(
                   text: "Property Images*",
                   fontType: FontType.semiBold,
                 ),
-                isActive: _currentStep >= 1,
-                state: _currentStep > 1? StepState.complete : StepState.indexed,
+                isActive: _currentStep >= 0,
+                state: _currentStep > 0? StepState.complete : StepState.indexed,
                 content: Column(
                   children: [
                     const SizedBox(height: 10),
@@ -370,8 +316,8 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
                   text: "Website & Facilities*",
                   fontType: FontType.semiBold,
                 ),
-                isActive: _currentStep >= 2,
-                state: _currentStep > 2 ? StepState.complete : StepState.indexed,
+                isActive: _currentStep >= 1,
+                state: _currentStep > 1 ? StepState.complete : StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -539,7 +485,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
                   text: "Property Rules",
                   fontType: FontType.semiBold,
                 ),
-                isActive: _currentStep >= 3,
+                isActive: _currentStep >= 2,
                 state: StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

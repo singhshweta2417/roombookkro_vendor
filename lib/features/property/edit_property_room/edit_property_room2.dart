@@ -41,7 +41,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
   final _propertyNightController = TextEditingController();
   final _propertyDayController = TextEditingController();
 
-  // ✅ Rules Controllers
+  // Rules Controllers
   final _ruleController = TextEditingController();
   List<String> propertyRules = [];
 
@@ -89,7 +89,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     _propertyNightController.text = existingPropertyData?.pricePerNight?.toString() ?? '';
     _propertyDayController.text = existingPropertyData?.pricePerDay?.toString() ?? '';
 
-    // ✅ Initialize rules
+    // Initialize rules
     if (existingPropertyData?.rules != null && existingPropertyData!.rules!.isNotEmpty) {
       propertyRules = existingPropertyData!.rules!.map((rule) => rule.toString()).toList();
     }
@@ -101,18 +101,43 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     });
   }
 
+  // VALIDATION FOR STEP
   bool _validateStep(int step) {
     if (step == 0) {
+      // Price validation
+      if (_oldMrpController.text.isEmpty || _discountCont.text.isEmpty) {
+        _showSnackBar("Please fill MRP and Discount fields");
+        return false;
+      }
+      final selectedPropertyTypeId = arguments?["selectedPropertyTypeId"];
+
+      if (selectedPropertyTypeId == 1 && _propertyNightController.text.isEmpty) {
+        _showSnackBar("Please fill Price / Night");
+        return false;
+      } else if ((selectedPropertyTypeId == 3 || selectedPropertyTypeId == 4) &&
+          _propertyMonthController.text.isEmpty) {
+        _showSnackBar("Please fill Price / Month and Deposit Amount");
+        return false;
+      }
+    } else if (step == 1) {
+      // Image and description validation
       if (_descriptionController.text.isEmpty) {
-        _showSnackBar("Please fill all required fields");
+        _showSnackBar("Please add a description");
+        return false;
+      }
+    } else if (step == 2) {
+      // Facilities validation (optional but recommended)
+      if (selectedAmenities.isEmpty) {
+        _showSnackBar("Please select at least one facility");
         return false;
       }
     }
+    // Step 3 (Rules) can be optional
     return true;
   }
 
   void _onStepContinue() {
-    if (_currentStep < 2) {
+    if (_currentStep < 3) {
       if (_validateStep(_currentStep)) {
         setState(() => _currentStep++);
       }
@@ -268,12 +293,12 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     final selectedPropertyTypeId = arguments!["selectedPropertyTypeId"];
     final amenitiesState = ref.watch(getAmenitiesPropertyProvider);
 
-    // ✅ Initialize form when amenities load
+    // Initialize form when amenities load
     if (amenitiesState is GetAmenitiesPropertySuccess && !_isFormInitialized) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _initializeFormWithData();
 
-        // ✅ Pre-select amenities
+        // Pre-select amenities
         if (existingPropertyData?.amenities != null) {
           for (var amenity in existingPropertyData!.amenities!) {
             final amenityId = amenity.sId ?? '';
@@ -290,7 +315,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     return CustomScaffold(
       appBar: CustomAppBar(
         middle: AppText(
-          text: "Edit Property - Step 2",
+          text: "Edit Property",
           fontType: FontType.bold,
           fontSize: AppConstants.twentyTwo,
           color: Colors.black,
@@ -311,7 +336,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
               return Colors.grey;
             }),
             controlsBuilder: (context, details) {
-              final isLast = _currentStep == 2;
+              final isLast = _currentStep == 3;
               return Padding(
                 padding: const EdgeInsets.only(top: 20),
                 child: Row(
@@ -350,7 +375,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
             steps: [
               Step(
                 title: AppText(
-                  text: "Property Details*",
+                  text: "Show Price For User*",
                   fontType: FontType.semiBold,
                 ),
                 isActive: _currentStep >= 0,
@@ -358,7 +383,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                 content: Column(
                   children: [
                     const SizedBox(height: 10),
-                    _field("Old MRP", _oldMrpController, num: true),
+                    _field("MRP", _oldMrpController, num: true),
                     _field("Discount %", _discountCont, num: true),
                     if (selectedPropertyTypeId == 1)
                       _field("Price / Night", _propertyNightController, num: true)
@@ -370,6 +395,19 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                       _field("Price / Month", _propertyMonthController, num: true),
                       _field("Deposit Amount", _depositCont, num: true),
                     ],
+                  ],
+                ),
+              ),
+              Step(
+                title: AppText(
+                  text: "Property Images*",
+                  fontType: FontType.semiBold,
+                ),
+                isActive: _currentStep >= 1,
+                state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+                content: Column(
+                  children: [
+                    const SizedBox(height: 10),
                     _imageSection(),
                     _field("Description", _descriptionController, multi: true),
                   ],
@@ -380,8 +418,8 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                   text: "Website & Facilities*",
                   fontType: FontType.semiBold,
                 ),
-                isActive: _currentStep >= 1,
-                state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+                isActive: _currentStep >= 2,
+                state: _currentStep > 2 ? StepState.complete : StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -424,7 +462,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                               checkmarkColor: Colors.white,
                               avatar: amenity.icon != null && amenity.icon!.isNotEmpty
                                   ? CircleAvatar(
-                                backgroundColor: isSelected ? Colors.white : Colors.grey.shade300,
+                                backgroundColor: AppColors.secondary(ref),
                                 child: CachedNetworkImage(
                                   imageUrl: amenity.icon.toString(),
                                   height: 24,
@@ -541,7 +579,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                   text: "Property Rules",
                   fontType: FontType.semiBold,
                 ),
-                isActive: _currentStep >= 2,
+                isActive: _currentStep >= 3,
                 state: StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -565,6 +603,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                           child: TextField(
                             controller: _ruleController,
                             textInputAction: TextInputAction.done,
+                            textCapitalization: TextCapitalization.words,
                             decoration: InputDecoration(
                               labelText: "Enter a rule",
                               hintText: "e.g., No smoking allowed",
@@ -764,6 +803,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
       ),
     );
   }
+
 
   Widget _infoRow(String label, String value) {
     return Padding(

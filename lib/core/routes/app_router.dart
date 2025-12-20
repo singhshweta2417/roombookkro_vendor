@@ -3,6 +3,7 @@ import 'package:room_book_kro_vendor/features/home/bank/add_bank_screen.dart';
 import 'package:room_book_kro_vendor/features/home/bank/bank_list_screen.dart';
 import 'package:room_book_kro_vendor/features/home/bank/edit_bank_screen.dart';
 import 'package:room_book_kro_vendor/features/home/wallet_screen/ticket_screen.dart';
+import 'package:room_book_kro_vendor/features/home/wallet_screen/withdraw_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/otp_view.dart';
 import '../../features/auth/register_screen.dart';
@@ -81,6 +82,10 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       );
     case AppRoutes.editBankAccountScreen:return MaterialPageRoute(
         builder: (_) => EditBankAccountScreen(),
+        settings: settings,
+      );
+    case AppRoutes.withdrawScreen:return MaterialPageRoute(
+        builder: (_) => WithdrawScreen(),
         settings: settings,
       );
     case AppRoutes.addPropertyRoom2:return MaterialPageRoute(

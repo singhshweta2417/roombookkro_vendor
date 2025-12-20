@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:room_book_kro_vendor/core/utils/context_extensions.dart';
 import 'package:room_book_kro_vendor/core/widgets/custom_app_bar.dart';
 import 'package:room_book_kro_vendor/core/widgets/custom_scaffold.dart';
 import 'package:room_book_kro_vendor/core/widgets/custom_text_field.dart';
@@ -10,8 +12,8 @@ import 'package:room_book_kro_vendor/core/widgets/primary_button.dart';
 import 'package:room_book_kro_vendor/features/property/view_model/add_property_view_model.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/context_extensions.dart';
 import '../../../core/widgets/app_text.dart';
+import '../../../generated/assets.dart';
 import 'package:room_book_kro_vendor/features/property/property_model.dart';
 import '../view_model/room_type_view_model.dart';
 import 'edit_room_bottom_sheet.dart';
@@ -32,11 +34,15 @@ class _FinalEditScreenPropertyState
   final TextEditingController roleController = TextEditingController();
   final TextEditingController userEmailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final TextEditingController checkInController = TextEditingController();
+  final TextEditingController checkOutController = TextEditingController();
 
   bool _isInitialized = false;
+  bool payAtProperty = false;
+  bool isAvailable = false;
 
   // ✅ Add these variables for existing images
-  List<Map<String, dynamic>> _existingRoomImages = []; // Store existing room images
+  List<Map<String, dynamic>> _existingRoomImages = [];
   String? _existingMainImage;
   List<String> _existingPropertyImages = [];
 
@@ -59,13 +65,14 @@ class _FinalEditScreenPropertyState
     final existingData = args["existingPropertyData"] as AddPropertyListData?;
 
     if (existingData != null) {
-      // Populate contact information
       userNameController.text = existingData.owner ?? '';
       roleController.text = existingData.role ?? '';
       userEmailController.text = existingData.email ?? '';
       phoneController.text = existingData.contactNumber ?? '';
-
-      // ✅ Store existing images
+      checkInController.text = existingData.checkIn ?? '';
+      checkOutController.text = existingData.checkOut ?? '';
+      payAtProperty = existingData.payAtProperty ?? false;
+      isAvailable = existingData.isAvailable ?? false;
       _existingMainImage = existingData.mainImage;
       _existingPropertyImages = existingData.images?.cast<String>() ?? [];
 
@@ -88,8 +95,8 @@ class _FinalEditScreenPropertyState
             price: room.price?.toString() ?? '0',
             availableUnits: room.availableUnits?.toString() ?? '0',
             amenitiesIds:
-            room.amenities?.map((a) => a.sId ?? '').toList() ?? [],
-            roomImages: [], // This is for NEW images only
+                room.amenities?.map((a) => a.sId ?? '').toList() ?? [],
+            roomImages: [],
             roomPricePerDay: room.roomPricePerDay?.toString() ?? '0',
             isAvailable: true,
           );
@@ -120,12 +127,95 @@ class _FinalEditScreenPropertyState
     return total.toString();
   }
 
+  Future<void> _selectTime(
+    BuildContext context,
+    TextEditingController controller,
+  ) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      initialEntryMode: TimePickerEntryMode.dial,
+      helpText: 'Select Time',
+      cancelText: 'Cancel',
+      confirmText: 'Confirm',
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: Theme(
+            data: ThemeData.light().copyWith(
+              colorScheme: ColorScheme.light(
+                primary: AppColors.secondary(ref),
+                onPrimary: Colors.white,
+                surface: Colors.white,
+                onSurface: Colors.black,
+                secondary: AppColors.secondary(ref),
+                onSecondary: Colors.white,
+              ),
+              timePickerTheme: TimePickerThemeData(
+                backgroundColor: Colors.white,
+                hourMinuteShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: AppColors.secondary(ref).withValues(alpha: 0.2),
+                  ),
+                ),
+                dayPeriodShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                dayPeriodColor: AppColors.secondary(ref).withValues(alpha: 0.5),
+                dayPeriodTextColor: AppColors.text(ref),
+                dialHandColor: AppColors.secondary(ref),
+                dialBackgroundColor: AppColors.secondary(
+                  ref,
+                ).withValues(alpha: 0.1),
+                dialTextColor: Colors.black87,
+                entryModeIconColor: AppColors.secondary(ref),
+                helpTextStyle: TextStyle(
+                  fontSize: context.sh * 0.025,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  fontFamily: Assets.fontsNotoSansRegular,
+                ),
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  textStyle: TextStyle(
+                    fontSize: context.sh * 0.015,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: Assets.fontsNotoSansRegular,
+                  ),
+                ),
+              ),
+            ),
+            child: child!,
+          ),
+        );
+      },
+    );
+
+    if (picked != null) {
+      final now = DateTime.now();
+      final dateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        picked.hour,
+        picked.minute,
+      );
+
+      final formattedTime = DateFormat('hh:mm a').format(dateTime);
+      controller.text = formattedTime;
+    }
+  }
+
   @override
   void dispose() {
     userNameController.dispose();
     roleController.dispose();
     userEmailController.dispose();
     phoneController.dispose();
+    checkInController.dispose();
+    checkOutController.dispose();
     super.dispose();
   }
 
@@ -188,8 +278,6 @@ class _FinalEditScreenPropertyState
         subTypeList[propertyTypeId]!.add(label);
       }
     }
-
-    final bool isAvailable = args["availability"] ?? true;
     final List<File> mainImage =
         (args["mainImage"] as List?)?.cast<File>() ?? [];
     final List<File> propertyImages =
@@ -216,447 +304,633 @@ class _FinalEditScreenPropertyState
             ? const Center(child: CircularProgressIndicator())
             : roomTypeState is GetRoomTypeError
             ? Center(
-          child: AppText(
-            text: roomTypeState.error,
-            fontType: FontType.regular,
-            color: Colors.red,
-          ),
-        )
+                child: AppText(
+                  text: roomTypeState.error,
+                  fontType: FontType.regular,
+                  color: Colors.red,
+                ),
+              )
             : ListView(
-          padding: EdgeInsets.symmetric(vertical: context.sh*0.02),
-          children: [
-            // ✅ Property Info Card with Images
-            _buildPropertyImageSection(args),
-
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.secondary(ref).withValues(alpha: 0.1),
-                    AppColors.secondary(ref).withValues(alpha: 0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: AppColors.secondary(ref).withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.secondary(ref).withValues(alpha: 0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                padding: EdgeInsets.symmetric(vertical: context.sh * 0.02),
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary(ref),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.apartment,
-                          color: Colors.white,
-                          size: 28,
-                        ),
+                  // ✅ Property Info Card with Images
+                  _buildPropertyImageSection(args),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.secondary(ref).withValues(alpha: 0.1),
+                          AppColors.secondary(ref).withValues(alpha: 0.05),
+                        ],
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.secondary(ref).withValues(alpha: 0.3),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.secondary(
+                            ref,
+                          ).withValues(alpha: 0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            AppText(
-                              text: propertyTitle ?? "Property",
-                              fontType: FontType.bold,
-                              fontSize: 20,
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.secondary(ref),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.apartment,
+                                color: Colors.white,
+                                size: 28,
+                              ),
                             ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on,
-                                  size: 16,
-                                  color: Colors.grey.shade600,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: AppText(
-                                    text: "$city, $state • $pincode",
-                                    fontType: FontType.regular,
-                                    fontSize: 14,
-                                    color: Colors.grey.shade600,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AppText(
+                                    text: propertyTitle ?? "Property",
+                                    fontType: FontType.bold,
+                                    fontSize: 20,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.location_on,
+                                        size: 16,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: AppText(
+                                          text: "$city, $state • $pincode",
+                                          fontType: FontType.regular,
+                                          fontSize: 14,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildStatItem(
-                          icon: Icons.hotel_outlined,
-                          label: "Total Rooms",
-                          value: "${roomsList.length}",
-                          color: Colors.green,
-                        ),
+                        const SizedBox(height: 16),
                         Container(
-                          height: 40,
-                          width: 1,
-                          color: Colors.grey.shade300,
-                        ),
-                        _buildStatItem(
-                          icon: Icons.checklist_rounded,
-                          label: "Available Units",
-                          value: _getTotalAvailableUnits(),
-                          color: Colors.blue,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildStatItem(
+                                icon: Icons.hotel_outlined,
+                                label: "Total Rooms",
+                                value: "${roomsList.length}",
+                                color: Colors.green,
+                              ),
+                              Container(
+                                height: 40,
+                                width: 1,
+                                color: Colors.grey.shade300,
+                              ),
+                              _buildStatItem(
+                                icon: Icons.checklist_rounded,
+                                label: "Available Units",
+                                value: _getTotalAvailableUnits(),
+                                color: Colors.blue,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-            // Contact Information Section
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+                  // Contact Information Section
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              color: AppColors.secondary(ref),
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            const AppText(
+                              text: "Contact Information",
+                              fontType: FontType.bold,
+                              fontSize: 18,
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            AppText(
+                              text: "Property Availability",
+                              fontType: FontType.bold,
+                              fontSize: context.sh*0.017,
+                            ),
+                            Switch(
+                              value: isAvailable,
+                              activeThumbColor: AppColors.secondary(ref),
+                              activeTrackColor: AppColors.secondary(
+                                ref,
+                              ).withValues(alpha   : 0.4),
+                              inactiveTrackColor: AppColors.secondary(
+                                ref,
+                              ).withValues(alpha: 0.4),
+                              inactiveThumbColor: Colors.grey.withValues(
+                                alpha: 0.5,
+                              ),
+                              onChanged: (value) {
+                                setState(() {
+                                  isAvailable = value;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        CustomTextField(
+                          textCapitalization: TextCapitalization.words,
+                          controller: userNameController,
+                          hintText: "Enter your full name",
+                          labelText: "Name",
+                          suffixIcon: const Icon(Icons.person),
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          controller: roleController,
+                          textCapitalization: TextCapitalization.words,
+                          maxLines: 1,
+                          hintText: "Enter your role (e.g., Owner, Manager)",
+                          labelText: "Role",
+                          suffixIcon: const Icon(Icons.work_outline),
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          controller: userEmailController,
+                          hintText: "Enter your email address",
+                          labelText: "Email",
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          controller: phoneController,
+                          hintText: "Enter your phone number",
+                          maxLength: 10,
+                          labelText: "Phone Number",
+                          prefixIcon: const Icon(Icons.phone_outlined),
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Check-in and Check-out Times
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              color: AppColors.secondary(ref),
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            const AppText(
+                              text: "Property Timing",
+                              fontType: FontType.bold,
+                              fontSize: 18,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () =>
+                                    _selectTime(context, checkInController),
+                                child: AbsorbPointer(
+                                  child: CustomTextField(
+                                    maxLines: 1,
+                                    controller: checkInController,
+                                    hintText: "Select time",
+                                    labelText: "Check-in Time",
+                                    suffixIcon: Icon(
+                                      Icons.access_time,
+                                      color: AppColors.secondary(ref),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () =>
+                                    _selectTime(context, checkOutController),
+                                child: AbsorbPointer(
+                                  child: CustomTextField(
+                                    maxLines: 1,
+                                    controller: checkOutController,
+                                    hintText: "Select time",
+                                    labelText: "Check-out Time",
+                                    suffixIcon: Icon(
+                                      Icons.access_time,
+                                      color: AppColors.secondary(ref),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Pay at Property Toggle
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondary(
+                              ref,
+                            ).withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.secondary(
+                                ref,
+                              ).withValues(alpha: 0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: payAtProperty
+                                      ? AppColors.secondary(
+                                          ref,
+                                        ).withValues(alpha: 0.15)
+                                      : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  Icons.payment,
+                                  color: payAtProperty
+                                      ? AppColors.secondary(ref)
+                                      : Colors.grey.shade600,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const AppText(
+                                      text: "Pay at Property",
+                                      fontType: FontType.bold,
+                                      fontSize: 16,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    AppText(
+                                      text:
+                                          "Allow customers to pay at property",
+                                      fontType: FontType.regular,
+                                      fontSize: 13,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: payAtProperty,
+                                activeThumbColor: AppColors.secondary(ref),
+                                activeTrackColor: AppColors.secondary(
+                                  ref,
+                                ).withValues(alpha: 0.4),
+                                inactiveTrackColor: AppColors.secondary(
+                                  ref,
+                                ).withValues(alpha: 0.4),
+                                inactiveThumbColor: Colors.grey.withValues(
+                                  alpha: 0.5,
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    payAtProperty = value;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                  const SizedBox(height: 24),
+
+                  // Rooms Section
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(
-                        Icons.person_outline,
-                        color: AppColors.secondary(ref),
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
                       const AppText(
-                        text: "Contact Information",
+                        text: "Your Rooms",
                         fontType: FontType.bold,
-                        fontSize: 18,
+                        fontSize: 20,
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary(
+                            ref,
+                          ).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: AppText(
+                          text: "${roomsList.length} rooms",
+                          fontType: FontType.semiBold,
+                          fontSize: 14,
+                          color: AppColors.secondary(ref),
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  CustomTextField(
-                    controller: userNameController,
-                    hintText: "Enter your full name",
-                    labelText: "Name",
-                    suffixIcon: const Icon(Icons.person),
-                  ),
                   const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: roleController,
-                    hintText: "Enter your role (e.g., Owner, Manager)",
-                    labelText: "Role",
-                    suffixIcon: const Icon(Icons.work_outline),
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: userEmailController,
-                    hintText: "Enter your email address",
-                    labelText: "Email",
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: phoneController,
-                    hintText: "Enter your phone number",
-                    labelText: "Phone Number",
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                    keyboardType: TextInputType.phone,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
 
-            // Rooms Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const AppText(
-                  text: "Your Rooms",
-                  fontType: FontType.bold,
-                  fontSize: 20,
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary(ref).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: AppText(
-                    text: "${roomsList.length} rooms",
-                    fontType: FontType.semiBold,
-                    fontSize: 14,
-                    color: AppColors.secondary(ref),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                  // Rooms List or Empty State
+                  roomsList.isEmpty
+                      ? Container(
+                          padding: const EdgeInsets.all(40),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.meeting_room_outlined,
+                                size: 64,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              AppText(
+                                text: "No rooms added yet",
+                                fontType: FontType.bold,
+                                fontSize: 18,
+                                color: Colors.grey.shade700,
+                              ),
+                              const SizedBox(height: 8),
+                              AppText(
+                                text:
+                                    "Tap the button below to add your first room",
+                                fontType: FontType.regular,
+                                fontSize: 14,
+                                color: Colors.grey.shade500,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        )
+                      : Column(
+                          children: roomsList.asMap().entries.map((entry) {
+                            final idx = entry.key;
+                            final r = entry.value;
+                            return _buildEnhancedRoomCard(
+                              idx,
+                              r,
+                              selectedPropertyType,
+                            );
+                          }).toList(),
+                        ),
+                  const SizedBox(height: 24),
 
-            // Rooms List or Empty State
-            roomsList.isEmpty
-                ? Container(
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.grey.shade300,
-                  width: 2,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.meeting_room_outlined,
-                    size: 64,
-                    color: Colors.grey.shade400,
-                  ),
-                  const SizedBox(height: 16),
-                  AppText(
-                    text: "No rooms added yet",
-                    fontType: FontType.bold,
-                    fontSize: 18,
-                    color: Colors.grey.shade700,
-                  ),
-                  const SizedBox(height: 8),
-                  AppText(
-                    text:
-                    "Tap the button below to add your first room",
-                    fontType: FontType.regular,
-                    fontSize: 14,
-                    color: Colors.grey.shade500,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            )
-                : Column(
-              children: roomsList.asMap().entries.map((entry) {
-                final idx = entry.key;
-                final r = entry.value;
-                return _buildEnhancedRoomCard(
-                  idx,
-                  r,
-                  selectedPropertyType,
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
-
-            // Add New Room Button
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.secondary(ref).withValues(alpha: 0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: PrimaryButton(
-                label: "+ Add New Room",
-                onTap: subTypeList.isEmpty
-                    ? null
-                    : () async {
-                  final newRoom =
-                  await showModalBottomSheet<RoomData>(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(24),
+                  // Add New Room Button
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.secondary(
+                            ref,
+                          ).withValues(alpha: 0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.only(
-                          bottom: MediaQuery.of(context).viewInsets.bottom,
-                        ),
-                        child: EditRoomBottomSheet(
-                          propertyType: selectedPropertyType,
-                          subTypeList: subTypeList,
-                        ),
-                      ),
+                      ],
                     ),
-                  );
+                    child: PrimaryButton(
+                      label: "+ Add New Room",
+                      onTap: subTypeList.isEmpty
+                          ? null
+                          : () async {
+                              final newRoom =
+                                  await showModalBottomSheet<RoomData>(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(24),
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: EdgeInsets.only(
+                                          bottom: MediaQuery.of(
+                                            context,
+                                          ).viewInsets.bottom,
+                                        ),
+                                        child: EditRoomBottomSheet(
+                                          propertyType: selectedPropertyType,
+                                          subTypeList: subTypeList,
+                                        ),
+                                      ),
+                                    ),
+                                  );
 
-                  if (newRoom != null) {
-                    setState(() => roomsList.add(newRoom));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: const [
-                            Icon(
-                              Icons.check_circle,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 12),
-                            AppText(
-                              text: "Room added successfully!",
-                              fontType: FontType.semiBold,
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                        backgroundColor: Colors.green,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Submit Button
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.secondary(ref),
-                    AppColors.secondary(ref).withValues(alpha: 0.8),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.secondary(ref).withValues(alpha: 0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+                              if (newRoom != null) {
+                                setState(() => roomsList.add(newRoom));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: const [
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.white,
+                                        ),
+                                        SizedBox(width: 12),
+                                        AppText(
+                                          text: "Room added successfully!",
+                                          fontType: FontType.semiBold,
+                                          color: Colors.white,
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                    ),
                   ),
+                  const SizedBox(height: 16),
+
+                  // Submit Button
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.secondary(ref),
+                          AppColors.secondary(ref).withValues(alpha: 0.8),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.secondary(
+                            ref,
+                          ).withValues(alpha: 0.4),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: PrimaryButton(
+                      label: "Update Property",
+                      isLoading: ref.watch(addPropertyProvider).isLoading,
+                      onTap: () {
+                        if (roomsList.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: const [
+                                  Icon(
+                                    Icons.warning_amber,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 12),
+                                  AppText(
+                                    text: "Please add at least one room",
+                                    fontType: FontType.semiBold,
+                                    color: Colors.white,
+                                  ),
+                                ],
+                              ),
+                              backgroundColor: Colors.orange,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+
+                        ref
+                            .read(addPropertyProvider.notifier)
+                            .updatePropertyApi(
+                              residenceId: propertyId.toString(),
+                              userName: userNameController.text.toString(),
+                              role: roleController.text.toString(),
+                              userEmail: userEmailController.text.toString(),
+                              phone: phoneController.text.toString(),
+                              checkIn: checkInController.text.toString(),
+                              checkOut: checkOutController.text.toString(),
+                              payAtProperty: payAtProperty,
+                              rules: propertyRules,
+                              name: propertyTitle ?? "",
+                              propertyType: selectedPropertyType.toString(),
+                              landmark: flatNo.toString(),
+                              additionalAddress: additionalAddress,
+                              address: address ?? "",
+                              city: city ?? "",
+                              state: state ?? "",
+                              pincode: pincode?.toString() ?? "",
+                              coordinates:
+                                  coordinates ?? {"lat": 0.0, "lng": 0.0},
+                              mainImage: mainImage,
+                              propertyImages: propertyImages,
+                              pricePerMonth:
+                                  propertyMonthPrice?.toString() ?? "",
+                              depositAmount: depositAmount?.toString() ?? "0",
+                              amenitiesMain: mainAmenitiesList,
+                              website: website?.toString() ?? "",
+                              pricePerDay: propertyDayPrice?.toString() ?? "",
+                              availableRooms: _getTotalAvailableUnits(),
+                              description: description?.toString() ?? "",
+                              oldMrp: oldMrp?.toString() ?? "",
+                              tax: tax?.toString() ?? "",
+                              isAvailable: isAvailable,
+                              pricePerNight:
+                                  propertyNightPrice?.toString() ?? "",
+                              discount: discount?.toString() ?? "",
+                              rooms: roomsList,
+                              context: context,
+                            );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 40),
                 ],
               ),
-              child: PrimaryButton(
-                label: "Update Property",
-                isLoading: ref.watch(addPropertyProvider).isLoading,
-                onTap: () {
-                  if (roomsList.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: const [
-                            Icon(
-                              Icons.warning_amber,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 12),
-                            AppText(
-                              text: "Please add at least one room",
-                              fontType: FontType.semiBold,
-                              color: Colors.white,
-                            ),
-                          ],
-                        ),
-                        backgroundColor: Colors.orange,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    );
-                    return;
-                  }
-
-                  // TODO: Call update API with propertyId
-                  ref
-                      .read(addPropertyProvider.notifier)
-                      .updatePropertyApi(
-                    residenceId:propertyId.toString(),
-                    userName: userNameController.text.toString(),
-                    role: roleController.text.toString(),
-                    userEmail: userEmailController.text.toString(),
-                    phone: phoneController.text.toString(),
-                    rules: propertyRules,
-                    name: propertyTitle ?? "",
-                    propertyType: selectedPropertyType.toString(),
-                    landmark: flatNo.toString(),
-                    additionalAddress: additionalAddress,
-                    address: address ?? "",
-                    city: city ?? "",
-                    state: state ?? "",
-                    pincode: pincode?.toString() ?? "",
-                    coordinates:
-                    coordinates ?? {"lat": 0.0, "lng": 0.0},
-                    mainImage: mainImage,
-                    propertyImages: propertyImages,
-                    pricePerMonth:
-                    propertyMonthPrice?.toString() ?? "",
-                    depositAmount: depositAmount?.toString() ?? "0",
-                    amenitiesMain: mainAmenitiesList,
-                    website: website?.toString() ?? "",
-                    pricePerDay: propertyDayPrice?.toString() ?? "",
-                    availableRooms: _getTotalAvailableUnits(),
-                    description: description?.toString() ?? "",
-                    oldMrp: oldMrp?.toString() ?? "",
-                    tax: tax?.toString() ?? "",
-                    isAvailable: isAvailable,
-                    pricePerNight:
-                    propertyNightPrice?.toString() ?? "",
-                    discount: discount?.toString() ?? "",
-                    rooms: roomsList,
-                    context: context,
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 40),
-          ],
-        ),
       ),
     );
   }
 
   // ✅ New method to show property images
   Widget _buildPropertyImageSection(Map args) {
-    final hasNewMainImage = args["mainImage"] is List && (args["mainImage"] as List).isNotEmpty;
-    final hasNewPropertyImages = args["propertyImages"] is List && (args["propertyImages"] as List).isNotEmpty;
+    final hasNewMainImage =
+        args["mainImage"] is List && (args["mainImage"] as List).isNotEmpty;
+    final hasNewPropertyImages =
+        args["propertyImages"] is List &&
+        (args["propertyImages"] as List).isNotEmpty;
 
     return Column(
       children: [
@@ -679,44 +953,40 @@ class _FinalEditScreenPropertyState
               borderRadius: BorderRadius.circular(16),
               child: hasNewMainImage
                   ? Image.file(
-                (args["mainImage"] as List<File>).first,
-                fit: BoxFit.cover,
-                width: double.infinity,
-              )
+                      (args["mainImage"] as List<File>).first,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    )
                   : _existingMainImage != null
                   ? CachedNetworkImage(
-                imageUrl: _existingMainImage!,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey.shade200,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.secondary(ref),
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey.shade200,
-                  child: const Center(
-                    child: Icon(
-                      Icons.image_not_supported,
-                      color: Colors.grey,
-                      size: 50,
-                    ),
-                  ),
-                ),
-              )
+                      imageUrl: _existingMainImage!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey.shade200,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.secondary(ref),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                            size: 50,
+                          ),
+                        ),
+                      ),
+                    )
                   : Container(
-                color: Colors.grey.shade200,
-                child: const Center(
-                  child: Icon(
-                    Icons.image,
-                    color: Colors.grey,
-                    size: 50,
-                  ),
-                ),
-              ),
+                      color: Colors.grey.shade200,
+                      child: const Center(
+                        child: Icon(Icons.image, color: Colors.grey, size: 50),
+                      ),
+                    ),
             ),
           ),
 
@@ -735,7 +1005,7 @@ class _FinalEditScreenPropertyState
                     fontSize: 16,
                   ),
                 ),
-                Container(
+                SizedBox(
                   height: 100,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
@@ -854,47 +1124,47 @@ class _FinalEditScreenPropertyState
                     ),
                     child: hasNewImages
                         ? Image.file(
-                      r.roomImages.first,
-                      width: double.infinity,
-                      height: 180,
-                      fit: BoxFit.cover,
-                    )
+                            r.roomImages.first,
+                            width: double.infinity,
+                            height: 180,
+                            fit: BoxFit.cover,
+                          )
                         : hasExistingImages
                         ? CachedNetworkImage(
-                      imageUrl: existingImages.first,
-                      width: double.infinity,
-                      height: 180,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 180,
-                        color: Colors.grey.shade200,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.secondary(ref),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        height: 180,
-                        color: Colors.grey.shade200,
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey,
-                          size: 50,
-                        ),
-                      ),
-                    )
+                            imageUrl: existingImages.first,
+                            width: double.infinity,
+                            height: 180,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              height: 180,
+                              color: Colors.grey.shade200,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.secondary(ref),
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              height: 180,
+                              color: Colors.grey.shade200,
+                              child: const Icon(
+                                Icons.image_not_supported,
+                                color: Colors.grey,
+                                size: 50,
+                              ),
+                            ),
+                          )
                         : Container(
-                      height: 180,
-                      color: Colors.grey.shade200,
-                      child: const Center(
-                        child: Icon(
-                          Icons.image,
-                          color: Colors.grey,
-                          size: 50,
-                        ),
-                      ),
-                    ),
+                            height: 180,
+                            color: Colors.grey.shade200,
+                            child: const Center(
+                              child: Icon(
+                                Icons.image,
+                                color: Colors.grey,
+                                size: 50,
+                              ),
+                            ),
+                          ),
                   ),
                   Positioned(
                     top: 12,
@@ -993,13 +1263,15 @@ class _FinalEditScreenPropertyState
                           _buildActionButton(
                             icon: Icons.edit_outlined,
                             color: Colors.blue,
-                            onTap: () => _editRoom(idx, selectedPropertyType, {}),
+                            onTap: () =>
+                                _editRoom(idx, selectedPropertyType, {}),
                           ),
                           const SizedBox(width: 8),
                           _buildActionButton(
                             icon: Icons.delete_outline,
                             color: Colors.red,
-                            onTap: () => setState(() => roomsList.removeAt(idx)),
+                            onTap: () =>
+                                setState(() => roomsList.removeAt(idx)),
                           ),
                         ],
                       ),
@@ -1105,10 +1377,10 @@ class _FinalEditScreenPropertyState
   }
 
   Future<void> _editRoom(
-      int index,
-      selectedPropertyType,
-      Map<int, List<String>> subTypeList,
-      ) async {
+    int index,
+    selectedPropertyType,
+    Map<int, List<String>> subTypeList,
+  ) async {
     final existing = roomsList[index];
     final editedRoom = await showModalBottomSheet<RoomData>(
       context: context,

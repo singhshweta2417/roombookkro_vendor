@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:room_book_kro_vendor/features/property/property_room/add_room_bottom_sheet.dart';
 import '../../../core/utils/utils.dart';
 import '../../auth/data/user_view.dart';
 import '../../bottom/bottom_screen.dart';
@@ -55,7 +56,8 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
     required String discount,
     required List<RoomData> rooms,
     required BuildContext context,
-  }) async {
+  }) async
+  {
     try {
       super.state = const AddPropertyLoading();
       final userPref = ref.read(userViewModelProvider);
@@ -205,6 +207,7 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
     required Map<String, dynamic> coordinates,
     required List<File> mainImage,
     required List<File> propertyImages,
+    required bool payAtProperty,
     required String pricePerMonth,
     required String depositAmount,
     required List<String> amenitiesMain,
@@ -217,6 +220,8 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
     required String description,
     required String oldMrp,
     required String tax,
+    required String checkIn,
+    required String checkOut,
     required bool isAvailable,
     required String pricePerNight,
     required String discount,
@@ -233,12 +238,15 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
         "userType": "1",
         "name": name,
         "type": propertyType,
+        "payAtProperty": payAtProperty,
         "address": address,
         "additionalAddress": additionalAddress,
         "landmark": landmark,
         "city": city,
         "state": state,
         "pincode": pincode,
+        "checkIn": checkIn,
+        "checkOut": checkOut,
         "pricePerMonth": pricePerMonth,
         "depositAmount": depositAmount,
         "contactNumber": phone ?? '',
@@ -371,6 +379,7 @@ class RoomData {
   final List<String> amenitiesIds;
   final List<File> roomImages;
   final List<String>? existingImages;
+  final Map<String, PricingData> pricingDetails;
 
   RoomData({
     required this.roomType,
@@ -384,9 +393,12 @@ class RoomData {
     required this.amenitiesIds,
     required this.roomImages,
     this.existingImages,
+    this.pricingDetails = const {},
   });
 
   Map<String, dynamic> toJson() {
+    print(pricingDetails);
+    print("sdbfcsjdbjhsdb");
     return {
       "roomType": roomType,
       "furnished": furnished,

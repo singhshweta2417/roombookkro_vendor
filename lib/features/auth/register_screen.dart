@@ -298,7 +298,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                     if (_currentStep > 0)
                       OutlinedButton(
                         onPressed: details.onStepCancel,
-                        child: const Text('Back'),
+                        child: AppText(text: 'Back',fontType: FontType.bold,),
                       ),
                   ],
                 ),
@@ -314,6 +314,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                   children: [
                     CustomTextField(
                       keyboardType: TextInputType.name,
+                      textCapitalization: TextCapitalization.words,
                       fieldType: FieldType.name,
                       controller: nameCont,
                       hintText: "Enter Owner's Name",

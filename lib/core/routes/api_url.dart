@@ -23,8 +23,11 @@ class ApiUrl {
   String? updateProperty;
   String? create;
   String? addBank;
+  String? ifsc;
   String? bankDelete;
   String? propertyType;
+  String? withdrawHistory;
+  String? withdrawRequest;
   String? bankDetailsUser;
   String? policyUrl;
   String? sendOtp;
@@ -54,7 +57,10 @@ class ApiUrl {
     this.create,
     this.topUp,
     this.propertyType,
+    this.withdrawRequest,
     this.bankDetailsUser,
+    this.ifsc,
+    this.withdrawHistory,
     this.updateProperty,
     this.getVendorProperty,
     this.sendOtp,
@@ -76,6 +82,7 @@ final apiUrlProvider = Provider<ApiUrl>((ref) {
     getAmenitiesRoom: "${base}get-amenities/room",
     vendorOrderHistory: "${base}vendorOrderHistory?vendorId=",
     notification: "${base}notification",
+    withdrawRequest: "${base}withdraw/request",
     orderedPropertyDetails: "${base}orderedProperty?userId=",
     getOnboardPage: "${base}getonboardpage",
     getVendorProperty: "${base}getvendorproperty?userId=",
@@ -89,7 +96,9 @@ final apiUrlProvider = Provider<ApiUrl>((ref) {
     bankUpdate: "${base}bank/update/",
     bankDelete: "${base}bank/delete/",
     topUp: "${base}list/topup",
+    ifsc: "${base}ifsc",
     depositHistory: "${base}history/",
+    withdrawHistory: "${base}withdraw/history/",
     updateProperty: "${base}updateproperty/",
     sendOtp: 'https://otp.fctechteam.org/send_otp.php?',
     verifyOtp: 'https://otp.fctechteam.org/verifyotp.php?mobile=',

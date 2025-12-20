@@ -98,7 +98,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                 lightColor: Colors.green,
                 borderRadius: BorderRadius.circular(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -113,7 +113,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            AppText(text: "Your balance", color: Colors.white70),
+                            AppText(text: "Available Balance", color: Colors.white70),
                             AppText(
                               text: "₹${wallet.toString()}",
                               color: Colors.white,
@@ -173,6 +173,27 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                           ),
                         ],
                       ),
+                    InkWell(
+                      onTap: (){
+                      Navigator.pushNamed(context, AppRoutes.withdrawScreen);
+                      },
+                      child: Container(
+                        height: context.sh*0.05,
+                        width: context.sw*0.25,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white),
+                          borderRadius: BorderRadius.circular(5)
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add,color: Colors.white,),
+                            AppText(text: "Withdraw",color: Colors.white,fontType: FontType.bold,fontSize: context.sh*0.015,)
+                          ],
+                        ),
+                      ),
+                    )
                   ],
                 ),
               ),

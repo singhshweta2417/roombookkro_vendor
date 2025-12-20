@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,25 +11,39 @@ class OnBoardViewModel extends StateNotifier<OnboardState> {
 
   OnBoardViewModel(this._onboardRepo, this.ref) : super(const OnboardInitial());
 
-  Future<void> onboardApi() async {
+  Future<void> loadOnboardingData() async {
+    // Prevent multiple simultaneous loads
+    if (state is OnboardLoading) return;
+
     state = const OnboardLoading();
+
     try {
       final value = await _onboardRepo.onboardApi();
 
-      if (value.status == 200) {
-        state = OnboardSuccess(onboard: value.data ?? []);
-      } else {
-        state = OnboardError(value.message ?? 'Failed to load onboard data');
+      if (mounted) {
+        if (value.status == 200 && value.data != null) {
+          state = OnboardSuccess(onboard: value.data!);
+        } else {
+          state = OnboardError(
+            value.message ?? 'Failed to load onboarding data',
+          );
+        }
       }
     } catch (error) {
-      state = OnboardError(error.toString());
+      if (mounted) {
+        state = OnboardError(error.toString());
+      }
     }
   }
 
-  /// ✅ Save onboarding completion to SharedPreferences
   Future<void> completeOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_completed', true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboarding_completed', true);
+    } catch (e) {
+      // Log error but don't throw - we still want to navigate
+      debugPrint('Error saving onboarding status: $e');
+    }
   }
 }
 
@@ -57,7 +72,7 @@ class OnboardError extends OnboardState {
 
 // --- PROVIDER ---
 final onboardingProvider =
-StateNotifierProvider<OnBoardViewModel, OnboardState>((ref) {
-  final repo = ref.read(onboardRepoProvider);
-  return OnBoardViewModel(repo, ref);
-});
+    StateNotifierProvider<OnBoardViewModel, OnboardState>((ref) {
+      final repo = ref.read(onboardRepoProvider);
+      return OnBoardViewModel(repo, ref);
+    });

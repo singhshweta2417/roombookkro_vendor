@@ -10,7 +10,7 @@ class SplashState {
   final String? nextRoute;
   final String? error;
 
-  SplashState({
+  const SplashState({
     this.isReady = false,
     this.isLoading = false,
     this.nextRoute,
@@ -36,37 +36,53 @@ class SplashViewModel extends StateNotifier<SplashState> {
   final SplashRepository repository;
   final Ref ref;
 
-  SplashViewModel(this.repository, this.ref) : super(SplashState());
+  SplashViewModel(this.repository, this.ref) : super(const SplashState());
 
   Future<void> initialize() async {
+    // Prevent multiple initializations
+    if (state.isLoading || state.isReady) return;
+
     state = state.copyWith(isLoading: true);
 
     try {
-      // Read the values here in the ViewModel, not in the repository
       final prefs = await SharedPreferences.getInstance();
       final isOnboardingDone = prefs.getBool('onboarding_completed') ?? false;
 
       final userPref = ref.read(userViewModelProvider);
       final isLoggedIn = await userPref.isLoggedIn();
 
-      final route = await repository.getInitialRoute(
+      final route = repository.getInitialRoute(
         isOnboardingDone,
         isLoggedIn,
       );
 
-      state = state.copyWith(isReady: true, isLoading: false, nextRoute: route);
+      // Ensure minimum splash duration for better UX
+      await Future.wait([
+        Future.delayed(const Duration(milliseconds: 2000)),
+        Future.value(route),
+      ]);
+
+      if (mounted) {
+        state = state.copyWith(
+          isReady: true,
+          isLoading: false,
+          nextRoute: route,
+        );
+      }
     } catch (error) {
-      state = state.copyWith(
-        isReady: true,
-        isLoading: false,
-        nextRoute: '/onboarding', // fallback route
-        error: error.toString(),
-      );
+      if (mounted) {
+        state = state.copyWith(
+          isReady: true,
+          isLoading: false,
+          nextRoute: '/onboarding', // fallback route
+          error: error.toString(),
+        );
+      }
     }
   }
 }
 
 final splashViewModelProvider =
-    StateNotifierProvider<SplashViewModel, SplashState>(
+StateNotifierProvider<SplashViewModel, SplashState>(
       (ref) => SplashViewModel(ref.read(splashRepositoryProvider), ref),
-    );
+);

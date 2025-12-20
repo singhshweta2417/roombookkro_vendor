@@ -81,7 +81,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _menuTile(ref, Icons.wallet, () {
             Navigator.pushNamed(context, AppRoutes.walletScreen);
           }, "My Wallet"),
-          _menuTile(ref, Icons.notifications_none, () {
+          _menuTile(ref, Icons.account_balance, () {
             Navigator.pushNamed(context, AppRoutes.addBankAccountScreen);
           }, "Add Bank"),
           _menuTile(ref, Icons.person_outline, () {

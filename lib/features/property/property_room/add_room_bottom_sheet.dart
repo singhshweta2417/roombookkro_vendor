@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:room_book_kro_vendor/core/utils/context_extensions.dart';
+import 'package:room_book_kro_vendor/core/utils/utils.dart';
 import 'package:room_book_kro_vendor/features/property/view_model/add_property_view_model.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
@@ -12,6 +13,19 @@ import '../../auth/model/get_enum_model.dart';
 import '../view_model/amenities_room_view_model.dart';
 import '../view_model/get_property_type_view_model.dart';
 import '../view_model/room_type_view_model.dart';
+
+// Model for pricing data
+class PricingData {
+  String mrp;
+  String discount;
+  String finalPrice;
+
+  PricingData({
+    required this.mrp,
+    required this.discount,
+    required this.finalPrice,
+  });
+}
 
 class AddRoomBottomSheet extends ConsumerStatefulWidget {
   final dynamic propertyType;
@@ -33,37 +47,52 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
   final ImagePicker picker = ImagePicker();
 
   String? selectedSubType;
+  String? selectedSubTypeId;
   String selectedFurnished = "";
   final _occupancyCont = TextEditingController();
   final _availableUnitsCont = TextEditingController();
-  final _roomPriceController = TextEditingController();
-  final _roomPriceDayController = TextEditingController();
   bool isRoomAvailable = true;
   List<File> roomImages = [];
   Map<String, String> selectedRoomAmenities = {};
 
+  // Duration pricing data
+  Map<String, PricingData> durationPricing = {};
+  Map<String, TextEditingController> mrpControllers = {};
+  Map<String, TextEditingController> discountControllers = {};
+  Map<String, TextEditingController> priceControllers = {};
+
   @override
   void initState() {
     super.initState();
-
     if (widget.initialRoom != null) {
       final r = widget.initialRoom!;
-      selectedSubType = r.roomType;
+      selectedSubType = r.roomTypeName;
+      selectedSubTypeId = r.roomType;
       selectedFurnished = r.furnished;
       _occupancyCont.text = r.occupancy;
       _availableUnitsCont.text = r.availableUnits;
-      _roomPriceController.text = r.price;
-      _roomPriceDayController.text = r.roomPricePerDay;
       isRoomAvailable = r.isAvailable;
       roomImages = List<File>.from(r.roomImages);
+      if (r.amenitiesIds.isNotEmpty) {
+        for (var amenityId in r.amenitiesIds) {
+          selectedRoomAmenities[amenityId] = amenityId;
+        }
+      }
     }
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final int propertyTypeId = widget.propertyType is int
+          ? widget.propertyType
+          : int.tryParse(widget.propertyType.toString()) ?? 0;
+
+      if (propertyTypeId == 1) {
+        _addDuration('Night');
+      }
+
       ref.read(getAmenitiesRoomProvider.notifier).getAmenitiesRoomViewApi();
       ref.read(getPropertyTypeProvider.notifier).propertyTypeApi();
     });
   }
-  String? selectedSubTypeId;
+
   Future<void> pickRoomImages() async {
     try {
       final picked = await picker.pickMultiImage(
@@ -88,6 +117,53 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     return Icons.weekend;
   }
 
+  void _calculateFinalPrice(String duration) {
+    final mrp = double.tryParse(mrpControllers[duration]?.text ?? '0') ?? 0;
+    final discount = double.tryParse(discountControllers[duration]?.text ?? '0') ?? 0;
+
+    if (mrp > 0 && discount >= 0 && discount <= 100) {
+      final finalPrice = mrp - (mrp * discount / 100);
+      priceControllers[duration]?.text = finalPrice.toStringAsFixed(2);
+
+      setState(() {
+        durationPricing[duration] = PricingData(
+          mrp: mrp.toString(),
+          discount: discount.toString(),
+          finalPrice: finalPrice.toStringAsFixed(2),
+        );
+      });
+    }
+  }
+
+  void _addDuration(String duration) {
+    if (!durationPricing.containsKey(duration)) {
+      setState(() {
+        mrpControllers[duration] = TextEditingController();
+        discountControllers[duration] = TextEditingController();
+        priceControllers[duration] = TextEditingController();
+
+        durationPricing[duration] = PricingData(
+          mrp: '',
+          discount: '0',
+          finalPrice: '',
+        );
+      });
+    }
+  }
+
+  void _removeDuration(String duration) {
+    setState(() {
+      mrpControllers[duration]?.dispose();
+      discountControllers[duration]?.dispose();
+      priceControllers[duration]?.dispose();
+
+      mrpControllers.remove(duration);
+      discountControllers.remove(duration);
+      priceControllers.remove(duration);
+      durationPricing.remove(duration);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final int propertyTypeId = widget.propertyType is int
@@ -97,6 +173,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     final availableSubtypes = widget.subTypeList[propertyTypeId] ?? [];
     final roomAmenitiesState = ref.watch(getAmenitiesRoomProvider);
     final propertyTypeState = ref.watch(getPropertyTypeProvider);
+    final roomTypeState = ref.watch(getRoomTypeProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -224,26 +301,24 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                             vertical: 16,
                           ),
                         ),
-                        initialValue: selectedSubType,
-                        items: availableSubtypes
-                            .map(
-                              (e) => DropdownMenuItem(
-                            value: e,
-                            child: AppText(text: e, fontSize: 15),
-                          ),
-                        ).toList(),
+                        value: selectedSubType,
+                        items: availableSubtypes.toSet().toList().map((label) {
+                          return DropdownMenuItem<String>(
+                            value: label,
+                            child: AppText(text: label, fontSize: 15),
+                          );
+                        }).toList(),
                         onChanged: (value) {
                           setState(() {
                             selectedSubType = value;
-                            final roomTypeState = ref.read(getRoomTypeProvider);
                             if (roomTypeState is GetRoomTypeSuccess) {
-                              final matchingOption = roomTypeState.roomType.options?.firstWhere(
+                              final matchingOption = roomTypeState
+                                  .roomType.options
+                                  ?.firstWhere(
                                     (opt) => opt.label == value,
                                 orElse: () => RoomTypeOption(),
                               );
                               selectedSubTypeId = matchingOption?.id?.toString();
-                              print("Selected Label: $value");
-                              print("Selected ID: $selectedSubTypeId");
                             }
                           });
                         },
@@ -254,9 +329,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                   _buildSectionLabel("Furnished Type", true),
                   const SizedBox(height: 12),
                   _buildFurnishedOptions(propertyTypeState),
-
                   const SizedBox(height: 20),
-
                   // Occupancy & Units Row
                   Row(
                     children: [
@@ -292,29 +365,54 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                  // Pricing Section
-                  _buildSectionLabel("Pricing", true),
-                  const SizedBox(height: 8),
-                  if (propertyTypeId == 1)
-                    _buildTextField(
-                      controller: _roomPriceController,
-                      hint: "per night",
-                      icon: Icons.currency_rupee,
-                    )
-                  else ...[
-                    _buildTextField(
-                      controller: _roomPriceController,
-                      hint: "Monthly rent",
-                      icon: Icons.currency_rupee,
+                  // Duration-based Pricing Section
+                  _buildSectionLabel("Pricing by Duration", true),
+                  const SizedBox(height: 4),
+                  AppText(
+                    text: "Add pricing for different durations",
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Duration Selector Chips
+                  _buildDurationSelector(propertyTypeId),
+
+                  const SizedBox(height: 16),
+
+                  // Pricing Cards for Selected Durations
+                  if (durationPricing.isNotEmpty) ...[
+                    ...durationPricing.keys.map((duration) =>
+                        _buildPricingCard(duration)
+                    ).toList(),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.schedule_outlined,
+                              size: 40,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 8),
+                            AppText(
+                              text: "Select a duration to add pricing",
+                              color: Colors.grey.shade600,
+                              fontSize: 14,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildTextField(
-                      controller: _roomPriceDayController,
-                      hint: "Daily rate (optional)",
-                      icon: Icons.calendar_today_outlined,
-                    )
                   ],
 
                   const SizedBox(height: 24),
@@ -407,11 +505,11 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
 
                   const SizedBox(height: 24),
 
-                  // Room Images
-                  _buildSectionLabel("Room Images", false),
+                  // Room Images - REQUIRED
+                  _buildSectionLabel("Room Images", true),
                   const SizedBox(height: 4),
                   AppText(
-                    text: "Add photos to showcase your room",
+                    text: "Add at least one photo to showcase your room",
                     fontSize: 13,
                     color: Colors.grey.shade600,
                   ),
@@ -421,7 +519,10 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                     decoration: BoxDecoration(
                       color: Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(
+                        color: Colors.grey.shade200,
+                        width: roomImages.isEmpty ? 2 : 1,
+                      ),
                     ),
                     child: Wrap(
                       spacing: 10,
@@ -432,6 +533,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 30),
                 ],
               ),
@@ -495,7 +597,250 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     );
   }
 
-  // Build Furnished Options based on state
+  // Duration Selector Widget
+  Widget _buildDurationSelector(int propertyTypeId) {
+    final durations = ['Night', 'Day', 'Month'];
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: durations.map((duration) {
+        final isSelected = durationPricing.containsKey(duration);
+        final isDisabled = propertyTypeId.toString() == "1" && duration != 'Night';
+
+        return InkWell(
+          onTap: isDisabled ? null : () {
+            if (isSelected) {
+              _removeDuration(duration);
+            } else {
+              _addDuration(duration);
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Opacity(
+            opacity: isDisabled ? 0.4 : 1.0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.secondary(ref) : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.secondary(ref)
+                      : Colors.grey.shade300,
+                  width: isSelected ? 2 : 1,
+                ),
+                boxShadow: isSelected
+                    ? [
+                  BoxShadow(
+                    color: AppColors.secondary(ref).withValues(alpha: 0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+                    : [],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    duration == 'Night'
+                        ? Icons.nightlight_round
+                        : duration == 'Day'
+                        ? Icons.wb_sunny
+                        : Icons.calendar_month,
+                    size: 18,
+                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                  ),
+                  const SizedBox(width: 8),
+                  AppText(
+                    text: duration,
+                    color: isSelected ? Colors.white : Colors.grey.shade800,
+                    fontType: isSelected ? FontType.semiBold : FontType.medium,
+                    fontSize: 14,
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.check_circle,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // Pricing Card Widget
+  Widget _buildPricingCard(String duration) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.secondary(ref).withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary(ref).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  duration == 'Night'
+                      ? Icons.nightlight_round
+                      : duration == 'Day'
+                      ? Icons.wb_sunny
+                      : Icons.calendar_month,
+                  size: 20,
+                  color: AppColors.secondary(ref),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: AppText(
+                  text: "$duration Pricing",
+                  fontType: FontType.semiBold,
+                  fontSize: 16,
+                ),
+              ),
+              IconButton(
+                onPressed: () => _removeDuration(duration),
+                icon: const Icon(Icons.close, size: 20),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.shade50,
+                  foregroundColor: Colors.red.shade700,
+                  padding: const EdgeInsets.all(8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          AppText(
+            text: "MRP",
+            fontType: FontType.medium,
+            fontSize: 13,
+            color: Colors.grey.shade700,
+          ),
+          const SizedBox(height: 6),
+          _buildPricingTextField(
+            controller: mrpControllers[duration]!,
+            hint: "Enter MRP",
+            icon: Icons.currency_rupee,
+            onChanged: (value) => _calculateFinalPrice(duration),
+          ),
+          const SizedBox(height: 12),
+          AppText(
+            text: "Discount (%)",
+            fontType: FontType.medium,
+            fontSize: 13,
+            color: Colors.grey.shade700,
+          ),
+          const SizedBox(height: 6),
+          _buildPricingTextField(
+            controller: discountControllers[duration]!,
+            hint: "Enter discount percentage",
+            icon: Icons.percent,
+            onChanged: (value) => _calculateFinalPrice(duration),
+          ),
+          const SizedBox(height: 12),
+          AppText(
+            text: "Final Price",
+            fontType: FontType.medium,
+            fontSize: 13,
+            color: Colors.grey.shade700,
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.secondary(ref).withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.secondary(ref).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.price_check,
+                  color: AppColors.secondary(ref),
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppText(
+                    text: priceControllers[duration]!.text.isEmpty
+                        ? "Auto-calculated"
+                        : "₹${priceControllers[duration]!.text}",
+                    fontType: FontType.semiBold,
+                    fontSize: 16,
+                    color: priceControllers[duration]!.text.isEmpty
+                        ? Colors.grey.shade500
+                        : AppColors.secondary(ref),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPricingTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    required Function(String) onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          prefixIcon: Icon(icon, color: AppColors.secondary(ref), size: 22),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFurnishedOptions(GetPropertyTypeState state) {
     if (state is GetPropertyTypeLoading || state is GetPropertyTypeInitial) {
       return _buildFurnishedLoading();
@@ -564,8 +909,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                   AppText(
                     text: label,
                     color: sel ? Colors.white : Colors.grey.shade800,
-                    fontType:
-                    sel ? FontType.semiBold : FontType.medium,
+                    fontType: sel ? FontType.semiBold : FontType.medium,
                     fontSize: 14,
                   ),
                 ],
@@ -575,7 +919,6 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
         }).toList(),
       );
     }
-
     return _buildFurnishedEmpty();
   }
 
@@ -636,7 +979,6 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     );
   }
 
-  // Furnished Type Loading State
   Widget _buildFurnishedLoading() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -668,7 +1010,6 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     );
   }
 
-  // Furnished Type Empty State
   Widget _buildFurnishedEmpty() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -687,7 +1028,6 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     );
   }
 
-  // Furnished Type Error State
   Widget _buildFurnishedError() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -893,69 +1233,97 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     );
   }
 
+  // Replace the _handleSave() method in add_room_bottom_sheet.dart
+
   void _handleSave() {
-    print(selectedSubTypeId);
-    print("selectedSubTypeId");
-    if (selectedSubTypeId == null ||
-        selectedFurnished.isEmpty ||
-        _occupancyCont.text.trim().isEmpty ||
-        _availableUnitsCont.text.trim().isEmpty ||
-        _roomPriceController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.white),
-              SizedBox(width: 12),
-              Expanded(
-                child: AppText(
-                  text: "Please fill all required fields",
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red.shade600,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
+    // Validation with specific error messages
+    if (selectedSubTypeId == null || selectedSubTypeId!.isEmpty) {
+      _showError("Please select a room category");
       return;
+    }
+
+    if (selectedFurnished.isEmpty) {
+      _showError("Please select a furnished type");
+      return;
+    }
+
+    if (_occupancyCont.text.trim().isEmpty) {
+      _showError("Please enter occupancy");
+      return;
+    }
+
+    if (_availableUnitsCont.text.trim().isEmpty) {
+      _showError("Please enter available units");
+      return;
+    }
+
+    if (durationPricing.isEmpty) {
+      _showError("Please add pricing for at least one duration");
+      return;
+    }
+
+    // CRITICAL: Check if room images are added
+    if (roomImages.isEmpty) {
+      _showError("Please add at least one room image");
+      return;
+    }
+
+    // Validate that all pricing fields are filled
+    for (var duration in durationPricing.keys) {
+      final mrp = mrpControllers[duration]?.text.trim() ?? '';
+      if (mrp.isEmpty || double.tryParse(mrp) == null) {
+        _showError("Please enter valid MRP for $duration");
+        return;
+      }
     }
 
     List<String> selectedAmenitiesIds = selectedRoomAmenities.keys.toList();
 
+    // Create a copy of durationPricing with proper PricingData objects
+    final Map<String, PricingData> pricingDetailsCopy = {};
+
+    durationPricing.forEach((key, value) {
+      pricingDetailsCopy[key] = PricingData(
+        mrp: value.mrp,
+        discount: value.discount,
+        finalPrice: value.finalPrice,
+      );
+    });
+    print(pricingDetailsCopy);
+    print("pricingDetailsCopy");
     final roomData = RoomData(
       roomType: selectedSubTypeId!,
-      roomTypeName:selectedSubType!,
+      roomTypeName: selectedSubType!,
       furnished: selectedFurnished,
       occupancy: _occupancyCont.text.trim(),
-      price: _roomPriceController.text.trim(),
-      roomPricePerDay: _roomPriceDayController.text.trim(),
+      price: durationPricing.values.first.finalPrice,
+      roomPricePerDay: '',
       isAvailable: isRoomAvailable,
       availableUnits: _availableUnitsCont.text.trim(),
       amenitiesIds: selectedAmenitiesIds,
       roomImages: roomImages,
+      pricingDetails: pricingDetailsCopy,
     );
-
+print(pricingDetailsCopy);
+print("pricingDetailsCopy");
     Navigator.of(context).pop(roomData);
+  }
+
+  void _showError(String message) {
+   Utils.show(message.toString(), context);
   }
 
   @override
   void dispose() {
     _occupancyCont.dispose();
     _availableUnitsCont.dispose();
-    _roomPriceController.dispose();
-    _roomPriceDayController.dispose();
+    mrpControllers.forEach((_, controller) => controller.dispose());
+    discountControllers.forEach((_, controller) => controller.dispose());
+    priceControllers.forEach((_, controller) => controller.dispose());
     super.dispose();
   }
 }
 
-///
-
-// ✅ Extension for state handling
 extension GetAmenitiesRoomStateExtension on GetAmenitiesRoomState {
   T when<T>({
     required T Function() initial,
