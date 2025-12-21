@@ -650,12 +650,12 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: hotel.propertyTypeId == "1"
+                            color: hotel.propertyTypeId.toString() == "1"
                                 ? Colors.blue.shade50
                                 : Colors.purple.shade50,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: hotel.propertyTypeId == "1"
+                              color: hotel.propertyTypeId.toString() == "1"
                                   ? Colors.blue.shade300
                                   : Colors.purple.shade300,
                               width: 1,
@@ -665,7 +665,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                             text: hotel.type?.toUpperCase() ?? "TYPE",
                             fontSize: 9,
                             fontType: FontType.bold,
-                            color: hotel.propertyTypeId == "1"
+                            color: hotel.propertyTypeId.toString() == "1"
                                 ? Colors.blue.shade700
                                 : Colors.purple.shade700,
                           ),
@@ -745,7 +745,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                                 children: [
                                   AppText(
                                     text:
-                                        "₹${hotel.propertyTypeId.toString() == "1" ? (hotel.pricePerNight.toString()) : (hotel.pricePerMonth.toString())}",
+                                        "₹${hotel.propertyTypeId.toString() == "1" ? (hotel.pricePerNight.toString()) : (hotel.pricePerDay.toString())}",
                                     fontSize: 16,
                                     fontType: FontType.bold,
                                     color: Colors.green.shade700,
@@ -762,7 +762,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                                 ],
                               ),
                               AppText(
-                                text: hotel.propertyTypeId.toString() == "1" ? "/night" : "/month",
+                                text: hotel.propertyTypeId.toString() == "1" ? "/night" : "/day",
                                 fontSize: 9,
                                 color: Colors.grey.shade600,
                               ),

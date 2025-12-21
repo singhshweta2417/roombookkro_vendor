@@ -9,12 +9,12 @@ import 'package:room_book_kro_vendor/core/widgets/custom_scaffold.dart';
 import 'package:room_book_kro_vendor/core/widgets/custom_text_field.dart';
 import 'package:room_book_kro_vendor/core/widgets/primary_button.dart';
 import 'package:room_book_kro_vendor/features/property/property_model.dart';
-import 'package:room_book_kro_vendor/features/property/property_room/add_property_room2.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../auth/model/amenities_model.dart';
 import '../view_model/amenities_property_view_model.dart';
 
 class EditPropertyScreen2 extends ConsumerStatefulWidget {
@@ -41,7 +41,6 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
   final _propertyNightController = TextEditingController();
   final _propertyDayController = TextEditingController();
 
-  // Rules Controllers
   final _ruleController = TextEditingController();
   List<String> propertyRules = [];
 
@@ -52,6 +51,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
 
   bool isAvailable = false;
   bool _isFormInitialized = false;
+  late int selectedPropertyType;
 
   @override
   void initState() {
@@ -59,6 +59,14 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     _oldMrpController.addListener(_calculatePrice);
     _discountCont.addListener(_calculatePrice);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args != null && args is Map<String, dynamic>) {
+        setState(() {
+          arguments = args;
+          existingPropertyData = args['existingPropertyData'] as AddPropertyListData?;
+          selectedPropertyType = args["selectedPropertyTypeId"] ?? 2;
+        });
+      }
       ref.read(getAmenitiesPropertyProvider.notifier).getAmenitiesPropertyViewApi();
     });
   }
@@ -72,6 +80,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
         setState(() {
           arguments = args;
           existingPropertyData = args['existingPropertyData'] as AddPropertyListData?;
+          selectedPropertyType = args["selectedPropertyTypeId"] ?? 2;
         });
       }
     }
@@ -89,7 +98,6 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     _propertyNightController.text = existingPropertyData?.pricePerNight?.toString() ?? '';
     _propertyDayController.text = existingPropertyData?.pricePerDay?.toString() ?? '';
 
-    // Initialize rules
     if (existingPropertyData?.rules != null && existingPropertyData!.rules!.isNotEmpty) {
       propertyRules = existingPropertyData!.rules!.map((rule) => rule.toString()).toList();
     }
@@ -101,43 +109,31 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     });
   }
 
-  // VALIDATION FOR STEP
   bool _validateStep(int step) {
     if (step == 0) {
-      // Price validation
-      if (_oldMrpController.text.isEmpty || _discountCont.text.isEmpty) {
-        _showSnackBar("Please fill MRP and Discount fields");
+      if (mainImage.isEmpty && existingPropertyData?.mainImage == null) {
+        _showSnackBar("Please select a main image");
         return false;
       }
-      final selectedPropertyTypeId = arguments?["selectedPropertyTypeId"];
-
-      if (selectedPropertyTypeId == 1 && _propertyNightController.text.isEmpty) {
-        _showSnackBar("Please fill Price / Night");
-        return false;
-      } else if ((selectedPropertyTypeId == 3 || selectedPropertyTypeId == 4) &&
-          _propertyMonthController.text.isEmpty) {
-        _showSnackBar("Please fill Price / Month and Deposit Amount");
+      if (propertyImages.isEmpty && (existingPropertyData?.images?.isEmpty ?? true)) {
+        _showSnackBar("Please add at least one property image");
         return false;
       }
-    } else if (step == 1) {
-      // Image and description validation
       if (_descriptionController.text.isEmpty) {
         _showSnackBar("Please add a description");
         return false;
       }
-    } else if (step == 2) {
-      // Facilities validation (optional but recommended)
+    } else if (step == 1) {
       if (selectedAmenities.isEmpty) {
         _showSnackBar("Please select at least one facility");
         return false;
       }
     }
-    // Step 3 (Rules) can be optional
     return true;
   }
 
   void _onStepContinue() {
-    if (_currentStep < 3) {
+    if (_currentStep < 2) {
       if (_validateStep(_currentStep)) {
         setState(() => _currentStep++);
       }
@@ -149,7 +145,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: AppText(text: message, fontType: FontType.medium),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.red.shade700,
       ),
@@ -260,15 +256,16 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
   void _calculatePrice() {
     final oldMrp = double.tryParse(_oldMrpController.text) ?? 0.0;
     final discount = double.tryParse(_discountCont.text) ?? 0.0;
+
     if (oldMrp > 0 && discount >= 0 && discount <= 100) {
       final discountAmount = (oldMrp * discount) / 100;
       final finalPrice = oldMrp - discountAmount;
+
       setState(() {
         calculatedPrice = finalPrice;
-        final selectedPropertyTypeId = arguments?["selectedPropertyTypeId"];
-        if (selectedPropertyTypeId == 1) {
+        if (selectedPropertyType == 1) {
           _propertyNightController.text = finalPrice.toStringAsFixed(0);
-        } else if (selectedPropertyTypeId == 3 || selectedPropertyTypeId == 4) {
+        } else if (selectedPropertyType == 3 || selectedPropertyType == 4) {
           _propertyMonthController.text = finalPrice.toStringAsFixed(0);
         } else {
           _propertyMonthController.text = finalPrice.toStringAsFixed(0);
@@ -290,15 +287,12 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final selectedPropertyTypeId = arguments!["selectedPropertyTypeId"];
     final amenitiesState = ref.watch(getAmenitiesPropertyProvider);
 
-    // Initialize form when amenities load
     if (amenitiesState is GetAmenitiesPropertySuccess && !_isFormInitialized) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _initializeFormWithData();
 
-        // Pre-select amenities
         if (existingPropertyData?.amenities != null) {
           for (var amenity in existingPropertyData!.amenities!) {
             final amenityId = amenity.sId ?? '';
@@ -336,7 +330,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
               return Colors.grey;
             }),
             controlsBuilder: (context, details) {
-              final isLast = _currentStep == 3;
+              final isLast = _currentStep == 2;
               return Padding(
                 padding: const EdgeInsets.only(top: 20),
                 child: Row(
@@ -375,36 +369,11 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
             steps: [
               Step(
                 title: AppText(
-                  text: "Show Price For User*",
+                  text: "Property Images*",
                   fontType: FontType.semiBold,
                 ),
                 isActive: _currentStep >= 0,
                 state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-                content: Column(
-                  children: [
-                    const SizedBox(height: 10),
-                    _field("MRP", _oldMrpController, num: true),
-                    _field("Discount %", _discountCont, num: true),
-                    if (selectedPropertyTypeId == 1)
-                      _field("Price / Night", _propertyNightController, num: true)
-                    else if (selectedPropertyTypeId == 3 || selectedPropertyTypeId == 4) ...[
-                      _field("Price / Month", _propertyMonthController, num: true),
-                      _field("Deposit Amount", _depositCont, num: true),
-                    ] else ...[
-                      _field("Price / Day", _propertyDayController, num: true),
-                      _field("Price / Month", _propertyMonthController, num: true),
-                      _field("Deposit Amount", _depositCont, num: true),
-                    ],
-                  ],
-                ),
-              ),
-              Step(
-                title: AppText(
-                  text: "Property Images*",
-                  fontType: FontType.semiBold,
-                ),
-                isActive: _currentStep >= 1,
-                state: _currentStep > 1 ? StepState.complete : StepState.indexed,
                 content: Column(
                   children: [
                     const SizedBox(height: 10),
@@ -418,8 +387,8 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                   text: "Website & Facilities*",
                   fontType: FontType.semiBold,
                 ),
-                isActive: _currentStep >= 2,
-                state: _currentStep > 2 ? StepState.complete : StepState.indexed,
+                isActive: _currentStep >= 1,
+                state: _currentStep > 1 ? StepState.complete : StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -579,7 +548,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                   text: "Property Rules",
                   fontType: FontType.semiBold,
                 ),
-                isActive: _currentStep >= 3,
+                isActive: _currentStep >= 2,
                 state: StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -804,7 +773,6 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     );
   }
 
-
   Widget _infoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -831,48 +799,12 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     );
   }
 
-  // Widget _imageSection() {
-  //   return Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //       const AppText(text: "Main Image", fontType: FontType.bold),
-  //   const SizedBox(height: 8),
-  //   if (mainImage.isEmpty && existingPropertyData?.mainImage != null)
-  //   Column(
-  //   crossAxisAlignment: CrossAxisAlignment.start,
-  //   children: [
-  //   const AppText(
-  //   text: 'Current Main Image:',
-  //   fontSize: 12,
-  //   color: Colors.grey,
-  //   fontType: FontType.medium,
-  //   ),
-  //   const SizedBox(height: 8),
-  //   ClipRRect(
-  //   borderRadius: BorderRadius.circular(8),
-  //   child: CachedNetworkImage(
-  //   imageUrl: existingPropertyData!.mainImage!,
-  //   height: 180,
-  //   width: double.infinity,
-  //   fit: BoxFit.cover,
-  //   placeholder: (context, url) => Container(
-  //   height: 180,
-  //   color: Colors.grey.shade200,
-  //   child: const Center(child: CircularProgressIndicator()),
-  //   ),
-  //   errorWidget: (context, url, error) => Container(
-  //   height: 180,
-  //   color: Colors.grey.shade200,
-  //   child: const Icon(Icons.error),
-
   Widget _imageSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const AppText(text: "Main Image", fontType: FontType.bold),
         const SizedBox(height: 8),
-
-        // ✅ Show existing main image if available
         if (mainImage.isEmpty && existingPropertyData?.mainImage != null)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -881,21 +813,31 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                 text: 'Current Main Image:',
                 fontSize: 12,
                 color: Colors.grey,
+                fontType: FontType.medium,
               ),
               const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  existingPropertyData!.mainImage!,
+                child: CachedNetworkImage(
+                  imageUrl: existingPropertyData!.mainImage!,
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    height: 180,
+                    color: Colors.grey.shade200,
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    height: 180,
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.error),
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
             ],
           ),
-
         GestureDetector(
           onTap: selectMainImage,
           child: TCustomContainer(
@@ -906,30 +848,27 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
             borderRadius: BorderRadius.circular(8),
             child: mainImage.isEmpty
                 ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.add_a_photo),
-                      AppText(text: "Select New Image", color: Colors.grey),
-                    ],
-                  )
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.add_a_photo),
+                AppText(text: "Select Image", color: Colors.grey),
+              ],
+            )
                 : Image.file(mainImage.first, fit: BoxFit.cover),
           ),
         ),
-
         const SizedBox(height: 10),
         const AppText(text: "Property Images", fontType: FontType.bold),
-
-        // ✅ Show existing property images
-        if (propertyImages.isEmpty &&
-            existingPropertyData?.images?.isNotEmpty == true)
+        const SizedBox(height: 10),
+        if (propertyImages.isEmpty && existingPropertyData?.images?.isNotEmpty == true)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 8),
               const AppText(
                 text: 'Current Images:',
                 fontSize: 12,
                 color: Colors.grey,
+                fontType: FontType.medium,
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -937,25 +876,37 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                 children: existingPropertyData!.images!.map((imageUrl) {
                   return ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      imageUrl,
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
                       height: 90,
                       width: 90,
                       fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: 90,
+                        width: 90,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: 90,
+                        width: 90,
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.error),
+                      ),
                     ),
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
             ],
           ),
-
-        const SizedBox(height: 10),
         Wrap(
           spacing: 10,
           children: [
             ...propertyImages.map(
-              (file) => Stack(
+                  (file) => Stack(
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
@@ -971,9 +922,10 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                     top: 0,
                     child: GestureDetector(
                       onTap: () => setState(() => propertyImages.remove(file)),
-                      child: const CircleAvatar(
+                      child: CircleAvatar(
+                        backgroundColor: AppColors.secondary(ref),
                         radius: 10,
-                        child: Icon(Icons.close, size: 12),
+                        child: const Icon(Icons.close, size: 12, color: Colors.white),
                       ),
                     ),
                   ),
@@ -999,12 +951,12 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
   }
 
   Widget _field(
-    String label,
-    TextEditingController c, {
-    Widget? suffixIcon,
-    bool num = false,
-    bool multi = false,
-  }) {
+      String label,
+      TextEditingController c, {
+        Widget? suffixIcon,
+        bool num = false,
+        bool multi = false,
+      }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: CustomTextField(
@@ -1020,5 +972,41 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
         fillColor: AppColors.background(ref),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _websiteController.dispose();
+    _descriptionController.dispose();
+    _discountCont.dispose();
+    _oldMrpController.dispose();
+    _depositCont.dispose();
+    _propertyMonthController.dispose();
+    _propertyNightController.dispose();
+    _propertyDayController.dispose();
+    _ruleController.dispose();
+    super.dispose();
+  }
+}
+
+extension GetAmenitiesPropertyStateExtension on GetAmenitiesPropertyState {
+  T when<T>({
+    required T Function() initial,
+    required T Function() loading,
+    required T Function(AmenitiesModel amenitiesModel, String message) success,
+    required T Function(String error) error,
+  }) {
+    if (this is GetAmenitiesPropertyInitial) {
+      return initial();
+    } else if (this is GetAmenitiesPropertyLoading) {
+      return loading();
+    } else if (this is GetAmenitiesPropertySuccess) {
+      final state = this as GetAmenitiesPropertySuccess;
+      return success(state.amenitiesPropertyLists, state.message);
+    } else if (this is GetAmenitiesPropertyError) {
+      final state = this as GetAmenitiesPropertyError;
+      return error(state.error);
+    }
+    return initial();
   }
 }

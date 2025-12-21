@@ -990,6 +990,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                 city: city ?? "",
                 state: state ?? "",
                 pincode: pincode?.toString() ?? "",
+                selectedRoomPrice: selectedRoomForUser.toString(),
                 coordinates:
                 coordinates ?? {"lat": 0.0, "lng": 0.0},
                 mainImage: mainImage,
@@ -1073,6 +1074,8 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
     );
   }
 
+  // ✅ FIX: Replace the pricing details display section in _buildEnhancedRoomCard
+
   Widget _buildEnhancedRoomCard(
       int idx,
       RoomData r,
@@ -1105,7 +1108,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
         ),
         child: Column(
           children: [
-            // NEW: Selection Header (Radio Button Style)
+            // Selection Header (Radio Button Style)
             InkWell(
               onTap: () {
                 setState(() {
@@ -1356,184 +1359,173 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                     ],
                   ),
 
-                  if (r.pricingDetails.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Divider(color: Colors.grey.shade200, thickness: 1),
-                    const SizedBox(height: 12),
+                  // ✅ FIX: Updated Pricing Section - Using only backend fields
+                  const SizedBox(height: 16),
+                  Divider(color: Colors.grey.shade200, thickness: 1),
+                  const SizedBox(height: 12),
 
-                    Row(
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.receipt_long,
+                        size: 18,
+                        color: AppColors.secondary(ref),
+                      ),
+                      const SizedBox(width: 8),
+                      const AppText(
+                        text: "Pricing Details",
+                        fontType: FontType.bold,
+                        fontSize: 15,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Display Main Price
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.green.withValues(alpha: 0.05),
+                          Colors.green.withValues(alpha: 0.02),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.green.withValues(alpha: 0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
                       children: [
-                        Icon(
-                          Icons.receipt_long,
-                          size: 18,
-                          color: AppColors.secondary(ref),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.currency_rupee,
+                            color: Colors.green,
+                            size: 18,
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        AppText(
-                          text: "Pricing Details",
-                          fontType: FontType.bold,
-                          fontSize: 15,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const AppText(
+                                text: "Main Price",
+                                fontType: FontType.bold,
+                                fontSize: 14,
+                                color: Colors.green,
+                              ),
+                              if (r.discountRoom != "0" && r.discountRoom.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade50,
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: Colors.orange.shade200,
+                                    ),
+                                  ),
+                                  child: AppText(
+                                    text: "${r.discountRoom}% OFF",
+                                    fontType: FontType.bold,
+                                    fontSize: 10,
+                                    color: Colors.orange.shade700,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.currency_rupee,
+                              size: 16,
+                              color: Colors.green,
+                            ),
+                            AppText(
+                              text: r.price,
+                              fontType: FontType.bold,
+                              fontSize: 18,
+                              color: Colors.green.shade700,
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                  ),
 
-                    ...r.pricingDetails.entries.map((entry) {
-                      final duration = entry.key;
-                      final pricing = entry.value;
-                      final mrp = double.tryParse(pricing.mrp) ?? 0;
-                      final discount = double.tryParse(pricing.discount) ?? 0;
-                      final finalPrice = double.tryParse(pricing.finalPrice) ?? 0;
-
-                      IconData durationIcon;
-                      Color durationColor;
-
-                      if (duration == 'Night') {
-                        durationIcon = Icons.nightlight_round;
-                        durationColor = Colors.indigo;
-                      } else if (duration == 'Day') {
-                        durationIcon = Icons.wb_sunny;
-                        durationColor = Colors.amber;
-                      } else {
-                        durationIcon = Icons.calendar_month;
-                        durationColor = Colors.teal;
-                      }
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              durationColor.withValues(alpha: 0.05),
-                              durationColor.withValues(alpha: 0.02),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: durationColor.withValues(alpha: 0.3),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: durationColor.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(
-                                    durationIcon,
-                                    color: durationColor,
-                                    size: 18,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      AppText(
-                                        text: "Per $duration",
-                                        fontType: FontType.bold,
-                                        fontSize: 14,
-                                        color: durationColor,
-                                      ),
-                                      if (discount > 0) ...[
-                                        const SizedBox(height: 2),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green.shade50,
-                                            borderRadius: BorderRadius.circular(4),
-                                            border: Border.all(
-                                              color: Colors.green.shade200,
-                                            ),
-                                          ),
-                                          child: AppText(
-                                            text: "${discount.toStringAsFixed(0)}% OFF",
-                                            fontType: FontType.bold,
-                                            fontSize: 10,
-                                            color: Colors.green.shade700,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    if (discount > 0) ...[
-                                      AppText(
-                                        text: "₹${mrp.toStringAsFixed(0)}",
-                                        fontType: FontType.medium,
-                                        fontSize: 13,
-                                        color: Colors.grey.shade500,
-                                        decoration: TextDecoration.lineThrough,
-                                      ),
-                                      const SizedBox(height: 2),
-                                    ],
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.currency_rupee,
-                                          size: 16,
-                                          color: Colors.green,
-                                        ),
-                                        AppText(
-                                          text: finalPrice.toStringAsFixed(0),
-                                          fontType: FontType.bold,
-                                          fontSize: 18,
-                                          color: Colors.green.shade700,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            if (discount > 0) ...[
-                              const SizedBox(height: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade50,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.savings_outlined,
-                                      size: 14,
-                                      color: Colors.green.shade700,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    AppText(
-                                      text: "You save ₹${(mrp - finalPrice).toStringAsFixed(0)}",
-                                      fontType: FontType.semiBold,
-                                      fontSize: 12,
-                                      color: Colors.green.shade700,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                  // Display Per Day Price if different
+                  if (r.roomPricePerDay != r.price && r.roomPricePerDay.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.amber.withValues(alpha: 0.05),
+                            Colors.amber.withValues(alpha: 0.02),
                           ],
                         ),
-                      );
-                    }).toList(),
-                  ],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.amber.withValues(alpha: 0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.wb_sunny,
+                              color: Colors.amber,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: AppText(
+                              text: "Per Day",
+                              fontType: FontType.bold,
+                              fontSize: 14,
+                              color: Colors.amber,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.currency_rupee,
+                                size: 16,
+                                color: Colors.amber,
+                              ),
+                              AppText(
+                                text: r.roomPricePerDay,
+                                fontType: FontType.bold,
+                                fontSize: 18,
+                                color: Colors.amber.shade700,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
 
                   if (r.amenitiesIds.isNotEmpty) ...[
                     const SizedBox(height: 12),

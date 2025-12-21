@@ -14,18 +14,7 @@ import '../view_model/amenities_room_view_model.dart';
 import '../view_model/get_property_type_view_model.dart';
 import '../view_model/room_type_view_model.dart';
 
-// Model for pricing data
-class PricingData {
-  String mrp;
-  String discount;
-  String finalPrice;
 
-  PricingData({
-    required this.mrp,
-    required this.discount,
-    required this.finalPrice,
-  });
-}
 
 class AddRoomBottomSheet extends ConsumerStatefulWidget {
   final dynamic propertyType;
@@ -54,9 +43,8 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
   bool isRoomAvailable = true;
   List<File> roomImages = [];
   Map<String, String> selectedRoomAmenities = {};
-
-  // Duration pricing data
   Map<String, PricingData> durationPricing = {};
+  // Duration pricing data
   Map<String, TextEditingController> mrpControllers = {};
   Map<String, TextEditingController> discountControllers = {};
   Map<String, TextEditingController> priceControllers = {};
@@ -1236,7 +1224,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
   // Replace the _handleSave() method in add_room_bottom_sheet.dart
 
   void _handleSave() {
-    // Validation with specific error messages
+    // Validation
     if (selectedSubTypeId == null || selectedSubTypeId!.isEmpty) {
       _showError("Please select a room category");
       return;
@@ -1262,13 +1250,12 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
       return;
     }
 
-    // CRITICAL: Check if room images are added
     if (roomImages.isEmpty) {
       _showError("Please add at least one room image");
       return;
     }
 
-    // Validate that all pricing fields are filled
+    // Validate pricing fields
     for (var duration in durationPricing.keys) {
       final mrp = mrpControllers[duration]?.text.trim() ?? '';
       if (mrp.isEmpty || double.tryParse(mrp) == null) {
@@ -1279,38 +1266,57 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
 
     List<String> selectedAmenitiesIds = selectedRoomAmenities.keys.toList();
 
-    // Create a copy of durationPricing with proper PricingData objects
-    final Map<String, PricingData> pricingDetailsCopy = {};
+    // Backend ke liye sirf 3 fields chahiye:
+    String mainPrice = "0";
+    String roomPricePerDay = "0";
+    String roomDiscountPercent = "0";
 
-    durationPricing.forEach((key, value) {
-      pricingDetailsCopy[key] = PricingData(
-        mrp: value.mrp,
-        discount: value.discount,
-        finalPrice: value.finalPrice,
-      );
-    });
-    print(pricingDetailsCopy);
-    print("pricingDetailsCopy");
+    // Logic: Backend format ke according set karo
+    if (durationPricing.containsKey('Night')) {
+      // Night pricing hai to wo use karo
+      mainPrice = durationPricing['Night']!.finalPrice;
+      roomDiscountPercent = durationPricing['Night']!.discount;
+    } else if (durationPricing.containsKey('Month')) {
+      // Month pricing hai to wo use karo
+      mainPrice = durationPricing['Month']!.finalPrice;
+      roomDiscountPercent = durationPricing['Month']!.discount;
+    } else if (durationPricing.containsKey('Day')) {
+      // Day pricing hai to wo use karo
+      mainPrice = durationPricing['Day']!.finalPrice;
+      roomDiscountPercent = durationPricing['Day']!.discount;
+    }
+
+    // roomPricePerDay: Agar Day pricing hai to use karo, warna main price
+    if (durationPricing.containsKey('Day')) {
+      roomPricePerDay = durationPricing['Day']!.finalPrice;
+    } else {
+      roomPricePerDay = mainPrice;
+    }
+
     final roomData = RoomData(
       roomType: selectedSubTypeId!,
       roomTypeName: selectedSubType!,
       furnished: selectedFurnished,
       occupancy: _occupancyCont.text.trim(),
-      price: durationPricing.values.first.finalPrice,
-      roomPricePerDay: '',
+      price: mainPrice, // Backend field
+      roomPricePerDay: roomPricePerDay, // Backend field
+      discountRoom: roomDiscountPercent, // Backend field
       isAvailable: isRoomAvailable,
       availableUnits: _availableUnitsCont.text.trim(),
       amenitiesIds: selectedAmenitiesIds,
       roomImages: roomImages,
-      pricingDetails: pricingDetailsCopy,
     );
-print(pricingDetailsCopy);
-print("pricingDetailsCopy");
+
+    print("🎯 Room Data for Backend:");
+    print("price: $mainPrice");
+    print("roomPricePerDay: $roomPricePerDay");
+    print("discountRoom: $roomDiscountPercent%");
+
     Navigator.of(context).pop(roomData);
   }
 
   void _showError(String message) {
-   Utils.show(message.toString(), context);
+    Utils.show(message.toString(), context);
   }
 
   @override

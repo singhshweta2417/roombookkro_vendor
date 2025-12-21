@@ -88,6 +88,7 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         builder: (_) => WithdrawScreen(),
         settings: settings,
       );
+
     case AppRoutes.addPropertyRoom2:return MaterialPageRoute(
         builder: (_) => AddPropertyRoom2(),
         settings: settings,

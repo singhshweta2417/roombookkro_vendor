@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:room_book_kro_vendor/core/utils/context_extensions.dart';
+import 'package:room_book_kro_vendor/core/utils/utils.dart';
 import 'package:room_book_kro_vendor/features/property/view_model/add_property_view_model.dart';
 import '../../../core/constants/app_fonts.dart';
 import '../../../core/theme/app_colors.dart';
@@ -38,20 +39,24 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
   String selectedFurnished = "";
   final _occupancyCont = TextEditingController();
   final _availableUnitsCont = TextEditingController();
-  final _roomPriceController = TextEditingController();
-  final _roomPriceDayController = TextEditingController();
   bool isRoomAvailable = true;
   List<File> roomImages = [];
   Map<String, String> selectedRoomAmenities = {};
 
-  // ✅ Add this variable for existing room images
+  // ✅ Duration pricing data (same as AddRoomBottomSheet)
+  Map<String, PricingData> durationPricing = {};
+  Map<String, TextEditingController> mrpControllers = {};
+  Map<String, TextEditingController> discountControllers = {};
+  Map<String, TextEditingController> priceControllers = {};
+
+  // ✅ Existing room images
   List<String> existingRoomImages = [];
 
   @override
   void initState() {
     super.initState();
 
-    // ✅ Load existing room images from initialRoom
+    // ✅ Load existing room images
     if (widget.initialRoom != null && widget.initialRoom!.existingImages != null) {
       existingRoomImages = List<String>.from(widget.initialRoom!.existingImages ?? []);
     }
@@ -63,24 +68,52 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
       selectedFurnished = r.furnished;
       _occupancyCont.text = r.occupancy;
       _availableUnitsCont.text = r.availableUnits;
-      _roomPriceController.text = r.price;
-      _roomPriceDayController.text = r.roomPricePerDay;
       isRoomAvailable = r.isAvailable;
       roomImages = List<File>.from(r.roomImages);
+
       for (String amenityId in r.amenitiesIds) {
         selectedRoomAmenities[amenityId] = amenityId;
       }
 
-      // ✅ Also check if initialRoom has existing images in another field
-      if (existingRoomImages.isEmpty && r.existingImages != null) {
-        existingRoomImages = List<String>.from(r.existingImages ?? []);
-      }
+      // ✅ Initialize pricing from existing room data
+      _initializePricingFromExistingRoom(r);
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final int propertyTypeId = widget.propertyType is int
+          ? widget.propertyType
+          : int.tryParse(widget.propertyType.toString()) ?? 0;
+
+      // ✅ Auto-add Night duration for hotels
+      if (propertyTypeId == 1 && durationPricing.isEmpty) {
+        _addDuration('Night');
+      }
+
       ref.read(getAmenitiesRoomProvider.notifier).getAmenitiesRoomViewApi();
       ref.read(getPropertyTypeProvider.notifier).propertyTypeApi();
     });
+  }
+
+  // ✅ Initialize pricing from existing room
+  void _initializePricingFromExistingRoom(RoomData room) {
+    // Main price as main duration
+    if (room.price.isNotEmpty && room.price != "0") {
+      _addDuration('Night'); // Default to Night
+      mrpControllers['Night']?.text = room.price;
+      if (room.discountRoom.isNotEmpty) {
+        discountControllers['Night']?.text = room.discountRoom;
+      }
+      _calculateFinalPrice('Night');
+    }
+
+    // Day price if different
+    if (room.roomPricePerDay.isNotEmpty &&
+        room.roomPricePerDay != "0" &&
+        room.roomPricePerDay != room.price) {
+      _addDuration('Day');
+      mrpControllers['Day']?.text = room.roomPricePerDay;
+      _calculateFinalPrice('Day');
+    }
   }
 
   Future<void> pickRoomImages() async {
@@ -100,7 +133,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
 
   void _removeImage(File f) => setState(() => roomImages.remove(f));
 
-  // ✅ Remove existing image
   void _removeExistingImage(int index) {
     setState(() {
       existingRoomImages.removeAt(index);
@@ -112,6 +144,54 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     if (label.toLowerCase().contains('semi')) return Icons.chair_outlined;
     if (label.toLowerCase().contains('non')) return Icons.home_outlined;
     return Icons.weekend;
+  }
+
+  // ✅ Duration management methods (same as AddRoomBottomSheet)
+  void _calculateFinalPrice(String duration) {
+    final mrp = double.tryParse(mrpControllers[duration]?.text ?? '0') ?? 0;
+    final discount = double.tryParse(discountControllers[duration]?.text ?? '0') ?? 0;
+
+    if (mrp > 0 && discount >= 0 && discount <= 100) {
+      final finalPrice = mrp - (mrp * discount / 100);
+      priceControllers[duration]?.text = finalPrice.toStringAsFixed(2);
+
+      setState(() {
+        durationPricing[duration] = PricingData(
+          mrp: mrp.toString(),
+          discount: discount.toString(),
+          finalPrice: finalPrice.toStringAsFixed(2),
+        );
+      });
+    }
+  }
+
+  void _addDuration(String duration) {
+    if (!durationPricing.containsKey(duration)) {
+      setState(() {
+        mrpControllers[duration] = TextEditingController();
+        discountControllers[duration] = TextEditingController();
+        priceControllers[duration] = TextEditingController();
+
+        durationPricing[duration] = PricingData(
+          mrp: '',
+          discount: '0',
+          finalPrice: '',
+        );
+      });
+    }
+  }
+
+  void _removeDuration(String duration) {
+    setState(() {
+      mrpControllers[duration]?.dispose();
+      discountControllers[duration]?.dispose();
+      priceControllers[duration]?.dispose();
+
+      mrpControllers.remove(duration);
+      discountControllers.remove(duration);
+      priceControllers.remove(duration);
+      durationPricing.remove(duration);
+    });
   }
 
   @override
@@ -164,9 +244,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        widget.initialRoom == null
-                            ? Icons.add_home
-                            : Icons.edit,
+                        Icons.edit,
                         color: AppColors.secondary(ref),
                         size: 24,
                       ),
@@ -176,16 +254,14 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          AppText(
-                            text: widget.initialRoom == null
-                                ? "Add New Room"
-                                : "Edit Room",
+                          const AppText(
+                            text: "Edit Room",
                             fontType: FontType.bold,
                             fontSize: 20,
                           ),
                           const SizedBox(height: 2),
                           AppText(
-                            text: "Fill in the details below",
+                            text: "Update room details",
                             fontSize: 13,
                             color: Colors.grey.shade600,
                           ),
@@ -251,26 +327,24 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                           ),
                         ),
                         value: selectedSubType,
-                        items: availableSubtypes
-                            .map(
-                              (e) => DropdownMenuItem(
-                            value: e,
-                            child: AppText(text: e, fontSize: 15),
-                          ),
-                        )
-                            .toList(),
+                        items: availableSubtypes.toSet().toList().map((label) {
+                          return DropdownMenuItem<String>(
+                            value: label,
+                            child: AppText(text: label, fontSize: 15),
+                          );
+                        }).toList(),
                         onChanged: (value) {
                           setState(() {
                             selectedSubType = value;
                             final roomTypeState = ref.read(getRoomTypeProvider);
                             if (roomTypeState is GetRoomTypeSuccess) {
-                              final matchingOption = roomTypeState.roomType.options?.firstWhere(
+                              final matchingOption = roomTypeState
+                                  .roomType.options
+                                  ?.firstWhere(
                                     (opt) => opt.label == value,
                                 orElse: () => RoomTypeOption(),
                               );
                               selectedSubTypeId = matchingOption?.id?.toString();
-                              print("Selected Label: $value");
-                              print("Selected ID: $selectedSubTypeId");
                             }
                           });
                         },
@@ -278,10 +352,10 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                     ),
                     const SizedBox(height: 20),
                   ],
+
                   _buildSectionLabel("Furnished Type", true),
                   const SizedBox(height: 12),
                   _buildFurnishedOptions(propertyTypeState),
-
                   const SizedBox(height: 20),
 
                   // Occupancy & Units Row
@@ -319,29 +393,54 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                     ],
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                  // Pricing Section
-                  _buildSectionLabel("Pricing", true),
-                  const SizedBox(height: 8),
-                  if (propertyTypeId == 1)
-                    _buildTextField(
-                      controller: _roomPriceController,
-                      hint: "per night",
-                      icon: Icons.currency_rupee,
-                    )
-                  else ...[
-                    _buildTextField(
-                      controller: _roomPriceController,
-                      hint: "Monthly rent",
-                      icon: Icons.currency_rupee,
+                  // ✅ Duration-based Pricing Section
+                  _buildSectionLabel("Pricing by Duration", true),
+                  const SizedBox(height: 4),
+                  AppText(
+                    text: "Add pricing for different durations",
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Duration Selector Chips
+                  _buildDurationSelector(propertyTypeId),
+
+                  const SizedBox(height: 16),
+
+                  // Pricing Cards for Selected Durations
+                  if (durationPricing.isNotEmpty) ...[
+                    ...durationPricing.keys.map((duration) =>
+                        _buildPricingCard(duration)
+                    ).toList(),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.schedule_outlined,
+                              size: 40,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 8),
+                            AppText(
+                              text: "Select a duration to add pricing",
+                              color: Colors.grey.shade600,
+                              fontSize: 14,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildTextField(
-                      controller: _roomPriceDayController,
-                      hint: "Daily rate (optional)",
-                      icon: Icons.calendar_today_outlined,
-                    )
                   ],
 
                   const SizedBox(height: 24),
@@ -474,18 +573,11 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      widget.initialRoom == null
-                          ? Icons.add_circle_outline
-                          : Icons.check_circle_outline,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 8),
+                  children: const [
+                    Icon(Icons.check_circle_outline, size: 22),
+                    SizedBox(width: 8),
                     AppText(
-                      text: widget.initialRoom == null
-                          ? "Save Room"
-                          : "Update Room",
+                      text: "Update Room",
                       color: Colors.white,
                       fontType: FontType.semiBold,
                       fontSize: 16,
@@ -500,33 +592,294 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
-  // ✅ New method for Room Images Section
+  // ✅ Duration Selector Widget
+  Widget _buildDurationSelector(int propertyTypeId) {
+    final durations = ['Night', 'Day', 'Month'];
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: durations.map((duration) {
+        final isSelected = durationPricing.containsKey(duration);
+        final isDisabled = propertyTypeId.toString() == "1" && duration != 'Night';
+
+        return InkWell(
+          onTap: isDisabled ? null : () {
+            if (isSelected) {
+              _removeDuration(duration);
+            } else {
+              _addDuration(duration);
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Opacity(
+            opacity: isDisabled ? 0.4 : 1.0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.secondary(ref) : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.secondary(ref)
+                      : Colors.grey.shade300,
+                  width: isSelected ? 2 : 1,
+                ),
+                boxShadow: isSelected
+                    ? [
+                  BoxShadow(
+                    color: AppColors.secondary(ref).withValues(alpha: 0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+                    : [],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    duration == 'Night'
+                        ? Icons.nightlight_round
+                        : duration == 'Day'
+                        ? Icons.wb_sunny
+                        : Icons.calendar_month,
+                    size: 18,
+                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                  ),
+                  const SizedBox(width: 8),
+                  AppText(
+                    text: duration,
+                    color: isSelected ? Colors.white : Colors.grey.shade800,
+                    fontType: isSelected ? FontType.semiBold : FontType.medium,
+                    fontSize: 14,
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.check_circle,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ✅ Pricing Card Widget
+  Widget _buildPricingCard(String duration) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.secondary(ref).withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary(ref).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  duration == 'Night'
+                      ? Icons.nightlight_round
+                      : duration == 'Day'
+                      ? Icons.wb_sunny
+                      : Icons.calendar_month,
+                  size: 20,
+                  color: AppColors.secondary(ref),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: AppText(
+                  text: "$duration Pricing",
+                  fontType: FontType.semiBold,
+                  fontSize: 16,
+                ),
+              ),
+              IconButton(
+                onPressed: () => _removeDuration(duration),
+                icon: const Icon(Icons.close, size: 20),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.shade50,
+                  foregroundColor: Colors.red.shade700,
+                  padding: const EdgeInsets.all(8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          AppText(
+            text: "MRP",
+            fontType: FontType.medium,
+            fontSize: 13,
+            color: Colors.grey.shade700,
+          ),
+          const SizedBox(height: 6),
+          _buildPricingTextField(
+            controller: mrpControllers[duration]!,
+            hint: "Enter MRP",
+            icon: Icons.currency_rupee,
+            onChanged: (value) => _calculateFinalPrice(duration),
+          ),
+          const SizedBox(height: 12),
+          AppText(
+            text: "Discount (%)",
+            fontType: FontType.medium,
+            fontSize: 13,
+            color: Colors.grey.shade700,
+          ),
+          const SizedBox(height: 6),
+          _buildPricingTextField(
+            controller: discountControllers[duration]!,
+            hint: "Enter discount percentage",
+            icon: Icons.percent,
+            onChanged: (value) => _calculateFinalPrice(duration),
+          ),
+          const SizedBox(height: 12),
+          AppText(
+            text: "Final Price",
+            fontType: FontType.medium,
+            fontSize: 13,
+            color: Colors.grey.shade700,
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.secondary(ref).withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.secondary(ref).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.price_check,
+                  color: AppColors.secondary(ref),
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppText(
+                    text: priceControllers[duration]!.text.isEmpty
+                        ? "Auto-calculated"
+                        : "₹${priceControllers[duration]!.text}",
+                    fontType: FontType.semiBold,
+                    fontSize: 16,
+                    color: priceControllers[duration]!.text.isEmpty
+                        ? Colors.grey.shade500
+                        : AppColors.secondary(ref),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPricingTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    required Function(String) onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          prefixIcon: Icon(icon, color: AppColors.secondary(ref), size: 22),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ✅ Room Images Section
   Widget _buildRoomImagesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionLabel("Room Images", false),
+        _buildSectionLabel("Room Images", true),
         const SizedBox(height: 4),
         AppText(
-          text: "Add photos to showcase your room",
+          text: "Add at least one photo to showcase your room",
           fontSize: 13,
           color: Colors.grey.shade600,
         ),
 
-        // ✅ Show existing room images if any
+        // Existing images
         if (existingRoomImages.isNotEmpty) ...[
           const SizedBox(height: 12),
-          _buildExistingImagesSection(),
+          const AppText(
+            text: "Existing Images:",
+            fontSize: 14,
+            fontType: FontType.medium,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: existingRoomImages.asMap().entries.map((entry) {
+              final index = entry.key;
+              final imageUrl = entry.value;
+              return _buildExistingImageCard(imageUrl, index);
+            }).toList(),
+          ),
         ],
 
-        // ✅ Show new images section
+        // New images
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.grey.shade50,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(
+              color: Colors.grey.shade200,
+              width: (existingRoomImages.isEmpty && roomImages.isEmpty) ? 2 : 1,
+            ),
           ),
           child: Wrap(
             spacing: 10,
@@ -538,13 +891,13 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
           ),
         ),
 
-        // ✅ Show total images count
+        // Total images count
         if (existingRoomImages.isNotEmpty || roomImages.isNotEmpty) ...[
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.secondary(ref).withOpacity(0.1),
+              color: AppColors.secondary(ref).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -569,31 +922,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
-  // ✅ Widget to show existing images from server
-  Widget _buildExistingImagesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const AppText(
-          text: "Existing Images:",
-          fontSize: 14,
-          fontType: FontType.medium,
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: existingRoomImages.asMap().entries.map((entry) {
-            final index = entry.key;
-            final imageUrl = entry.value;
-            return _buildExistingImageCard(imageUrl, index);
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  // ✅ Widget for existing image card (from URL)
+  // ✅ Existing image card
   Widget _buildExistingImageCard(String imageUrl, int index) {
     return Stack(
       children: [
@@ -638,10 +967,10 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
             onTap: () => _removeExistingImage(index),
             child: Container(
               padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.red,
                 shape: BoxShape.circle,
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(color: Colors.black26, blurRadius: 4),
                 ],
               ),
@@ -655,7 +984,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
+              color: Colors.black.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(6),
             ),
             child: const AppText(
@@ -669,7 +998,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
-  // ✅ Widget for new image card (File)
+  // ✅ New image card
   Widget _buildNewImageCard(File file) {
     return Stack(
       children: [
@@ -697,10 +1026,10 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
             onTap: () => _removeImage(file),
             child: Container(
               padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.red,
                 shape: BoxShape.circle,
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(color: Colors.black26, blurRadius: 4),
                 ],
               ),
@@ -749,7 +1078,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
-  // Build Furnished Options based on state
   Widget _buildFurnishedOptions(GetPropertyTypeState state) {
     if (state is GetPropertyTypeLoading || state is GetPropertyTypeInitial) {
       return _buildFurnishedLoading();
@@ -818,8 +1146,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                   AppText(
                     text: label,
                     color: sel ? Colors.white : Colors.grey.shade800,
-                    fontType:
-                    sel ? FontType.semiBold : FontType.medium,
+                    fontType: sel ? FontType.semiBold : FontType.medium,
                     fontSize: 14,
                   ),
                 ],
@@ -829,7 +1156,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
         }).toList(),
       );
     }
-
     return _buildFurnishedEmpty();
   }
 
@@ -890,7 +1216,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
-  // Furnished Type Loading State
   Widget _buildFurnishedLoading() {
     return Container(
         padding: const EdgeInsets.all(16),
@@ -917,11 +1242,10 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                 fontSize: 13,
               ),
             ],
-          )
-    ));
+          ),
+        ));
   }
 
-  // Furnished Type Empty State
   Widget _buildFurnishedEmpty() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -940,7 +1264,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
-  // Furnished Type Error State
   Widget _buildFurnishedError() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1080,62 +1403,110 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
+  // ✅ Updated _handleSave with duration pricing logic
   void _handleSave() {
-    if (selectedSubTypeId == null ||
-        selectedFurnished.isEmpty ||
-        _occupancyCont.text.trim().isEmpty ||
-        _availableUnitsCont.text.trim().isEmpty ||
-        _roomPriceController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.white),
-              SizedBox(width: 12),
-              Expanded(
-                child: AppText(
-                  text: "Please fill all required fields",
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red.shade600,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
+    // Validation
+    if (selectedSubTypeId == null || selectedSubTypeId!.isEmpty) {
+      _showError("Please select a room category");
       return;
     }
 
+    if (selectedFurnished.isEmpty) {
+      _showError("Please select a furnished type");
+      return;
+    }
+
+    if (_occupancyCont.text.trim().isEmpty) {
+      _showError("Please enter occupancy");
+      return;
+    }
+
+    if (_availableUnitsCont.text.trim().isEmpty) {
+      _showError("Please enter available units");
+      return;
+    }
+
+    if (durationPricing.isEmpty) {
+      _showError("Please add pricing for at least one duration");
+      return;
+    }
+
+    if (existingRoomImages.isEmpty && roomImages.isEmpty) {
+      _showError("Please add at least one room image");
+      return;
+    }
+
+    // Validate pricing fields
+    for (var duration in durationPricing.keys) {
+      final mrp = mrpControllers[duration]?.text.trim() ?? '';
+      if (mrp.isEmpty || double.tryParse(mrp) == null) {
+        _showError("Please enter valid MRP for $duration");
+        return;
+      }
+    }
+
     List<String> selectedAmenitiesIds = selectedRoomAmenities.keys.toList();
+
+    // Backend ke liye sirf 3 fields chahiye:
+    String mainPrice = "0";
+    String roomPricePerDay = "0";
+    String roomDiscountPercent = "0";
+
+    // Logic: Backend format ke according set karo
+    if (durationPricing.containsKey('Night')) {
+      mainPrice = durationPricing['Night']!.finalPrice;
+      roomDiscountPercent = durationPricing['Night']!.discount;
+    } else if (durationPricing.containsKey('Month')) {
+      mainPrice = durationPricing['Month']!.finalPrice;
+      roomDiscountPercent = durationPricing['Month']!.discount;
+    } else if (durationPricing.containsKey('Day')) {
+      mainPrice = durationPricing['Day']!.finalPrice;
+      roomDiscountPercent = durationPricing['Day']!.discount;
+    }
+
+    // roomPricePerDay: Agar Day pricing hai to use karo, warna main price
+    if (durationPricing.containsKey('Day')) {
+      roomPricePerDay = durationPricing['Day']!.finalPrice;
+    } else {
+      roomPricePerDay = mainPrice;
+    }
 
     final roomData = RoomData(
       roomType: selectedSubTypeId!,
       roomTypeName: selectedSubType!,
       furnished: selectedFurnished,
       occupancy: _occupancyCont.text.trim(),
-      price: _roomPriceController.text.trim(),
-      roomPricePerDay: _roomPriceDayController.text.trim(),
+      price: mainPrice, // Backend field
+      roomPricePerDay: roomPricePerDay, // Backend field
+      discountRoom: roomDiscountPercent, // Backend field
       isAvailable: isRoomAvailable,
       availableUnits: _availableUnitsCont.text.trim(),
       amenitiesIds: selectedAmenitiesIds,
       roomImages: roomImages,
-      // ✅ Pass existing images back
-      existingImages: existingRoomImages,
+      existingImages: existingRoomImages, // ✅ Pass existing images
     );
 
+    print("🎯 Updated Room Data for Backend:");
+    print("price: $mainPrice");
+    print("roomPricePerDay: $roomPricePerDay");
+    print("discountRoom: $roomDiscountPercent%");
+    print("existingImages: ${existingRoomImages.length}");
+    print("newImages: ${roomImages.length}");
+
     Navigator.of(context).pop(roomData);
+  }
+
+  void _showError(String message) {
+    Utils.show(message.toString(), context);
   }
 
   @override
   void dispose() {
     _occupancyCont.dispose();
     _availableUnitsCont.dispose();
-    _roomPriceController.dispose();
-    _roomPriceDayController.dispose();
+    mrpControllers.forEach((_, controller) => controller.dispose());
+    discountControllers.forEach((_, controller) => controller.dispose());
+    priceControllers.forEach((_, controller) => controller.dispose());
     super.dispose();
   }
 }

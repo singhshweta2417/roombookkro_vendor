@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:room_book_kro_vendor/core/routes/app_routes.dart';
 import 'package:room_book_kro_vendor/features/property/property_room/add_room_bottom_sheet.dart';
 import '../../../core/utils/utils.dart';
 import '../../auth/data/user_view.dart';
@@ -54,6 +55,7 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
     required bool isAvailable,
     required String pricePerNight,
     required String discount,
+    required String selectedRoomPrice,
     required List<RoomData> rooms,
     required BuildContext context,
   }) async
@@ -73,6 +75,7 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
         "landmark": landmark,
         "city": city,
         "state": state,
+        "selectedRoomPrice": selectedRoomPrice,
         "payAtProperty": payAtProperty,
         "checkIn": checkIn,
         "checkOut": checkOut,
@@ -134,6 +137,9 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
           MapEntry("roomPricePerDay[$r]", room.roomPricePerDay),
         );
         formData.fields.add(
+          MapEntry("discountRoom[$r]", room.discountRoom),
+        );
+        formData.fields.add(
           MapEntry("availableUnits[$r]", room.availableUnits),
         );
         formData.fields.add(
@@ -173,11 +179,24 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
           message: response["message"].toString(),
         );
         Utils.show(response["message"].toString(), context);
-        await Future.delayed(Duration(milliseconds: 100));
-        ref.read(bottomNavProvider.notifier).setIndex(2);
+        await Future.delayed(const Duration(milliseconds: 300));
+
         if (context.mounted) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
+          // Replace '/bottomNavigation' with your actual route name
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.bottomNavigationPage, // or '/bottom' or whatever your route is
+                (route) => false,
+          );
+
+          // Set Property tab after navigation
+          Future.delayed(const Duration(milliseconds: 100), () {
+            ref.read(bottomNavProvider.notifier).setIndex(2);
+          });}
+        // await Future.delayed(Duration(milliseconds: 100));
+        // ref.read(bottomNavProvider.notifier).setIndex(2);
+        // if (context.mounted) {
+        //   Navigator.of(context).popUntil((route) => route.isFirst);
+        // }
       } else {
         print("sdbfcjsd");
         super.state = AddPropertyError(response["message"].toString());
@@ -209,6 +228,7 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
     required List<File> propertyImages,
     required bool payAtProperty,
     required String pricePerMonth,
+    required String selectedRoomPrice,
     required String depositAmount,
     required List<String> amenitiesMain,
     required List<String> rules,
@@ -227,7 +247,8 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
     required String discount,
     required List<RoomData> rooms,
     required BuildContext context,
-  }) async {
+  }) async
+  {
     try {
       super.state = const AddPropertyLoading();
       final userPref = ref.read(userViewModelProvider);
@@ -242,6 +263,7 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
         "address": address,
         "additionalAddress": additionalAddress,
         "landmark": landmark,
+        "selectedRoomPrice": selectedRoomPrice,
         "city": city,
         "state": state,
         "pincode": pincode,
@@ -303,6 +325,9 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
           MapEntry("roomPricePerDay[$r]", room.roomPricePerDay),
         );
         formData.fields.add(
+          MapEntry("discountRoom[$r]", room.discountRoom),
+        );
+        formData.fields.add(
           MapEntry("availableUnits[$r]", room.availableUnits),
         );
         formData.fields.add(
@@ -352,11 +377,23 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
           message: response["message"].toString(),
         );
         Utils.show(response["message"].toString(), context);
-        await Future.delayed(Duration(milliseconds: 100));
-        ref.read(bottomNavProvider.notifier).setIndex(2);
+        await Future.delayed(const Duration(milliseconds: 300));
+
         if (context.mounted) {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRoutes.bottomNavigationPage,
+                (route) => false,
+          );
+
+          // Set Property tab after navigation
+          Future.delayed(const Duration(milliseconds: 100), () {
+            ref.read(bottomNavProvider.notifier).setIndex(2);
+          });}
+        // await Future.delayed(Duration(milliseconds: 100));
+        // ref.read(bottomNavProvider.notifier).setIndex(2);
+        // if (context.mounted) {
+        //   Navigator.of(context).popUntil((route) => route.isFirst);
+        // }
       } else {
         super.state = AddPropertyError(response["message"].toString());
         Utils.show(response["message"].toString(), context);
@@ -372,14 +409,14 @@ class RoomData {
   final String roomTypeName;
   final String furnished;
   final String occupancy;
-  final String price;
-  final String roomPricePerDay;
+  final String price; // Main price (backend ke liye)
+  final String roomPricePerDay; // Per day price (backend ke liye)
+  final String discountRoom; // Discount % (backend ke liye)
   final bool isAvailable;
   final String availableUnits;
   final List<String> amenitiesIds;
   final List<File> roomImages;
   final List<String>? existingImages;
-  final Map<String, PricingData> pricingDetails;
 
   RoomData({
     required this.roomType,
@@ -390,24 +427,44 @@ class RoomData {
     required this.roomPricePerDay,
     required this.isAvailable,
     required this.availableUnits,
+    required this.discountRoom,
     required this.amenitiesIds,
     required this.roomImages,
     this.existingImages,
-    this.pricingDetails = const {},
   });
 
   Map<String, dynamic> toJson() {
-    print(pricingDetails);
-    print("sdbfcsjdbjhsdb");
     return {
       "roomType": roomType,
       "furnished": furnished,
       "occupancy": occupancy,
       "price": price,
+      "discountRoom": discountRoom,
       "roomPricePerDay": roomPricePerDay,
       "isAvailable": isAvailable,
       "availableUnits": availableUnits,
       "roomAmenityIds": amenitiesIds,
+    };
+  }
+}
+
+// PricingData class sirf UI ke liye hai (backend ko nahi jaata)
+class PricingData {
+  final String mrp;
+  final String discount;
+  final String finalPrice;
+
+  PricingData({
+    required this.mrp,
+    required this.discount,
+    required this.finalPrice,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      "mrp": mrp,
+      "discount": discount,
+      "finalPrice": finalPrice,
     };
   }
 }
