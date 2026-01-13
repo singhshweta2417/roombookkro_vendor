@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:room_book_kro_vendor/core/utils/context_extensions.dart';
+import 'package:room_book_kro_vendor/features/home/home_screen.dart';
 import 'package:room_book_kro_vendor/features/profile/view_model/profile_view_model.dart';
 import '../../core/constants/app_fonts.dart';
 import '../../core/google_services/google_auth.dart';
@@ -37,6 +38,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userImage = (authState is ProfileSuccess && authState.profile != null)
         ? authState.profile!.userImage
         : "";
+    final vendorVerify =
+        (authState is ProfileSuccess && authState.profile != null)
+        ? authState.profile!.vendorVerify ?? false
+        : false;
     return CustomScaffold(
       appBar: CustomAppBar(
         autoImplyLeading: false,
@@ -68,8 +73,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              AppText(text: username.toString(), fontSize: 18, fontType: FontType.bold),
-              AppText(text:mail.toString(), color: Colors.grey),
+              AppText(
+                text: username.toString(),
+                fontSize: 18,
+                fontType: FontType.bold,
+              ),
+              AppText(text: mail.toString(), color: Colors.grey),
               const SizedBox(height: 20),
             ],
           ),
@@ -82,13 +91,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Navigator.pushNamed(context, AppRoutes.walletScreen);
           }, "My Wallet"),
           _menuTile(ref, Icons.account_balance, () {
-            Navigator.pushNamed(context, AppRoutes.addBankAccountScreen);
+            if (vendorVerify) {
+              Navigator.pushNamed(context, AppRoutes.addBankAccountScreen);
+            } else {
+              _showVerificationDialog(context);
+            }
           }, "Add Bank"),
           _menuTile(ref, Icons.person_outline, () {
-            Navigator.of(
-              context,
-              rootNavigator: true,
-            ).pushNamed(AppRoutes.personalProfileScreen);
+            if (vendorVerify) {
+              Navigator.pushNamed(context, AppRoutes.personalProfileScreen);
+            } else {
+              _showVerificationDialog(context);
+            }
           }, "Edit Profile"),
           Row(
             children: [
@@ -186,6 +200,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       onTap: onTap,
     );
   }
+}
+
+void _showVerificationDialog(context) {
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (BuildContext dialogContext) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: VerificationDialogContent(),
+      );
+    },
+  );
 }
 
 void _showLogoutDialog(BuildContext context, WidgetRef ref) {

@@ -123,12 +123,13 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
         _showSnackBar("Please add a description");
         return false;
       }
-    } else if (step == 1) {
-      if (selectedAmenities.isEmpty) {
-        _showSnackBar("Please select at least one facility");
-        return false;
-      }
     }
+    // else if (step == 1) {
+    //   if (selectedAmenities.isEmpty) {
+    //     _showSnackBar("Please select at least one facility");
+    //     return false;
+    //   }
+    // }
     return true;
   }
 
@@ -145,7 +146,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: AppText(text: message, fontType: FontType.medium),
+        content: AppText(text: message, fontType: FontType.medium,color: Colors.white,),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.red.shade700,
       ),
@@ -874,26 +875,29 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
               Wrap(
                 spacing: 10,
                 children: existingPropertyData!.images!.map((imageUrl) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      height: 90,
-                      width: 90,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl,
                         height: 90,
                         width: 90,
-                        color: Colors.grey.shade200,
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          height: 90,
+                          width: 90,
+                          color: Colors.grey.shade200,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                         ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        height: 90,
-                        width: 90,
-                        color: Colors.grey.shade200,
-                        child: const Icon(Icons.error),
+                        errorWidget: (context, url, error) => Container(
+                          height: 90,
+                          width: 90,
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.error),
+                        ),
                       ),
                     ),
                   );
@@ -908,13 +912,16 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
             ...propertyImages.map(
                   (file) => Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      file,
-                      height: 90,
-                      width: 90,
-                      fit: BoxFit.fill,
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        file,
+                        height: 90,
+                        width: 90,
+                        fit: BoxFit.fill,
+                      ),
                     ),
                   ),
                   Positioned(

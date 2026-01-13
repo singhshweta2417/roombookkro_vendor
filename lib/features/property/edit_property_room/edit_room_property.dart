@@ -39,9 +39,9 @@ class _FinalEditScreenPropertyState
   bool _isInitialized = false;
   bool payAtProperty = false;
   bool isAvailable = false;
-  int? selectedRoomForUser = 0; // ✅ ADDED
+  int? selectedRoomForUser = 0;
 
-  List<Map<String, dynamic>> _existingRoomImages = [];
+  final List<Map<String, dynamic>> _existingRoomImages = [];
 
   @override
   void initState() {
@@ -55,6 +55,7 @@ class _FinalEditScreenPropertyState
       _initializeFormData(args);
     });
   }
+
 
   void _initializeFormData(Map args) {
     if (_isInitialized) return;
@@ -73,33 +74,44 @@ class _FinalEditScreenPropertyState
 
       if (existingData.rooms != null && existingData.rooms!.isNotEmpty) {
         roomsList = existingData.rooms!.map((room) {
-          // ✅ Store existing room images
+
           final roomIndex = existingData.rooms!.indexOf(room);
+          List<String> roomExistingImages = [];
           if (room.images != null && room.images!.isNotEmpty) {
+            roomExistingImages = room.images!.cast<String>();
             _existingRoomImages.add({
               'roomId': room.roomId,
-              'images': room.images!.cast<String>(),
+              'images': roomExistingImages,
             });
           }
-
           return RoomData(
             roomTypeName: room.roomType ?? '',
             roomType: room.roomTypeId?.toString() ?? '',
             furnished: room.furnished ?? '',
+            roomOldMrp: room.roomOldMrp??"",
             occupancy: room.occupancy?.toString() ?? '1',
             price: room.price?.toString() ?? '0',
             availableUnits: room.availableUnits?.toString() ?? '0',
-            discountRoom: "",
-            amenitiesIds:
-            room.amenities?.map((a) => a.sId ?? '').toList() ?? [],
+            discountRoom: room.discountRoom?.toString() ?? "0",
+            amenitiesIds: room.amenities?.map((a) => a.sId ?? '').toList() ?? [],
             roomImages: [],
             roomPricePerDay: room.roomPricePerDay?.toString() ?? '0',
             isAvailable: true,
+            existingImages: roomExistingImages,
           );
         }).toList();
 
-        // ✅ ADDED: Auto-select first room
         selectedRoomForUser = 0;
+
+        print("\n📦 Loaded ${roomsList.length} rooms:");
+        for (int i = 0; i < roomsList.length; i++) {
+          final room = roomsList[i];
+          print("Room $i:");
+          print("  Type: ${room.roomTypeName}");
+          print("  Price: ${room.price}");
+          print("  Discount: ${room.discountRoom}%");
+          print("  Existing Images: ${room.existingImages?.length ?? 0}");
+        }
       }
 
       setState(() {
@@ -1159,7 +1171,6 @@ class _FinalEditScreenPropertyState
     );
   }
 
-// ✅ Enhanced Room Card matching AddRoomProperty style
   Widget _buildEnhancedRoomCard(
       int idx,
       RoomData r,
@@ -1828,35 +1839,50 @@ class _FinalEditScreenPropertyState
     );
   }
 
+
   Future<void> _editRoom(
       int index,
       selectedPropertyType,
       Map<int, List<String>> subTypeList,
       ) async {
     final existing = roomsList[index];
+
+    // ✅ DEBUG: Print existing room data before opening bottom sheet
+    print("\n🔧 Editing Room #$index:");
+    print("Room Type: ${existing.roomTypeName}");
+    print("Price: ${existing.price}");
+    print("Day Price: ${existing.roomPricePerDay}");
+    print("Discount: ${existing.discountRoom}%");
+    print("Existing Images: ${existing.existingImages?.length ?? 0}");
+    print("New Images: ${existing.roomImages.length}");
+    print("Amenities: ${existing.amenitiesIds.length}");
+
     final editedRoom = await showModalBottomSheet<RoomData>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: EditRoomBottomSheet(
-            propertyType: selectedPropertyType.toString(),
-            subTypeList: subTypeList,
-            initialRoom: existing,
-          ),
+        child: EditRoomBottomSheet(
+          propertyType: selectedPropertyType.toString(),
+          subTypeList: subTypeList,
+          initialRoom: existing,
         ),
       ),
     );
+
     if (editedRoom != null) {
       setState(() => roomsList[index] = editedRoom);
+
+      print("\n✅ Room Updated:");
+      print("Price: ${editedRoom.price}");
+      print("Discount: ${editedRoom.discountRoom}%");
+      print("Images: ${(editedRoom.existingImages?.length ?? 0) + editedRoom.roomImages.length}");
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(

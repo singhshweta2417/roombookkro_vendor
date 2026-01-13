@@ -214,33 +214,33 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                 fontSize: 12,
               ),
               const SizedBox(height: 4),
-              Row(
-                children: [
-                  AppText(
-                    text: isHotel
-                        ? '₹$pricePerNight'
-                        : propertyData?.propertyTypeId.toString() == "3" ||
-                              propertyData?.propertyTypeId.toString() == "4"
-                        ? ""
-                        : '₹$pricePerDay',
-                    fontSize: 24,
-                    fontType: FontType.bold,
-                    color: AppColors.secondary(ref),
-                  ),
-                  const SizedBox(width: 8),
-                  AppText(
-                    text: isHotel
-                        ? '/night'
-                        : propertyData?.propertyTypeId.toString() == "3" ||
-                              propertyData?.propertyTypeId.toString() == "4"
-                        ? ""
-                        : '/day',
-                    color: Colors.grey[600],
-                  ),
-                ],
-              ),
+              if (isHotel)
+                Row(
+                  children: [
+                    AppText(
+                      text: isHotel
+                          ? '₹$pricePerNight'
+                          : propertyData?.propertyTypeId.toString() == "3" ||
+                                propertyData?.propertyTypeId.toString() == "4"
+                          ? ""
+                          : '₹$pricePerDay',
+                      fontSize: 24,
+                      fontType: FontType.bold,
+                      color: AppColors.secondary(ref),
+                    ),
+                    const SizedBox(width: 8),
+                    AppText(
+                      text: isHotel
+                          ? '/night'
+                          : propertyData?.propertyTypeId.toString() == "3" ||
+                                propertyData?.propertyTypeId.toString() == "4"
+                          ? ""
+                          : '/day',
+                      color: Colors.grey[600],
+                    ),
+                  ],
+                ),
               if (!isHotel) ...[
-                const SizedBox(height: 4),
                 Row(
                   children: [
                     AppText(
@@ -471,7 +471,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                     runSpacing: 5,
                     children: roomAmenities.map((amenity) {
                       return SizedBox(
-                        width: context.sw * 0.25,
+                        width: context.sw * 0.3,
                         child: Chip(
                           labelPadding: EdgeInsets.zero,
                           label: Row(
@@ -486,7 +486,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                               SizedBox(width: context.sw * 0.01),
                               AppText(
                                 text: amenity.name?.toString() ?? '',
-                                fontSize: context.sh * 0.015,
+                                fontSize: context.sh * 0.0145,
                                 fontType: FontType.semiBold,
                               ),
                             ],
@@ -514,7 +514,8 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                           ),
                         ],
                       )
-                    : propertyType.toString() == "3" || propertyType.toString() == "4"
+                    : propertyType.toString() == "3" ||
+                          propertyType.toString() == "4"
                     ? Row(
                         children: [
                           AppText(

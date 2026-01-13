@@ -182,9 +182,8 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
         await Future.delayed(const Duration(milliseconds: 300));
 
         if (context.mounted) {
-          // Replace '/bottomNavigation' with your actual route name
           Navigator.of(context).pushNamedAndRemoveUntil(
-            AppRoutes.bottomNavigationPage, // or '/bottom' or whatever your route is
+            AppRoutes.bottomNavigationPage,
                 (route) => false,
           );
 
@@ -409,9 +408,10 @@ class RoomData {
   final String roomTypeName;
   final String furnished;
   final String occupancy;
-  final String price; // Main price (backend ke liye)
-  final String roomPricePerDay; // Per day price (backend ke liye)
-  final String discountRoom; // Discount % (backend ke liye)
+  final String price;
+  final String roomPricePerDay;
+  final String roomOldMrp;
+  final String discountRoom;
   final bool isAvailable;
   final String availableUnits;
   final List<String> amenitiesIds;
@@ -424,6 +424,7 @@ class RoomData {
     required this.furnished,
     required this.occupancy,
     required this.price,
+    required this.roomOldMrp,
     required this.roomPricePerDay,
     required this.isAvailable,
     required this.availableUnits,
@@ -441,6 +442,7 @@ class RoomData {
       "price": price,
       "discountRoom": discountRoom,
       "roomPricePerDay": roomPricePerDay,
+      "roomOldMrp": roomOldMrp,
       "isAvailable": isAvailable,
       "availableUnits": availableUnits,
       "roomAmenityIds": amenitiesIds,

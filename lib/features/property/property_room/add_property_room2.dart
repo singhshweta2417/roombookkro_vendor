@@ -75,12 +75,13 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
           _showSnackBar("Please add a description");
           return false;
         }
-      } else if (step == 1) {
-      if (selectedAmenities.isEmpty) {
-        _showSnackBar("Please select at least one facility");
-        return false;
       }
-    }
+    //   else if (step == 1) {
+    //   if (selectedAmenities.isEmpty) {
+    //     _showSnackBar("Please select at least one facility");
+    //     return false;
+    //   }
+    // }
     return true;
   }
 
@@ -97,7 +98,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: AppText(text:message,fontType: FontType.medium),
+        content: AppText(text:message,fontType: FontType.medium,color: Colors.white,),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.red.shade700,
       ),
@@ -745,13 +746,16 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyRoom2> {
             ...propertyImages.map(
                   (file) => Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      file,
-                      height: 90,
-                      width: 90,
-                      fit: BoxFit.fill,
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        file,
+                        height: 90,
+                        width: 90,
+                        fit: BoxFit.fill,
+                      ),
                     ),
                   ),
                   Positioned(

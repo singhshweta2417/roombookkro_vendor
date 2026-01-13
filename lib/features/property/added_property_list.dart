@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:room_book_kro_vendor/core/routes/app_routes.dart';
 import 'package:room_book_kro_vendor/core/utils/context_extensions.dart';
 import 'package:room_book_kro_vendor/core/widgets/custom_app_bar.dart';
+import 'package:room_book_kro_vendor/features/home/home_screen.dart';
+import 'package:room_book_kro_vendor/features/profile/view_model/profile_view_model.dart';
 import 'package:room_book_kro_vendor/features/property/property_model.dart';
 import 'package:room_book_kro_vendor/features/property/view_model/property_list_view_model.dart';
 import '../../../core/widgets/custom_scaffold.dart';
@@ -112,6 +114,11 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
           }
           if (state is GetPropertySuccess) {
             if (state.propertyLists.data?.isEmpty ?? true) {
+              final authState = ref.watch(updateProvider);
+              final vendorVerify =
+                  (authState is ProfileSuccess && authState.profile != null)
+                  ? authState.profile!.vendorVerify ?? false
+                  : false;
               return Center(
                 child: Container(
                   padding: EdgeInsets.all(40),
@@ -153,7 +160,11 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                       SizedBox(height: 24),
                       ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.pushNamed(context, AppRoutes.addRoom);
+                          if (vendorVerify) {
+                            Navigator.pushNamed(context, AppRoutes.addRoom);
+                          } else {
+                            _showVerificationDialog(); // ✨ Beautiful Dialog
+                          }
                         },
                         icon: Icon(Icons.add_rounded),
                         label: Text("Add Property"),
@@ -180,6 +191,20 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
           return const SizedBox();
         },
       ),
+    );
+  }
+
+  void _showVerificationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: VerificationDialogContent(),
+        );
+      },
     );
   }
 
@@ -576,7 +601,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                       ),
                     ),
                   ),
-
                 Positioned(
                   bottom: 10,
                   left: 10,
@@ -745,7 +769,11 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                                 children: [
                                   AppText(
                                     text:
-                                        "₹${hotel.propertyTypeId.toString() == "1" ? (hotel.pricePerNight.toString()) : (hotel.pricePerDay.toString())}",
+                                        "₹${hotel.propertyTypeId.toString() == "1"
+                                            ? hotel.pricePerNight.toString()
+                                            : hotel.propertyTypeId.toString() == "3"
+                                            ? hotel.pricePerMonth.toString()
+                                            : hotel.pricePerDay.toString()}",
                                     fontSize: 16,
                                     fontType: FontType.bold,
                                     color: Colors.green.shade700,
@@ -762,7 +790,11 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                                 ],
                               ),
                               AppText(
-                                text: hotel.propertyTypeId.toString() == "1" ? "/night" : "/day",
+                                text: hotel.propertyTypeId.toString() == "1"
+                                    ? "/night"
+                                    : hotel.propertyTypeId.toString() == "3"
+                                    ? "/month"
+                                    : "/day",
                                 fontSize: 9,
                                 color: Colors.grey.shade600,
                               ),

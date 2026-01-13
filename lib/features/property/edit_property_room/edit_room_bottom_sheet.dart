@@ -28,7 +28,8 @@ class EditRoomBottomSheet extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<EditRoomBottomSheet> createState() => _EditRoomBottomSheetState();
+  ConsumerState<EditRoomBottomSheet> createState() =>
+      _EditRoomBottomSheetState();
 }
 
 class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
@@ -43,40 +44,21 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
   List<File> roomImages = [];
   Map<String, String> selectedRoomAmenities = {};
 
-  // ✅ Duration pricing data (same as AddRoomBottomSheet)
   Map<String, PricingData> durationPricing = {};
   Map<String, TextEditingController> mrpControllers = {};
   Map<String, TextEditingController> discountControllers = {};
   Map<String, TextEditingController> priceControllers = {};
 
-  // ✅ Existing room images
   List<String> existingRoomImages = [];
 
+  bool _isInitialized = false;
   @override
   void initState() {
     super.initState();
 
-    // ✅ Load existing room images
-    if (widget.initialRoom != null && widget.initialRoom!.existingImages != null) {
-      existingRoomImages = List<String>.from(widget.initialRoom!.existingImages ?? []);
-    }
-
+    // ✅ Initialize room data synchronously
     if (widget.initialRoom != null) {
-      final r = widget.initialRoom!;
-      selectedSubTypeId = r.roomType;
-      selectedSubType = r.roomTypeName;
-      selectedFurnished = r.furnished;
-      _occupancyCont.text = r.occupancy;
-      _availableUnitsCont.text = r.availableUnits;
-      isRoomAvailable = r.isAvailable;
-      roomImages = List<File>.from(r.roomImages);
-
-      for (String amenityId in r.amenitiesIds) {
-        selectedRoomAmenities[amenityId] = amenityId;
-      }
-
-      // ✅ Initialize pricing from existing room data
-      _initializePricingFromExistingRoom(r);
+      _initializeRoomData(widget.initialRoom!);
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -84,8 +66,8 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
           ? widget.propertyType
           : int.tryParse(widget.propertyType.toString()) ?? 0;
 
-      // ✅ Auto-add Night duration for hotels
-      if (propertyTypeId == 1 && durationPricing.isEmpty) {
+      // Only auto-add Night for NEW rooms in hotels
+      if (propertyTypeId == 1 && widget.initialRoom == null) {
         _addDuration('Night');
       }
 
@@ -94,25 +76,119 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     });
   }
 
-  // ✅ Initialize pricing from existing room
-  void _initializePricingFromExistingRoom(RoomData room) {
-    // Main price as main duration
-    if (room.price.isNotEmpty && room.price != "0") {
-      _addDuration('Night'); // Default to Night
-      mrpControllers['Night']?.text = room.price;
-      if (room.discountRoom.isNotEmpty) {
-        discountControllers['Night']?.text = room.discountRoom;
+  void _initializeRoomData(RoomData room) {
+    if (_isInitialized) return;
+
+    print("\n🔍 Initializing Room Data:");
+    print("Room Type ID: ${room.roomType}");
+    print("Room Type Name: ${room.roomTypeName}");
+
+    // ✅ FIX: Set the ID first, THEN the name
+    selectedSubTypeId = room.roomType;
+    selectedSubType = room.roomTypeName;
+
+    // Verify the ID exists in available options
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final roomTypeState = ref.read(getRoomTypeProvider);
+      if (roomTypeState is GetRoomTypeSuccess) {
+        final matchingOption = roomTypeState
+            .roomType
+            .options
+            ?.firstWhere(
+              (opt) => opt.id?.toString() == selectedSubTypeId,
+          orElse: () => RoomTypeOption(),
+        );
+
+        if (matchingOption?.id == null) {
+          print("⚠️ Warning: Room type ID $selectedSubTypeId not found in options");
+          // Reset to first available option if current one doesn't exist
+          if (roomTypeState.roomType.options?.isNotEmpty ?? false) {
+            setState(() {
+              selectedSubTypeId = roomTypeState.roomType.options!.first.id?.toString();
+              selectedSubType = roomTypeState.roomType.options!.first.label;
+            });
+          }
+        } else {
+          print("✅ Room type validated: ${matchingOption?.label}");
+        }
       }
-      _calculateFinalPrice('Night');
+    });
+
+    selectedFurnished = room.furnished;
+    _occupancyCont.text = room.occupancy;
+    _availableUnitsCont.text = room.availableUnits;
+
+    // Images
+    if (room.existingImages != null) {
+      existingRoomImages = List<String>.from(room.existingImages!);
+    }
+    if (room.roomImages.isNotEmpty) {
+      roomImages = List<File>.from(room.roomImages);
     }
 
-    // Day price if different
+    // Amenities
+    for (String amenityId in room.amenitiesIds) {
+      selectedRoomAmenities[amenityId] = amenityId;
+    }
+
+    // Initialize pricing
+    _initializePricing(room);
+
+    _isInitialized = true;
+
+    print("✅ Room data initialized successfully");
+    print("Selected ID: $selectedSubTypeId");
+    print("Selected Name: $selectedSubType");
+  }
+
+  void _initializePricing(RoomData room) {
+    final discount = double.tryParse(room.discountRoom) ?? 0;
+
+    // Night pricing
+    if (room.price.isNotEmpty && room.price != "0") {
+      final finalPrice = double.tryParse(room.price) ?? 0;
+      if (finalPrice > 0) {
+        _addDuration('Night'); // This creates controllers
+
+        double mrp = discount > 0 && discount < 100
+            ? finalPrice / (1 - discount / 100)
+            : finalPrice;
+
+        // ✅ Set values immediately after controllers exist
+        mrpControllers['Night']!.text = mrp.toStringAsFixed(0);
+        discountControllers['Night']!.text = discount.toStringAsFixed(0);
+        priceControllers['Night']!.text = finalPrice.toStringAsFixed(0);
+
+        durationPricing['Night'] = PricingData(
+          mrp: mrp.toStringAsFixed(0),
+          discount: discount.toStringAsFixed(0),
+          finalPrice: finalPrice.toStringAsFixed(0),
+        );
+      }
+    }
+
+    // Day pricing
     if (room.roomPricePerDay.isNotEmpty &&
         room.roomPricePerDay != "0" &&
         room.roomPricePerDay != room.price) {
-      _addDuration('Day');
-      mrpControllers['Day']?.text = room.roomPricePerDay;
-      _calculateFinalPrice('Day');
+      final finalPrice = double.tryParse(room.roomPricePerDay) ?? 0;
+      if (finalPrice > 0) {
+        _addDuration('Day');
+
+        double mrp = discount > 0 && discount < 100
+            ? finalPrice / (1 - discount / 100)
+            : finalPrice;
+
+        mrpControllers['Day']!.text = mrp.toStringAsFixed(0);
+        discountControllers['Day']!.text = discount.toStringAsFixed(0);
+        priceControllers['Day']!.text = finalPrice.toStringAsFixed(0);
+
+        durationPricing['Day'] = PricingData(
+          mrp: mrp.toStringAsFixed(0),
+          discount: discount.toStringAsFixed(0),
+          finalPrice: finalPrice.toStringAsFixed(0),
+        );
+      }
     }
   }
 
@@ -146,10 +222,10 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     return Icons.weekend;
   }
 
-  // ✅ Duration management methods (same as AddRoomBottomSheet)
   void _calculateFinalPrice(String duration) {
     final mrp = double.tryParse(mrpControllers[duration]?.text ?? '0') ?? 0;
-    final discount = double.tryParse(discountControllers[duration]?.text ?? '0') ?? 0;
+    final discount =
+        double.tryParse(discountControllers[duration]?.text ?? '0') ?? 0;
 
     if (mrp > 0 && discount >= 0 && discount <= 100) {
       final finalPrice = mrp - (mrp * discount / 100);
@@ -212,7 +288,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag Handle & Header
           Container(
             padding: EdgeInsets.symmetric(
               horizontal: context.sw * 0.04,
@@ -280,8 +355,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
               ],
             ),
           ),
-
-          // Scrollable Content
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(
@@ -291,7 +364,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Category Section
                   if (availableSubtypes.isNotEmpty) ...[
                     _buildSectionLabel("Room Category", true),
                     const SizedBox(height: 8),
@@ -326,25 +398,42 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                             vertical: 16,
                           ),
                         ),
-                        value: selectedSubType,
+                        // ✅ FIX: Use the ID as value instead of the label
+                        value: selectedSubTypeId,
                         items: availableSubtypes.toSet().toList().map((label) {
+                          // Get the corresponding ID for this label
+                          final roomTypeState = ref.read(getRoomTypeProvider);
+                          String? itemId;
+                          if (roomTypeState is GetRoomTypeSuccess) {
+                            final matchingOption = roomTypeState
+                                .roomType
+                                .options
+                                ?.firstWhere(
+                                  (opt) => opt.label == label,
+                              orElse: () => RoomTypeOption(),
+                            );
+                            itemId = matchingOption?.id?.toString();
+                          }
+
                           return DropdownMenuItem<String>(
-                            value: label,
+                            value: itemId, // ✅ Use ID as value
                             child: AppText(text: label, fontSize: 15),
                           );
                         }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            selectedSubType = value;
+                            selectedSubTypeId = value;
+                            // Update the label name for display
                             final roomTypeState = ref.read(getRoomTypeProvider);
                             if (roomTypeState is GetRoomTypeSuccess) {
                               final matchingOption = roomTypeState
-                                  .roomType.options
+                                  .roomType
+                                  .options
                                   ?.firstWhere(
-                                    (opt) => opt.label == value,
+                                    (opt) => opt.id?.toString() == value,
                                 orElse: () => RoomTypeOption(),
                               );
-                              selectedSubTypeId = matchingOption?.id?.toString();
+                              selectedSubType = matchingOption?.label;
                             }
                           });
                         },
@@ -353,12 +442,11 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                     const SizedBox(height: 20),
                   ],
 
+
                   _buildSectionLabel("Furnished Type", true),
                   const SizedBox(height: 12),
                   _buildFurnishedOptions(propertyTypeState),
                   const SizedBox(height: 20),
-
-                  // Occupancy & Units Row
                   Row(
                     children: [
                       Expanded(
@@ -394,8 +482,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                   ),
 
                   const SizedBox(height: 24),
-
-                  // ✅ Duration-based Pricing Section
                   _buildSectionLabel("Pricing by Duration", true),
                   const SizedBox(height: 4),
                   AppText(
@@ -404,17 +490,12 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                     color: Colors.grey.shade600,
                   ),
                   const SizedBox(height: 12),
-
-                  // Duration Selector Chips
                   _buildDurationSelector(propertyTypeId),
-
                   const SizedBox(height: 16),
-
-                  // Pricing Cards for Selected Durations
                   if (durationPricing.isNotEmpty) ...[
-                    ...durationPricing.keys.map((duration) =>
-                        _buildPricingCard(duration)
-                    ).toList(),
+                    ...durationPricing.keys.map(
+                      (duration) => _buildPricingCard(duration),
+                    ),
                   ] else ...[
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -444,8 +525,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                   ],
 
                   const SizedBox(height: 24),
-
-                  // Room Amenities
                   _buildSectionLabel("Room Facilities", false),
                   const SizedBox(height: 12),
                   roomAmenitiesState.when(
@@ -530,19 +609,13 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                     },
                     error: (error) => _buildErrorState(ref),
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Room Images Section
                   _buildRoomImagesSection(),
-
                   const SizedBox(height: 30),
                 ],
               ),
             ),
           ),
-
-          // Bottom Action Button
           Container(
             padding: EdgeInsets.symmetric(
               horizontal: context.sw * 0.04,
@@ -592,25 +665,26 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
-  // ✅ Duration Selector Widget
   Widget _buildDurationSelector(int propertyTypeId) {
     final durations = ['Night', 'Day', 'Month'];
-
     return Wrap(
       spacing: 10,
       runSpacing: 10,
       children: durations.map((duration) {
         final isSelected = durationPricing.containsKey(duration);
-        final isDisabled = propertyTypeId.toString() == "1" && duration != 'Night';
+        final isDisabled =
+            propertyTypeId.toString() == "1" && duration != 'Night';
 
         return InkWell(
-          onTap: isDisabled ? null : () {
-            if (isSelected) {
-              _removeDuration(duration);
-            } else {
-              _addDuration(duration);
-            }
-          },
+          onTap: isDisabled
+              ? null
+              : () {
+                  if (isSelected) {
+                    _removeDuration(duration);
+                  } else {
+                    _addDuration(duration);
+                  }
+                },
           borderRadius: BorderRadius.circular(12),
           child: Opacity(
             opacity: isDisabled ? 0.4 : 1.0,
@@ -627,12 +701,14 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                 ),
                 boxShadow: isSelected
                     ? [
-                  BoxShadow(
-                    color: AppColors.secondary(ref).withValues(alpha: 0.2),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
+                        BoxShadow(
+                          color: AppColors.secondary(
+                            ref,
+                          ).withValues(alpha: 0.2),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
                     : [],
               ),
               child: Row(
@@ -679,7 +755,9 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.secondary(ref).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: AppColors.secondary(ref).withValues(alpha: 0.3),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -902,14 +980,11 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.image,
-                  color: AppColors.secondary(ref),
-                  size: 16,
-                ),
+                Icon(Icons.image, color: AppColors.secondary(ref), size: 16),
                 const SizedBox(width: 8),
                 AppText(
-                  text: "Total: ${existingRoomImages.length + roomImages.length} images",
+                  text:
+                      "Total: ${existingRoomImages.length + roomImages.length} images",
                   fontSize: 13,
                   color: AppColors.secondary(ref),
                   fontType: FontType.medium,
@@ -970,9 +1045,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
               decoration: const BoxDecoration(
                 color: Colors.red,
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(color: Colors.black26, blurRadius: 4),
-                ],
+                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
               ),
               child: const Icon(Icons.close, size: 14, color: Colors.white),
             ),
@@ -1011,12 +1084,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.file(
-              file,
-              width: 90,
-              height: 90,
-              fit: BoxFit.cover,
-            ),
+            child: Image.file(file, width: 90, height: 90, fit: BoxFit.cover),
           ),
         ),
         Positioned(
@@ -1029,9 +1097,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
               decoration: const BoxDecoration(
                 color: Colors.red,
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(color: Colors.black26, blurRadius: 4),
-                ],
+                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
               ),
               child: const Icon(Icons.close, size: 14, color: Colors.white),
             ),
@@ -1101,59 +1167,61 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
         children: furnishedOptions
             .where((option) => option.isActive == true)
             .map((option) {
-          final label = option.label ?? '';
-          final value = option.value ?? '';
-          final icon = _getFurnishedIcon(label);
-          final sel = selectedFurnished == value;
+              final label = option.label ?? '';
+              final value = option.value ?? '';
+              final icon = _getFurnishedIcon(label);
+              final sel = selectedFurnished == value;
 
-          return InkWell(
-            onTap: () => setState(() => selectedFurnished = value),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                color: sel ? AppColors.secondary(ref) : Colors.white,
+              return InkWell(
+                onTap: () => setState(() => selectedFurnished = value),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: sel
-                      ? AppColors.secondary(ref)
-                      : Colors.grey.shade300,
-                  width: sel ? 2 : 1,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: sel ? AppColors.secondary(ref) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: sel
+                          ? AppColors.secondary(ref)
+                          : Colors.grey.shade300,
+                      width: sel ? 2 : 1,
+                    ),
+                    boxShadow: sel
+                        ? [
+                            BoxShadow(
+                              color: AppColors.secondary(
+                                ref,
+                              ).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 20,
+                        color: sel ? Colors.white : Colors.grey.shade700,
+                      ),
+                      const SizedBox(width: 8),
+                      AppText(
+                        text: label,
+                        color: sel ? Colors.white : Colors.grey.shade800,
+                        fontType: sel ? FontType.semiBold : FontType.medium,
+                        fontSize: 14,
+                      ),
+                    ],
+                  ),
                 ),
-                boxShadow: sel
-                    ? [
-                  BoxShadow(
-                    color: AppColors.secondary(ref)
-                        .withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-                    : [],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    icon,
-                    size: 20,
-                    color: sel ? Colors.white : Colors.grey.shade700,
-                  ),
-                  const SizedBox(width: 8),
-                  AppText(
-                    text: label,
-                    color: sel ? Colors.white : Colors.grey.shade800,
-                    fontType: sel ? FontType.semiBold : FontType.medium,
-                    fontSize: 14,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
+              );
+            })
+            .toList(),
       );
     }
     return _buildFurnishedEmpty();
@@ -1218,32 +1286,33 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
 
   Widget _buildFurnishedLoading() {
     return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.secondary(ref),
+              ),
+            ),
+            const SizedBox(width: 12),
+            AppText(
+              text: "Loading options...",
+              color: Colors.grey.shade600,
+              fontSize: 13,
+            ),
+          ],
         ),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.secondary(ref),
-                ),
-              ),
-              const SizedBox(width: 12),
-              AppText(
-                text: "Loading options...",
-                color: Colors.grey.shade600,
-                fontSize: 13,
-              ),
-            ],
-          ),
-        ));
+      ),
+    );
   }
 
   Widget _buildFurnishedEmpty() {
@@ -1447,12 +1516,10 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
 
     List<String> selectedAmenitiesIds = selectedRoomAmenities.keys.toList();
 
-    // Backend ke liye sirf 3 fields chahiye:
     String mainPrice = "0";
     String roomPricePerDay = "0";
     String roomDiscountPercent = "0";
 
-    // Logic: Backend format ke according set karo
     if (durationPricing.containsKey('Night')) {
       mainPrice = durationPricing['Night']!.finalPrice;
       roomDiscountPercent = durationPricing['Night']!.discount;
@@ -1464,7 +1531,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
       roomDiscountPercent = durationPricing['Day']!.discount;
     }
 
-    // roomPricePerDay: Agar Day pricing hai to use karo, warna main price
     if (durationPricing.containsKey('Day')) {
       roomPricePerDay = durationPricing['Day']!.finalPrice;
     } else {
@@ -1476,23 +1542,21 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
       roomTypeName: selectedSubType!,
       furnished: selectedFurnished,
       occupancy: _occupancyCont.text.trim(),
-      price: mainPrice, // Backend field
-      roomPricePerDay: roomPricePerDay, // Backend field
-      discountRoom: roomDiscountPercent, // Backend field
+      roomOldMrp: mrpControllers.toString(),
+      price: mainPrice,
+      roomPricePerDay: roomPricePerDay,
+      discountRoom: roomDiscountPercent,
       isAvailable: isRoomAvailable,
       availableUnits: _availableUnitsCont.text.trim(),
-      amenitiesIds: selectedAmenitiesIds,
+      amenitiesIds: selectedRoomAmenities.keys.toList(),
       roomImages: roomImages,
-      existingImages: existingRoomImages, // ✅ Pass existing images
+      existingImages: existingRoomImages,
     );
-
-    print("🎯 Updated Room Data for Backend:");
+    print("🎯 Room Data for Backend:");
     print("price: $mainPrice");
     print("roomPricePerDay: $roomPricePerDay");
+    print("sdvchsvdcjhsvchj: ${mrpControllers.toString()}");
     print("discountRoom: $roomDiscountPercent%");
-    print("existingImages: ${existingRoomImages.length}");
-    print("newImages: ${roomImages.length}");
-
     Navigator.of(context).pop(roomData);
   }
 
@@ -1511,7 +1575,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
   }
 }
 
-// ✅ Extension for state handling
 extension GetAmenitiesRoomStateExtension on GetAmenitiesRoomState {
   T when<T>({
     required T Function() initial,

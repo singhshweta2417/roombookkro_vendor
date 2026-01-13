@@ -188,7 +188,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       {
         "icon": Icons.local_offer_rounded,
         "title": "Offers",
-        "onTap": () => Navigator.pushNamed(context, AppRoutes.offerScreen),
+        "onTap": () {
+          if (vendorVerify) {
+            Navigator.pushNamed(context, AppRoutes.offerScreen);
+          } else {
+            _showVerificationDialog();
+          }
+        },
         "color": Colors.green,
       },
     ];

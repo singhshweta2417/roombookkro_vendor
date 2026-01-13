@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -25,25 +26,75 @@ class NotificationService {
 
   /// Request notification permission
   Future<void> requestedNotificationPermission() async {
-    await Permission.notification.request();
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    try {
+      await Permission.notification.request();
+      NotificationSettings settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint("✅ User granted notification permission");
-    } else {
-      debugPrint("❌ Notification permission denied");
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        debugPrint("✅ User granted notification permission");
+      } else {
+        debugPrint("❌ Notification permission denied");
+      }
+    } catch (e) {
+      debugPrint("⚠️ Error requesting notification permission: $e");
     }
   }
 
-  /// Get FCM token
-  Future<String?> getDeviceToken() async {
-    String? token = await messaging.getToken();
-    debugPrint("📱 FCM Token: $token");
-    return token;
+  /// Get FCM token with retry logic and error handling
+  Future<String?> getDeviceToken({int maxRetries = 3}) async {
+    for (int attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        String? token = await messaging.getToken().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw Exception('Token retrieval timeout');
+          },
+        );
+
+        if (token != null) {
+          debugPrint("📱 FCM Token: $token");
+          return token;
+        }
+
+        debugPrint("⚠️ Token is null, attempt ${attempt + 1}/$maxRetries");
+      } on FirebaseException catch (e) {
+        debugPrint("🔥 Firebase Error (attempt ${attempt + 1}/$maxRetries): ${e.code} - ${e.message}");
+
+        if (e.code == 'unavailable' || e.message?.contains('SERVICE_NOT_AVAILABLE') == true) {
+          debugPrint("⚠️ FCM service unavailable. This might be due to:");
+          debugPrint("   - No internet connection");
+          debugPrint("   - Google Play Services outdated/unavailable");
+          debugPrint("   - Temporary Firebase service issue");
+        }
+      } catch (e) {
+        debugPrint("❌ Error getting FCM token (attempt ${attempt + 1}/$maxRetries): $e");
+      }
+
+      // Wait before retry (exponential backoff)
+      if (attempt < maxRetries - 1) {
+        await Future.delayed(Duration(seconds: 2 * (attempt + 1)));
+      }
+    }
+
+    debugPrint("⚠️ Failed to get FCM token after $maxRetries attempts. Continuing without token.");
+    return null;
+  }
+
+  /// Get token without blocking (for non-critical operations)
+  Future<String?> getDeviceTokenSafe() async {
+    try {
+      return await getDeviceToken(maxRetries: 1).timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => null,
+      );
+    } catch (e) {
+      debugPrint("⚠️ Safe token retrieval failed: $e");
+      return null;
+    }
   }
 
   /// Init local notifications
@@ -131,5 +182,17 @@ class NotificationService {
   /// Navigate on notification tap
   Future<void> handleMassage(RemoteMessage message) async {
     navigatorKey.currentState?.pushNamed(AppRoutes.notificationScreen);
+  }
+
+  /// Check if FCM is available
+  Future<bool> isFCMAvailable() async {
+    try {
+      final token = await messaging.getToken().timeout(
+        const Duration(seconds: 3),
+      );
+      return token != null;
+    } catch (e) {
+      return false;
+    }
   }
 }

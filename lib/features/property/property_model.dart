@@ -283,6 +283,8 @@ class Rooms {
   dynamic roomPricePerDay;
   List<Amenities>? amenities;
   dynamic availableUnits;
+  dynamic discountRoom;
+  dynamic roomOldMrp;
   List<String>? images;
   bool? isAvailable;
   dynamic sId;
@@ -298,6 +300,8 @@ class Rooms {
     this.amenities,
     this.availableUnits,
     this.images,
+    this.discountRoom,
+    this.roomOldMrp,
     this.isAvailable,
     this.sId,
   });
@@ -317,8 +321,10 @@ class Rooms {
       });
     }
     availableUnits = json['availableUnits'];
+    discountRoom = json['discountRoom'];
     images = json['images'].cast<String>();
     isAvailable = json['isAvailable'];
+    roomOldMrp = json['roomOldMrp'];
     sId = json['_id'];
   }
 
@@ -336,6 +342,8 @@ class Rooms {
     }
     data['availableUnits'] = availableUnits;
     data['images'] = images;
+    data['discountRoom'] = discountRoom;
+    data['roomOldMrp'] = roomOldMrp;
     data['isAvailable'] = isAvailable;
     data['_id'] = sId;
     return data;

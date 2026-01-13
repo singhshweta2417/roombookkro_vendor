@@ -14,8 +14,6 @@ import '../view_model/amenities_room_view_model.dart';
 import '../view_model/get_property_type_view_model.dart';
 import '../view_model/room_type_view_model.dart';
 
-
-
 class AddRoomBottomSheet extends ConsumerStatefulWidget {
   final dynamic propertyType;
   final Map<int, List<String>> subTypeList;
@@ -107,7 +105,8 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
 
   void _calculateFinalPrice(String duration) {
     final mrp = double.tryParse(mrpControllers[duration]?.text ?? '0') ?? 0;
-    final discount = double.tryParse(discountControllers[duration]?.text ?? '0') ?? 0;
+    final discount =
+        double.tryParse(discountControllers[duration]?.text ?? '0') ?? 0;
 
     if (mrp > 0 && discount >= 0 && discount <= 100) {
       final finalPrice = mrp - (mrp * discount / 100);
@@ -301,12 +300,14 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                             selectedSubType = value;
                             if (roomTypeState is GetRoomTypeSuccess) {
                               final matchingOption = roomTypeState
-                                  .roomType.options
+                                  .roomType
+                                  .options
                                   ?.firstWhere(
                                     (opt) => opt.label == value,
-                                orElse: () => RoomTypeOption(),
-                              );
-                              selectedSubTypeId = matchingOption?.id?.toString();
+                                    orElse: () => RoomTypeOption(),
+                                  );
+                              selectedSubTypeId = matchingOption?.id
+                                  ?.toString();
                             }
                           });
                         },
@@ -319,6 +320,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                   _buildFurnishedOptions(propertyTypeState),
                   const SizedBox(height: 20),
                   // Occupancy & Units Row
+
                   Row(
                     children: [
                       Expanded(
@@ -342,7 +344,10 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                           children: [
                             _buildSectionLabel("Occupancy", true),
                             const SizedBox(height: 8),
-                            _buildTextField(
+                            // Property Type 4 ke liye locked occupancy
+                            propertyTypeId == 4
+                                ? _buildLockedOccupancyField()
+                                : _buildTextField(
                               controller: _occupancyCont,
                               hint: "e.g., 2",
                               icon: Icons.people_outline,
@@ -354,8 +359,6 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                   ),
 
                   const SizedBox(height: 24),
-
-                  // Duration-based Pricing Section
                   _buildSectionLabel("Pricing by Duration", true),
                   const SizedBox(height: 4),
                   AppText(
@@ -364,17 +367,13 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                     color: Colors.grey.shade600,
                   ),
                   const SizedBox(height: 12),
-
-                  // Duration Selector Chips
                   _buildDurationSelector(propertyTypeId),
 
                   const SizedBox(height: 16),
-
-                  // Pricing Cards for Selected Durations
                   if (durationPricing.isNotEmpty) ...[
-                    ...durationPricing.keys.map((duration) =>
-                        _buildPricingCard(duration)
-                    ).toList(),
+                    ...durationPricing.keys.map(
+                      (duration) => _buildPricingCard(duration),
+                    ),
                   ] else ...[
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -584,17 +583,77 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
       ),
     );
   }
+// Add this method after _buildTextField method
 
+  Widget _buildLockedOccupancyField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: TextEditingController(text: "1"),
+        enabled: false, // Disabled field
+        keyboardType: TextInputType.number,
+        style: TextStyle(
+          color: Colors.grey.shade600,
+          fontWeight: FontWeight.w600,
+        ),
+        decoration: InputDecoration(
+          hintText: "1 person",
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          prefixIcon: Icon(
+            Icons.people_outline,
+            color: Colors.grey.shade500,
+            size: 22,
+          ),
+          suffixIcon: Icon(
+            Icons.lock_outline,
+            color: Colors.grey.shade400,
+            size: 18,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.grey.shade100,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+      ),
+    );
+  }
   // Duration Selector Widget
   Widget _buildDurationSelector(int propertyTypeId) {
     final durations = ['Night', 'Day', 'Month'];
-
     return Wrap(
       spacing: 10,
       runSpacing: 10,
       children: durations.map((duration) {
         final isSelected = durationPricing.containsKey(duration);
-        final isDisabled = propertyTypeId.toString() == "1" && duration != 'Night';
+
+        // Property ID = 1: Sirf Night enable
+        // Property ID = 3: Sirf Month enable
+        // Baki IDs: Night aur Day disable, Month enable
+        final isDisabled = propertyTypeId.toString() == "1"
+            ? duration != 'Night'  // ID=1: Sirf Night enable
+            : propertyTypeId.toString() == "3"
+            ? duration != 'Month'  // ID=3: Sirf Month enable
+            : duration == 'Night'; // Baki IDs: Night disable, Day aur Month enable
+
+        print(propertyTypeId.toString());
+        print("propertyTypeId.toString()");
 
         return InkWell(
           onTap: isDisabled ? null : () {
@@ -672,7 +731,9 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.secondary(ref).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: AppColors.secondary(ref).withValues(alpha: 0.3),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -744,6 +805,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
           ),
           const SizedBox(height: 6),
           _buildPricingTextField(
+            maxLength: 2,
             controller: discountControllers[duration]!,
             hint: "Enter discount percentage",
             icon: Icons.percent,
@@ -795,6 +857,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
   }
 
   Widget _buildPricingTextField({
+    int?maxLength,
     required TextEditingController controller,
     required String hint,
     required IconData icon,
@@ -810,7 +873,9 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
         controller: controller,
         keyboardType: TextInputType.number,
         onChanged: onChanged,
+        maxLength: maxLength,
         decoration: InputDecoration(
+          counterText: "",
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           prefixIcon: Icon(icon, color: AppColors.secondary(ref), size: 22),
@@ -852,59 +917,61 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
         children: furnishedOptions
             .where((option) => option.isActive == true)
             .map((option) {
-          final label = option.label ?? '';
-          final value = option.value ?? '';
-          final icon = _getFurnishedIcon(label);
-          final sel = selectedFurnished == value;
+              final label = option.label ?? '';
+              final value = option.value ?? '';
+              final icon = _getFurnishedIcon(label);
+              final sel = selectedFurnished == value;
 
-          return InkWell(
-            onTap: () => setState(() => selectedFurnished = value),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                color: sel ? AppColors.secondary(ref) : Colors.white,
+              return InkWell(
+                onTap: () => setState(() => selectedFurnished = value),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: sel
-                      ? AppColors.secondary(ref)
-                      : Colors.grey.shade300,
-                  width: sel ? 2 : 1,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: sel ? AppColors.secondary(ref) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: sel
+                          ? AppColors.secondary(ref)
+                          : Colors.grey.shade300,
+                      width: sel ? 2 : 1,
+                    ),
+                    boxShadow: sel
+                        ? [
+                            BoxShadow(
+                              color: AppColors.secondary(
+                                ref,
+                              ).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 20,
+                        color: sel ? Colors.white : Colors.grey.shade700,
+                      ),
+                      const SizedBox(width: 8),
+                      AppText(
+                        text: label,
+                        color: sel ? Colors.white : Colors.grey.shade800,
+                        fontType: sel ? FontType.semiBold : FontType.medium,
+                        fontSize: 14,
+                      ),
+                    ],
+                  ),
                 ),
-                boxShadow: sel
-                    ? [
-                  BoxShadow(
-                    color: AppColors.secondary(ref)
-                        .withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-                    : [],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    icon,
-                    size: 20,
-                    color: sel ? Colors.white : Colors.grey.shade700,
-                  ),
-                  const SizedBox(width: 8),
-                  AppText(
-                    text: label,
-                    color: sel ? Colors.white : Colors.grey.shade800,
-                    fontType: sel ? FontType.semiBold : FontType.medium,
-                    fontSize: 14,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
+              );
+            })
+            .toList(),
       );
     }
     return _buildFurnishedEmpty();
@@ -1221,9 +1288,11 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     );
   }
 
-  // Replace the _handleSave() method in add_room_bottom_sheet.dart
-
   void _handleSave() {
+    final int propertyTypeId = widget.propertyType is int
+        ? widget.propertyType
+        : int.tryParse(widget.propertyType.toString()) ?? 0;
+
     // Validation
     if (selectedSubTypeId == null || selectedSubTypeId!.isEmpty) {
       _showError("Please select a room category");
@@ -1235,9 +1304,17 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
       return;
     }
 
-    if (_occupancyCont.text.trim().isEmpty) {
-      _showError("Please enter occupancy");
-      return;
+    // Property Type 4 ke liye automatic occupancy set karo
+    if (propertyTypeId == 4) {
+      if (_occupancyCont.text.trim().isEmpty) {
+        _occupancyCont.text = "1";
+      }
+    } else {
+      // Other property types ke liye validation
+      if (_occupancyCont.text.trim().isEmpty) {
+        _showError("Please enter occupancy");
+        return;
+      }
     }
 
     if (_availableUnitsCont.text.trim().isEmpty) {
@@ -1293,11 +1370,24 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
       roomPricePerDay = mainPrice;
     }
 
+    // Property Type 4 ke liye occupancy ko room category name se extract karo
+    String finalOccupancy = _occupancyCont.text.trim();
+    if (propertyTypeId == 4 && selectedSubType != null) {
+      // Extract number from room category (e.g., "1 Bed" -> "1", "2 Bed" -> "2")
+      final match = RegExp(r'(\d+)').firstMatch(selectedSubType!);
+      if (match != null) {
+        finalOccupancy = match.group(1) ?? "1";
+      } else {
+        finalOccupancy = "1"; // Default fallback
+      }
+    }
+
     final roomData = RoomData(
       roomType: selectedSubTypeId!,
       roomTypeName: selectedSubType!,
       furnished: selectedFurnished,
-      occupancy: _occupancyCont.text.trim(),
+      roomOldMrp: mrpControllers.toString(),
+      occupancy: finalOccupancy,
       price: mainPrice, // Backend field
       roomPricePerDay: roomPricePerDay, // Backend field
       discountRoom: roomDiscountPercent, // Backend field
@@ -1308,8 +1398,12 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     );
 
     print("🎯 Room Data for Backend:");
+    print("Property Type: $propertyTypeId");
+    print("Room Category: $selectedSubType");
+    print("Occupancy: $finalOccupancy");
     print("price: $mainPrice");
     print("roomPricePerDay: $roomPricePerDay");
+    print("sdvchsvdcjhsvchj: ${mrpControllers.toString()}");
     print("discountRoom: $roomDiscountPercent%");
 
     Navigator.of(context).pop(roomData);
