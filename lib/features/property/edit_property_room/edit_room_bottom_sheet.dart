@@ -34,39 +34,158 @@ class EditRoomBottomSheet extends ConsumerStatefulWidget {
 
 class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
   final ImagePicker picker = ImagePicker();
-
   String? selectedSubType;
   String? selectedSubTypeId;
   String selectedFurnished = "";
   final _occupancyCont = TextEditingController();
   final _availableUnitsCont = TextEditingController();
   bool isRoomAvailable = true;
-  List<File> roomImages = [];
-  Map<String, String> selectedRoomAmenities = {};
 
+  // ✅ NEW: Separate lists for existing and new images
+  List<String> existingImages = [];
+  List<File> roomImages = [];
+
+  Map<String, String> selectedRoomAmenities = {};
   Map<String, PricingData> durationPricing = {};
   Map<String, TextEditingController> mrpControllers = {};
   Map<String, TextEditingController> discountControllers = {};
   Map<String, TextEditingController> priceControllers = {};
 
-  List<String> existingRoomImages = [];
-
-  bool _isInitialized = false;
   @override
   void initState() {
     super.initState();
 
-    // ✅ Initialize room data synchronously
+    final int propertyTypeId = widget.propertyType is int
+        ? widget.propertyType
+        : int.tryParse(widget.propertyType.toString()) ?? 0;
+
     if (widget.initialRoom != null) {
-      _initializeRoomData(widget.initialRoom!);
+      final r = widget.initialRoom!;
+      selectedSubType = r.roomTypeName;
+      selectedSubTypeId = r.roomType;
+      selectedFurnished = r.furnished;
+      _occupancyCont.text = r.occupancy;
+      _availableUnitsCont.text = r.availableUnits;
+      isRoomAvailable = r.isAvailable;
+
+      // ✅ Load existing images
+      existingImages = List<String>.from(r.existingImages ?? []);
+      roomImages = List<File>.from(r.roomImages);
+
+      if (r.amenitiesIds.isNotEmpty) {
+        for (var amenityId in r.amenitiesIds) {
+          selectedRoomAmenities[amenityId] = amenityId;
+        }
+      }
+
+      // ✅ Load pricing based on property type
+      if (propertyTypeId == 1) {
+        // Property Type 1 (Hotel) - Only Night pricing
+        if (r.price.isNotEmpty && r.price != "0") {
+          _addDuration('Night');
+          final finalPrice = double.tryParse(r.price) ?? 0;
+          final discount = double.tryParse(r.discountRoom) ?? 0;
+          String calculatedMrp = r.roomOldMrp.isNotEmpty
+              ? r.roomOldMrp
+              : r.price;
+
+          if (discount > 0 &&
+              finalPrice > 0 &&
+              (r.roomOldMrp.isEmpty || r.roomOldMrp == "0")) {
+            final mrp = finalPrice / (1 - (discount / 100));
+            calculatedMrp = mrp.toStringAsFixed(2);
+          }
+
+          mrpControllers['Night']?.text = calculatedMrp;
+          discountControllers['Night']?.text = r.discountRoom;
+          priceControllers['Night']?.text = r.price;
+          durationPricing['Night'] = PricingData(
+            mrp: calculatedMrp,
+            discount: r.discountRoom,
+            finalPrice: r.price,
+          );
+        }
+      } else if (propertyTypeId == 3) {
+        // Property Type 3 - Only Month pricing
+        if (r.price.isNotEmpty && r.price != "0") {
+          _addDuration('Month');
+          final finalPrice = double.tryParse(r.price) ?? 0;
+          final discount = double.tryParse(r.discountRoom) ?? 0;
+          String calculatedMrp = r.roomOldMrp.isNotEmpty
+              ? r.roomOldMrp
+              : r.price;
+
+          if (discount > 0 &&
+              finalPrice > 0 &&
+              (r.roomOldMrp.isEmpty || r.roomOldMrp == "0")) {
+            final mrp = finalPrice / (1 - (discount / 100));
+            calculatedMrp = mrp.toStringAsFixed(2);
+          }
+
+          mrpControllers['Month']?.text = calculatedMrp;
+          discountControllers['Month']?.text = r.discountRoom;
+          priceControllers['Month']?.text = r.price;
+          durationPricing['Month'] = PricingData(
+            mrp: calculatedMrp,
+            discount: r.discountRoom,
+            finalPrice: r.price,
+          );
+        }
+      } else {
+        // Other Property Types - Month and Day pricing
+        if (r.price.isNotEmpty && r.price != "0") {
+          _addDuration('Month');
+          final finalPrice = double.tryParse(r.price) ?? 0;
+          final discount = double.tryParse(r.discountRoom) ?? 0;
+          String calculatedMrp = r.roomOldMrp.isNotEmpty
+              ? r.roomOldMrp
+              : r.price;
+
+          if (discount > 0 &&
+              finalPrice > 0 &&
+              (r.roomOldMrp.isEmpty || r.roomOldMrp == "0")) {
+            final mrp = finalPrice / (1 - (discount / 100));
+            calculatedMrp = mrp.toStringAsFixed(2);
+          }
+
+          mrpControllers['Month']?.text = calculatedMrp;
+          discountControllers['Month']?.text = r.discountRoom;
+          priceControllers['Month']?.text = r.price;
+          durationPricing['Month'] = PricingData(
+            mrp: calculatedMrp,
+            discount: r.discountRoom,
+            finalPrice: r.price,
+          );
+        }
+
+        if (r.roomPricePerDay.isNotEmpty && r.roomPricePerDay != "0") {
+          _addDuration('Day');
+          final finalPriceDay = double.tryParse(r.roomPricePerDay) ?? 0;
+          final discount = double.tryParse(r.discountRoom) ?? 0;
+          String calculatedMrpDay = r.roomOldMrp.isNotEmpty
+              ? r.roomOldMrp
+              : r.roomPricePerDay;
+
+          if (discount > 0 &&
+              finalPriceDay > 0 &&
+              (r.roomOldMrp.isEmpty || r.roomOldMrp == "0")) {
+            final mrp = finalPriceDay / (1 - (discount / 100));
+            calculatedMrpDay = mrp.toStringAsFixed(2);
+          }
+
+          mrpControllers['Day']?.text = calculatedMrpDay;
+          discountControllers['Day']?.text = r.discountRoom;
+          priceControllers['Day']?.text = r.roomPricePerDay;
+          durationPricing['Day'] = PricingData(
+            mrp: calculatedMrpDay,
+            discount: r.discountRoom,
+            finalPrice: r.roomPricePerDay,
+          );
+        }
+      }
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final int propertyTypeId = widget.propertyType is int
-          ? widget.propertyType
-          : int.tryParse(widget.propertyType.toString()) ?? 0;
-
-      // Only auto-add Night for NEW rooms in hotels
       if (propertyTypeId == 1 && widget.initialRoom == null) {
         _addDuration('Night');
       }
@@ -74,122 +193,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
       ref.read(getAmenitiesRoomProvider.notifier).getAmenitiesRoomViewApi();
       ref.read(getPropertyTypeProvider.notifier).propertyTypeApi();
     });
-  }
-
-  void _initializeRoomData(RoomData room) {
-    if (_isInitialized) return;
-
-    print("\n🔍 Initializing Room Data:");
-    print("Room Type ID: ${room.roomType}");
-    print("Room Type Name: ${room.roomTypeName}");
-
-    // ✅ FIX: Set the ID first, THEN the name
-    selectedSubTypeId = room.roomType;
-    selectedSubType = room.roomTypeName;
-
-    // Verify the ID exists in available options
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final roomTypeState = ref.read(getRoomTypeProvider);
-      if (roomTypeState is GetRoomTypeSuccess) {
-        final matchingOption = roomTypeState
-            .roomType
-            .options
-            ?.firstWhere(
-              (opt) => opt.id?.toString() == selectedSubTypeId,
-          orElse: () => RoomTypeOption(),
-        );
-
-        if (matchingOption?.id == null) {
-          print("⚠️ Warning: Room type ID $selectedSubTypeId not found in options");
-          // Reset to first available option if current one doesn't exist
-          if (roomTypeState.roomType.options?.isNotEmpty ?? false) {
-            setState(() {
-              selectedSubTypeId = roomTypeState.roomType.options!.first.id?.toString();
-              selectedSubType = roomTypeState.roomType.options!.first.label;
-            });
-          }
-        } else {
-          print("✅ Room type validated: ${matchingOption?.label}");
-        }
-      }
-    });
-
-    selectedFurnished = room.furnished;
-    _occupancyCont.text = room.occupancy;
-    _availableUnitsCont.text = room.availableUnits;
-
-    // Images
-    if (room.existingImages != null) {
-      existingRoomImages = List<String>.from(room.existingImages!);
-    }
-    if (room.roomImages.isNotEmpty) {
-      roomImages = List<File>.from(room.roomImages);
-    }
-
-    // Amenities
-    for (String amenityId in room.amenitiesIds) {
-      selectedRoomAmenities[amenityId] = amenityId;
-    }
-
-    // Initialize pricing
-    _initializePricing(room);
-
-    _isInitialized = true;
-
-    print("✅ Room data initialized successfully");
-    print("Selected ID: $selectedSubTypeId");
-    print("Selected Name: $selectedSubType");
-  }
-
-  void _initializePricing(RoomData room) {
-    final discount = double.tryParse(room.discountRoom) ?? 0;
-
-    // Night pricing
-    if (room.price.isNotEmpty && room.price != "0") {
-      final finalPrice = double.tryParse(room.price) ?? 0;
-      if (finalPrice > 0) {
-        _addDuration('Night'); // This creates controllers
-
-        double mrp = discount > 0 && discount < 100
-            ? finalPrice / (1 - discount / 100)
-            : finalPrice;
-
-        // ✅ Set values immediately after controllers exist
-        mrpControllers['Night']!.text = mrp.toStringAsFixed(0);
-        discountControllers['Night']!.text = discount.toStringAsFixed(0);
-        priceControllers['Night']!.text = finalPrice.toStringAsFixed(0);
-
-        durationPricing['Night'] = PricingData(
-          mrp: mrp.toStringAsFixed(0),
-          discount: discount.toStringAsFixed(0),
-          finalPrice: finalPrice.toStringAsFixed(0),
-        );
-      }
-    }
-
-    // Day pricing
-    if (room.roomPricePerDay.isNotEmpty &&
-        room.roomPricePerDay != "0" &&
-        room.roomPricePerDay != room.price) {
-      final finalPrice = double.tryParse(room.roomPricePerDay) ?? 0;
-      if (finalPrice > 0) {
-        _addDuration('Day');
-
-        double mrp = discount > 0 && discount < 100
-            ? finalPrice / (1 - discount / 100)
-            : finalPrice;
-
-        mrpControllers['Day']!.text = mrp.toStringAsFixed(0);
-        discountControllers['Day']!.text = discount.toStringAsFixed(0);
-        priceControllers['Day']!.text = finalPrice.toStringAsFixed(0);
-
-        durationPricing['Day'] = PricingData(
-          mrp: mrp.toStringAsFixed(0),
-          discount: discount.toStringAsFixed(0),
-          finalPrice: finalPrice.toStringAsFixed(0),
-        );
-      }
-    }
   }
 
   Future<void> pickRoomImages() async {
@@ -207,13 +210,12 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     }
   }
 
-  void _removeImage(File f) => setState(() => roomImages.remove(f));
+  // ✅ Remove new image
+  void _removeNewImage(File f) => setState(() => roomImages.remove(f));
 
-  void _removeExistingImage(int index) {
-    setState(() {
-      existingRoomImages.removeAt(index);
-    });
-  }
+  // ✅ Remove existing image
+  void _removeExistingImage(String imageUrl) =>
+      setState(() => existingImages.remove(imageUrl));
 
   IconData _getFurnishedIcon(String label) {
     if (label.toLowerCase().contains('fully')) return Icons.weekend;
@@ -279,6 +281,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     final availableSubtypes = widget.subTypeList[propertyTypeId] ?? [];
     final roomAmenitiesState = ref.watch(getAmenitiesRoomProvider);
     final propertyTypeState = ref.watch(getPropertyTypeProvider);
+    final roomTypeState = ref.watch(getRoomTypeProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -288,6 +291,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Drag Handle & Header
           Container(
             padding: EdgeInsets.symmetric(
               horizontal: context.sw * 0.04,
@@ -319,7 +323,9 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        Icons.edit,
+                        widget.initialRoom == null
+                            ? Icons.add_home
+                            : Icons.edit,
                         color: AppColors.secondary(ref),
                         size: 24,
                       ),
@@ -329,14 +335,16 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const AppText(
-                            text: "Edit Room",
+                          AppText(
+                            text: widget.initialRoom == null
+                                ? "Add New Room"
+                                : "Edit Room",
                             fontType: FontType.bold,
                             fontSize: 20,
                           ),
                           const SizedBox(height: 2),
                           AppText(
-                            text: "Update room details",
+                            text: "Fill in the details below",
                             fontSize: 13,
                             color: Colors.grey.shade600,
                           ),
@@ -345,9 +353,9 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: Colors.grey.shade600),
+                      icon: Icon(Icons.close, color: AppColors.text(ref)),
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.grey.shade100,
+                        backgroundColor: AppColors.background(ref),
                       ),
                     ),
                   ],
@@ -355,6 +363,8 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
               ],
             ),
           ),
+
+          // Scrollable Content
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(
@@ -364,12 +374,13 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Category Section
                   if (availableSubtypes.isNotEmpty) ...[
                     _buildSectionLabel("Room Category", true),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.background(ref),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade300),
                         boxShadow: [
@@ -392,48 +403,32 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: AppColors.background(ref),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 16,
                           ),
                         ),
-                        // ✅ FIX: Use the ID as value instead of the label
-                        value: selectedSubTypeId,
+                        value: selectedSubType,
                         items: availableSubtypes.toSet().toList().map((label) {
-                          // Get the corresponding ID for this label
-                          final roomTypeState = ref.read(getRoomTypeProvider);
-                          String? itemId;
-                          if (roomTypeState is GetRoomTypeSuccess) {
-                            final matchingOption = roomTypeState
-                                .roomType
-                                .options
-                                ?.firstWhere(
-                                  (opt) => opt.label == label,
-                              orElse: () => RoomTypeOption(),
-                            );
-                            itemId = matchingOption?.id?.toString();
-                          }
-
                           return DropdownMenuItem<String>(
-                            value: itemId, // ✅ Use ID as value
+                            value: label,
                             child: AppText(text: label, fontSize: 15),
                           );
                         }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            selectedSubTypeId = value;
-                            // Update the label name for display
-                            final roomTypeState = ref.read(getRoomTypeProvider);
+                            selectedSubType = value;
                             if (roomTypeState is GetRoomTypeSuccess) {
                               final matchingOption = roomTypeState
                                   .roomType
                                   .options
                                   ?.firstWhere(
-                                    (opt) => opt.id?.toString() == value,
-                                orElse: () => RoomTypeOption(),
-                              );
-                              selectedSubType = matchingOption?.label;
+                                    (opt) => opt.label == value,
+                                    orElse: () => RoomTypeOption(),
+                                  );
+                              selectedSubTypeId = matchingOption?.id
+                                  ?.toString();
                             }
                           });
                         },
@@ -442,18 +437,18 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                     const SizedBox(height: 20),
                   ],
 
-
                   _buildSectionLabel("Furnished Type", true),
                   const SizedBox(height: 12),
                   _buildFurnishedOptions(propertyTypeState),
                   const SizedBox(height: 20),
+
                   Row(
                     children: [
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionLabel("Available Units", true),
+                            _buildSectionLabel("Similar Rooms", true),
                             const SizedBox(height: 8),
                             _buildTextField(
                               controller: _availableUnitsCont,
@@ -468,13 +463,15 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionLabel("Occupancy", true),
+                            _buildSectionLabel("Person in room", true),
                             const SizedBox(height: 8),
-                            _buildTextField(
-                              controller: _occupancyCont,
-                              hint: "e.g., 2",
-                              icon: Icons.people_outline,
-                            ),
+                            propertyTypeId == 4
+                                ? _buildLockedOccupancyField()
+                                : _buildTextField(
+                                    controller: _occupancyCont,
+                                    hint: "e.g., 2",
+                                    icon: Icons.people_outline,
+                                  ),
                           ],
                         ),
                       ),
@@ -487,10 +484,11 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                   AppText(
                     text: "Add pricing for different durations",
                     fontSize: 13,
-                    color: Colors.grey.shade600,
+                    color: AppColors.text(ref).withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 12),
                   _buildDurationSelector(propertyTypeId),
+
                   const SizedBox(height: 16),
                   if (durationPricing.isNotEmpty) ...[
                     ...durationPricing.keys.map(
@@ -525,6 +523,8 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                   ],
 
                   const SizedBox(height: 24),
+
+                  // Room Amenities
                   _buildSectionLabel("Room Facilities", false),
                   const SizedBox(height: 12),
                   roomAmenitiesState.when(
@@ -538,7 +538,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                       return Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: AppColors.background(ref),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.grey.shade200),
                         ),
@@ -548,7 +548,6 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                           children: amenitiesModel.data!.map((amenity) {
                             final isSelected = selectedRoomAmenities
                                 .containsKey(amenity.sId ?? '');
-
                             return InkWell(
                               onTap: () {
                                 setState(() {
@@ -569,7 +568,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? AppColors.secondary(ref)
-                                      : Colors.white,
+                                      : AppColors.background(ref),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: isSelected
@@ -592,8 +591,10 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                                     AppText(
                                       text: amenity.name ?? 'Unknown',
                                       color: isSelected
-                                          ? Colors.white
-                                          : Colors.grey.shade800,
+                                          ? AppColors.text(ref)
+                                          : AppColors.text(
+                                              ref,
+                                            ).withValues(alpha: 0.7),
                                       fontSize: 13,
                                       fontType: isSelected
                                           ? FontType.medium
@@ -609,13 +610,53 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                     },
                     error: (error) => _buildErrorState(ref),
                   ),
+
                   const SizedBox(height: 24),
-                  _buildRoomImagesSection(),
+
+                  // ✅ FIXED: Room Images Section with proper existing image display
+                  _buildSectionLabel("Room Images", true),
+                  const SizedBox(height: 4),
+                  AppText(
+                    text: "Add at least one photo to showcase your room",
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.background(ref),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.grey.shade200,
+                        width: (existingImages.isEmpty && roomImages.isEmpty)
+                            ? 2
+                            : 1,
+                      ),
+                    ),
+                    child: Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        // ✅ Display existing images
+                        ...existingImages.map(
+                          (imageUrl) => _buildExistingImageCard(imageUrl),
+                        ),
+                        // ✅ Display new images
+                        ...roomImages.map((file) => _buildNewImageCard(file)),
+                        // ✅ Add button
+                        _buildAddImageCard(),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 30),
                 ],
               ),
             ),
           ),
+
+          // Bottom Action Button
           Container(
             padding: EdgeInsets.symmetric(
               horizontal: context.sw * 0.04,
@@ -646,11 +687,18 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.check_circle_outline, size: 22),
-                    SizedBox(width: 8),
+                  children: [
+                    Icon(
+                      widget.initialRoom == null
+                          ? Icons.add_circle_outline
+                          : Icons.check_circle_outline,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
                     AppText(
-                      text: "Update Room",
+                      text: widget.initialRoom == null
+                          ? "Save Room"
+                          : "Update Room",
                       color: Colors.white,
                       fontType: FontType.semiBold,
                       fontSize: 16,
@@ -665,6 +713,135 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
+  // ✅ NEW: Widget to display existing images with delete option
+  Widget _buildExistingImageCard(String imageUrl) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: 90,
+            height: 90,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              width: 90,
+              height: 90,
+              color: AppColors.background(ref),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.secondary(ref),
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+            errorWidget: (context, url, error) => Container(
+              width: 90,
+              height: 90,
+              color: AppColors.background(ref),
+              child: const Icon(Icons.error, color: Colors.red),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 4,
+          top: 4,
+          child: GestureDetector(
+            onTap: () => _removeExistingImage(imageUrl),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 4),
+                ],
+              ),
+              child: const Icon(Icons.close, size: 16, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ✅ Widget to display new images
+  Widget _buildNewImageCard(File file) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.file(file, width: 90, height: 90, fit: BoxFit.cover),
+        ),
+        Positioned(
+          right: 4,
+          top: 4,
+          child: GestureDetector(
+            onTap: () => _removeNewImage(file),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.secondary(ref),
+                shape: BoxShape.circle,
+                boxShadow: const [
+                  BoxShadow(color: Colors.black26, blurRadius: 4),
+                ],
+              ),
+              child: const Icon(Icons.close, size: 16, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLockedOccupancyField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: TextEditingController(text: "1"),
+        enabled: false,
+        keyboardType: TextInputType.number,
+        style: TextStyle(color: AppColors.text(ref), fontSize: 14),
+        decoration: InputDecoration(
+          hintText: "1 person",
+          hintStyle: TextStyle(color: AppColors.text(ref), fontSize: 14),
+          prefixIcon: Icon(
+            Icons.people_outline,
+            color: AppColors.iconColor(ref),
+            size: 22,
+          ),
+          suffixIcon: Icon(
+            Icons.lock_outline,
+            color: AppColors.iconColor(ref),
+            size: 18,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: AppColors.background(ref),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDurationSelector(int propertyTypeId) {
     final durations = ['Night', 'Day', 'Month'];
     return Wrap(
@@ -672,8 +849,11 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
       runSpacing: 10,
       children: durations.map((duration) {
         final isSelected = durationPricing.containsKey(duration);
-        final isDisabled =
-            propertyTypeId.toString() == "1" && duration != 'Night';
+        final isDisabled = propertyTypeId.toString() == "1"
+            ? duration != 'Night'
+            : propertyTypeId.toString() == "3"
+            ? duration != 'Month'
+            : duration == 'Night';
 
         return InkWell(
           onTap: isDisabled
@@ -721,21 +901,25 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                         ? Icons.wb_sunny
                         : Icons.calendar_month,
                     size: 18,
-                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                    color: isSelected
+                        ? AppColors.iconColor(ref)
+                        : Colors.grey.shade700,
                   ),
                   const SizedBox(width: 8),
                   AppText(
                     text: duration,
-                    color: isSelected ? Colors.white : Colors.grey.shade800,
+                    color: isSelected
+                        ? AppColors.text(ref)
+                        : Colors.grey.shade800,
                     fontType: isSelected ? FontType.semiBold : FontType.medium,
                     fontSize: 14,
                   ),
                   if (isSelected) ...[
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.check_circle,
                       size: 16,
-                      color: Colors.white,
+                      color: AppColors.iconColor(ref),
                     ),
                   ],
                 ],
@@ -747,13 +931,12 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
-  // ✅ Pricing Card Widget
   Widget _buildPricingCard(String duration) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background(ref),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppColors.secondary(ref).withValues(alpha: 0.3),
@@ -793,6 +976,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                   text: "$duration Pricing",
                   fontType: FontType.semiBold,
                   fontSize: 16,
+                  color: AppColors.text(ref),
                 ),
               ),
               IconButton(
@@ -811,7 +995,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
             text: "MRP",
             fontType: FontType.medium,
             fontSize: 13,
-            color: Colors.grey.shade700,
+            color: AppColors.text(ref),
           ),
           const SizedBox(height: 6),
           _buildPricingTextField(
@@ -829,6 +1013,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
           ),
           const SizedBox(height: 6),
           _buildPricingTextField(
+            maxLength: 2,
             controller: discountControllers[duration]!,
             hint: "Enter discount percentage",
             icon: Icons.percent,
@@ -880,6 +1065,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
   }
 
   Widget _buildPricingTextField({
+    int? maxLength,
     required TextEditingController controller,
     required String hint,
     required IconData icon,
@@ -895,250 +1081,23 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
         controller: controller,
         keyboardType: TextInputType.number,
         onChanged: onChanged,
+        maxLength: maxLength,
+        style: TextStyle(color: AppColors.text(ref), fontSize: 14),
         decoration: InputDecoration(
+          counterText: "",
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          hintStyle: TextStyle(color: AppColors.text(ref), fontSize: 14),
           prefixIcon: Icon(icon, color: AppColors.secondary(ref), size: 22),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.background(ref),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 14,
           ),
-        ),
-      ),
-    );
-  }
-
-  // ✅ Room Images Section
-  Widget _buildRoomImagesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionLabel("Room Images", true),
-        const SizedBox(height: 4),
-        AppText(
-          text: "Add at least one photo to showcase your room",
-          fontSize: 13,
-          color: Colors.grey.shade600,
-        ),
-
-        // Existing images
-        if (existingRoomImages.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          const AppText(
-            text: "Existing Images:",
-            fontSize: 14,
-            fontType: FontType.medium,
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: existingRoomImages.asMap().entries.map((entry) {
-              final index = entry.key;
-              final imageUrl = entry.value;
-              return _buildExistingImageCard(imageUrl, index);
-            }).toList(),
-          ),
-        ],
-
-        // New images
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.grey.shade200,
-              width: (existingRoomImages.isEmpty && roomImages.isEmpty) ? 2 : 1,
-            ),
-          ),
-          child: Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              ...roomImages.map((file) => _buildNewImageCard(file)),
-              _buildAddImageCard(),
-            ],
-          ),
-        ),
-
-        // Total images count
-        if (existingRoomImages.isNotEmpty || roomImages.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.secondary(ref).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.image, color: AppColors.secondary(ref), size: 16),
-                const SizedBox(width: 8),
-                AppText(
-                  text:
-                      "Total: ${existingRoomImages.length + roomImages.length} images",
-                  fontSize: 13,
-                  color: AppColors.secondary(ref),
-                  fontType: FontType.medium,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  // ✅ Existing image card
-  Widget _buildExistingImageCard(String imageUrl, int index) {
-    return Stack(
-      children: [
-        Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              width: 90,
-              height: 90,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                color: Colors.grey.shade200,
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.secondary(ref),
-                    strokeWidth: 2,
-                  ),
-                ),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey.shade200,
-                child: const Icon(
-                  Icons.image_not_supported,
-                  color: Colors.grey,
-                  size: 32,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          right: 4,
-          top: 4,
-          child: GestureDetector(
-            onTap: () => _removeExistingImage(index),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
-              ),
-              child: const Icon(Icons.close, size: 14, color: Colors.white),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 4,
-          left: 4,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const AppText(
-              text: "Existing",
-              fontSize: 10,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ✅ New image card
-  Widget _buildNewImageCard(File file) {
-    return Stack(
-      children: [
-        Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.file(file, width: 90, height: 90, fit: BoxFit.cover),
-          ),
-        ),
-        Positioned(
-          right: 4,
-          top: 4,
-          child: GestureDetector(
-            onTap: () => _removeImage(file),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
-              ),
-              child: const Icon(Icons.close, size: 14, color: Colors.white),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAddImageCard() {
-    return InkWell(
-      onTap: pickRoomImages,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 90,
-        height: 90,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.grey.shade300,
-            width: 2,
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add_photo_alternate_outlined,
-              color: AppColors.secondary(ref),
-              size: 32,
-            ),
-            const SizedBox(height: 4),
-            AppText(
-              text: "Add",
-              fontSize: 12,
-              color: Colors.grey.shade600,
-              fontType: FontType.medium,
-            ),
-          ],
         ),
       ),
     );
@@ -1181,7 +1140,9 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: sel ? AppColors.secondary(ref) : Colors.white,
+                    color: sel
+                        ? AppColors.secondary(ref)
+                        : AppColors.background(ref),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: sel
@@ -1207,12 +1168,16 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
                       Icon(
                         icon,
                         size: 20,
-                        color: sel ? Colors.white : Colors.grey.shade700,
+                        color: sel
+                            ? AppColors.text(ref)
+                            : AppColors.text(ref).withValues(alpha: 0.5),
                       ),
                       const SizedBox(width: 8),
                       AppText(
                         text: label,
-                        color: sel ? Colors.white : Colors.grey.shade800,
+                        color: sel
+                            ? AppColors.text(ref)
+                            : AppColors.text(ref).withValues(alpha: 0.5),
                         fontType: sel ? FontType.semiBold : FontType.medium,
                         fontSize: 14,
                       ),
@@ -1251,7 +1216,7 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background(ref),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
@@ -1265,16 +1230,17 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
       child: TextField(
         controller: controller,
         keyboardType: TextInputType.number,
+        style: TextStyle(color: AppColors.text(ref), fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          hintStyle: TextStyle(color: AppColors.text(ref), fontSize: 14),
           prefixIcon: Icon(icon, color: AppColors.secondary(ref), size: 22),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.background(ref),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,
@@ -1359,6 +1325,43 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
             child: const Text('Retry'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAddImageCard() {
+    return InkWell(
+      onTap: pickRoomImages,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 90,
+        height: 90,
+        decoration: BoxDecoration(
+          color: AppColors.background(ref),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.grey.shade300,
+            width: 2,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_photo_alternate_outlined,
+              color: AppColors.secondary(ref),
+              size: 32,
+            ),
+            const SizedBox(height: 4),
+            AppText(
+              text: "Add",
+              fontSize: 12,
+              color: AppColors.text(ref),
+              fontType: FontType.medium,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1472,40 +1475,40 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
     );
   }
 
-  // ✅ Updated _handleSave with duration pricing logic
   void _handleSave() {
-    // Validation
+    final int propertyTypeId = widget.propertyType is int
+        ? widget.propertyType
+        : int.tryParse(widget.propertyType.toString()) ?? 0;
     if (selectedSubTypeId == null || selectedSubTypeId!.isEmpty) {
       _showError("Please select a room category");
       return;
     }
-
     if (selectedFurnished.isEmpty) {
       _showError("Please select a furnished type");
       return;
     }
-
-    if (_occupancyCont.text.trim().isEmpty) {
-      _showError("Please enter occupancy");
-      return;
+    if (propertyTypeId == 4) {
+      if (_occupancyCont.text.trim().isEmpty) {
+        _occupancyCont.text = "1";
+      }
+    } else {
+      if (_occupancyCont.text.trim().isEmpty) {
+        _showError("Please enter occupancy");
+        return;
+      }
     }
-
     if (_availableUnitsCont.text.trim().isEmpty) {
       _showError("Please enter available units");
       return;
     }
-
     if (durationPricing.isEmpty) {
       _showError("Please add pricing for at least one duration");
       return;
     }
-
-    if (existingRoomImages.isEmpty && roomImages.isEmpty) {
+    if (existingImages.isEmpty && roomImages.isEmpty) {
       _showError("Please add at least one room image");
       return;
     }
-
-    // Validate pricing fields
     for (var duration in durationPricing.keys) {
       final mrp = mrpControllers[duration]?.text.trim() ?? '';
       if (mrp.isEmpty || double.tryParse(mrp) == null) {
@@ -1513,50 +1516,72 @@ class _EditRoomBottomSheetState extends ConsumerState<EditRoomBottomSheet> {
         return;
       }
     }
-
     List<String> selectedAmenitiesIds = selectedRoomAmenities.keys.toList();
-
     String mainPrice = "0";
     String roomPricePerDay = "0";
     String roomDiscountPercent = "0";
+    String roomOldMrpValue = "0";
 
     if (durationPricing.containsKey('Night')) {
       mainPrice = durationPricing['Night']!.finalPrice;
       roomDiscountPercent = durationPricing['Night']!.discount;
+      roomOldMrpValue = durationPricing['Night']!.mrp;
     } else if (durationPricing.containsKey('Month')) {
       mainPrice = durationPricing['Month']!.finalPrice;
       roomDiscountPercent = durationPricing['Month']!.discount;
+      roomOldMrpValue = durationPricing['Month']!.mrp;
     } else if (durationPricing.containsKey('Day')) {
       mainPrice = durationPricing['Day']!.finalPrice;
       roomDiscountPercent = durationPricing['Day']!.discount;
+      roomOldMrpValue = durationPricing['Day']!.mrp;
     }
-
     if (durationPricing.containsKey('Day')) {
       roomPricePerDay = durationPricing['Day']!.finalPrice;
+      if (!durationPricing.containsKey('Night')) {
+        roomOldMrpValue = durationPricing['Day']!.mrp;
+      }
     } else {
       roomPricePerDay = mainPrice;
     }
 
+    String finalOccupancy = _occupancyCont.text.trim();
+    if (propertyTypeId == 4 && selectedSubType != null) {
+      final match = RegExp(r'(\d+)').firstMatch(selectedSubType!);
+      if (match != null) {
+        finalOccupancy = match.group(1) ?? "1";
+      } else {
+        finalOccupancy = "1";
+      }
+    }
+
+    // ✅ Return room data with both existing and new images
     final roomData = RoomData(
       roomType: selectedSubTypeId!,
       roomTypeName: selectedSubType!,
       furnished: selectedFurnished,
-      occupancy: _occupancyCont.text.trim(),
-      roomOldMrp: mrpControllers.toString(),
+      roomOldMrp: roomOldMrpValue,
+      occupancy: finalOccupancy,
       price: mainPrice,
       roomPricePerDay: roomPricePerDay,
       discountRoom: roomDiscountPercent,
       isAvailable: isRoomAvailable,
       availableUnits: _availableUnitsCont.text.trim(),
-      amenitiesIds: selectedRoomAmenities.keys.toList(),
+      amenitiesIds: selectedAmenitiesIds,
       roomImages: roomImages,
-      existingImages: existingRoomImages,
+      existingImages: existingImages, // ✅ Include existing images
     );
+
     print("🎯 Room Data for Backend:");
+    print("Property Type: $propertyTypeId");
+    print("Room Category: $selectedSubType");
+    print("Occupancy: $finalOccupancy");
     print("price: $mainPrice");
     print("roomPricePerDay: $roomPricePerDay");
-    print("sdvchsvdcjhsvchj: ${mrpControllers.toString()}");
+    print("roomOldMrp: $roomOldMrpValue");
     print("discountRoom: $roomDiscountPercent%");
+    print("Existing Images: ${existingImages.length}");
+    print("New Images: ${roomImages.length}");
+
     Navigator.of(context).pop(roomData);
   }
 

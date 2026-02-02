@@ -6,14 +6,13 @@ class AddPropertyListModel {
   dynamic verifiedPropertiesCount;
   List<AddPropertyListData>? data;
 
-  AddPropertyListModel({
-    this.success,
-    this.propertyCount,
-    this.overallRoomCount,
-    this.availablePropertiesCount,
-    this.verifiedPropertiesCount,
-    this.data,
-  });
+  AddPropertyListModel(
+      {this.success,
+        this.propertyCount,
+        this.overallRoomCount,
+        this.availablePropertiesCount,
+        this.verifiedPropertiesCount,
+        this.data});
 
   AddPropertyListModel.fromJson(Map<String, dynamic> json) {
     success = json['success'];
@@ -44,95 +43,96 @@ class AddPropertyListModel {
 }
 
 class AddPropertyListData {
-  dynamic sId;
-  dynamic userId;
-  dynamic userType;
+  String? sId;
+  String? userId;
+  String? userType;
   dynamic residencyId;
-  dynamic name;
-  dynamic type;
-  dynamic address;
-  dynamic city;
-  dynamic state;
-  dynamic pincode;
+  String? name;
+  String? type;
+  dynamic propertyTypeId;
+  String? address;
+  String? additionalAddress;
+  String? landmark;
+  String? city;
+  String? state;
+  String? pincode;
   Coordinates? coordinates;
-  dynamic mainImage;
+  String? mainImage;
   List<String>? images;
   dynamic pricePerNight;
   dynamic pricePerMonth;
-  dynamic propertyTypeId;
   dynamic pricePerDay;
   dynamic depositAmount;
-  dynamic checkIn;
-  dynamic checkOut;
   List<Rooms>? rooms;
   List<Amenities>? amenities;
   List<String>? rules;
-  dynamic contactNumber;
-  dynamic email;
-  dynamic website;
+  String? contactNumber;
+  String? email;
+  String? website;
   dynamic rating;
   List<Reviews>? reviews;
   bool? verifyProperty;
   dynamic commision;
-  dynamic payAtProperty;
-  dynamic description;
+  String? description;
   dynamic availableRooms;
   bool? isAvailable;
-  dynamic owner;
-  dynamic role;
-  dynamic discount;
-  dynamic additionalAddress;
+  bool? payAtProperty;
+  String? owner;
+  String? role;
+  String? discount;
+  String? checkIn;
+  String? checkOut;
   dynamic oldMrp;
   dynamic tax;
-  dynamic createdAt;
+  String? createdAt;
   dynamic iV;
   dynamic totalRooms;
 
-  AddPropertyListData({
-    this.sId,
-    this.userId,
-    this.userType,
-    this.residencyId,
-    this.name,
-    this.type,
-    this.address,
-    this.city,
-    this.state,
-    this.pincode,
-    this.coordinates,
-    this.mainImage,
-    this.images,
-    this.pricePerNight,
-    this.pricePerMonth,
-    this.pricePerDay,
-    this.depositAmount,
-    this.rooms,
-    this.amenities,
-    this.rules,
-    this.contactNumber,
-    this.propertyTypeId,
-    this.payAtProperty,
-    this.checkIn,
-    this.checkOut,
-    this.email,
-    this.website,
-    this.rating,
-    this.reviews,
-    this.verifyProperty,
-    this.commision,
-    this.description,
-    this.availableRooms,
-    this.isAvailable,
-    this.owner,
-    this.role,
-    this.discount,
-    this.additionalAddress,
-    this.oldMrp,
-    this.tax,
-    this.createdAt,
-    this.iV,
-    this.totalRooms,
-  });
+  AddPropertyListData(
+      {this.sId,
+        this.userId,
+        this.userType,
+        this.residencyId,
+        this.name,
+        this.type,
+        this.propertyTypeId,
+        this.address,
+        this.additionalAddress,
+        this.landmark,
+        this.city,
+        this.state,
+        this.pincode,
+        this.coordinates,
+        this.mainImage,
+        this.images,
+        this.pricePerNight,
+        this.pricePerMonth,
+        this.pricePerDay,
+        this.depositAmount,
+        this.rooms,
+        this.amenities,
+        this.rules,
+        this.contactNumber,
+        this.email,
+        this.website,
+        this.rating,
+        this.reviews,
+        this.verifyProperty,
+        this.commision,
+        this.description,
+        this.availableRooms,
+        this.isAvailable,
+        this.payAtProperty,
+        this.owner,
+        this.role,
+        this.discount,
+        this.checkIn,
+        this.checkOut,
+        this.oldMrp,
+        this.tax,
+        this.createdAt,
+        this.iV,
+        this.totalRooms});
 
   AddPropertyListData.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
@@ -141,13 +141,12 @@ class AddPropertyListData {
     residencyId = json['residencyId'];
     name = json['name'];
     type = json['type'];
+    propertyTypeId = json['propertyTypeId'];
     address = json['address'];
+    additionalAddress = json['additionalAddress'];
+    landmark = json['landmark'];
     city = json['city'];
     state = json['state'];
-    payAtProperty = json['payAtProperty'];
-    checkIn = json['checkIn'];
-    checkOut = json['checkOut'];
-    propertyTypeId = json['propertyTypeId'];
     pincode = json['pincode'];
     coordinates = json['coordinates'] != null
         ? Coordinates.fromJson(json['coordinates'])
@@ -186,10 +185,12 @@ class AddPropertyListData {
     description = json['description'];
     availableRooms = json['availableRooms'];
     isAvailable = json['isAvailable'];
+    payAtProperty = json['payAtProperty'];
     owner = json['owner'];
     role = json['role'];
     discount = json['discount'];
-    additionalAddress = json['additionalAddress'];
+    checkIn = json['checkIn'];
+    checkOut = json['checkOut'];
     oldMrp = json['oldMrp'];
     tax = json['tax'];
     createdAt = json['createdAt'];
@@ -205,12 +206,11 @@ class AddPropertyListData {
     data['residencyId'] = residencyId;
     data['name'] = name;
     data['type'] = type;
-    data['payAtProperty'] = payAtProperty;
-    data['checkIn'] = checkIn;
-    data['checkOut'] = checkOut;
-    data['address'] = address;
-    data['city'] = city;
     data['propertyTypeId'] = propertyTypeId;
+    data['address'] = address;
+    data['additionalAddress'] = additionalAddress;
+    data['landmark'] = landmark;
+    data['city'] = city;
     data['state'] = state;
     data['pincode'] = pincode;
     if (coordinates != null) {
@@ -241,10 +241,12 @@ class AddPropertyListData {
     data['description'] = description;
     data['availableRooms'] = availableRooms;
     data['isAvailable'] = isAvailable;
+    data['payAtProperty'] = payAtProperty;
     data['owner'] = owner;
     data['role'] = role;
     data['discount'] = discount;
-    data['additionalAddress'] = additionalAddress;
+    data['checkIn'] = checkIn;
+    data['checkOut'] = checkOut;
     data['oldMrp'] = oldMrp;
     data['tax'] = tax;
     data['createdAt'] = createdAt;
@@ -255,8 +257,8 @@ class AddPropertyListData {
 }
 
 class Coordinates {
-  dynamic lat;
-  dynamic lng;
+  double? lat;
+  double? lng;
 
   Coordinates({this.lat, this.lng});
 
@@ -275,36 +277,35 @@ class Coordinates {
 
 class Rooms {
   dynamic roomId;
-  dynamic roomType;
+  String? roomType;
   dynamic roomTypeId;
-  dynamic furnished;
+  String? furnished;
   dynamic occupancy;
   dynamic price;
   dynamic roomPricePerDay;
   List<Amenities>? amenities;
   dynamic availableUnits;
-  dynamic discountRoom;
-  dynamic roomOldMrp;
   List<String>? images;
   bool? isAvailable;
-  dynamic sId;
+  String? discountRoom;
+  String? roomOldMrp;
+  String? sId;
 
-  Rooms({
-    this.roomId,
-    this.roomType,
-    this.roomTypeId,
-    this.furnished,
-    this.occupancy,
-    this.price,
-    this.roomPricePerDay,
-    this.amenities,
-    this.availableUnits,
-    this.images,
-    this.discountRoom,
-    this.roomOldMrp,
-    this.isAvailable,
-    this.sId,
-  });
+  Rooms(
+      {this.roomId,
+        this.roomType,
+        this.roomTypeId,
+        this.furnished,
+        this.occupancy,
+        this.price,
+        this.roomPricePerDay,
+        this.amenities,
+        this.availableUnits,
+        this.images,
+        this.isAvailable,
+        this.discountRoom,
+        this.roomOldMrp,
+        this.sId});
 
   Rooms.fromJson(Map<String, dynamic> json) {
     roomId = json['roomId'];
@@ -321,9 +322,9 @@ class Rooms {
       });
     }
     availableUnits = json['availableUnits'];
-    discountRoom = json['discountRoom'];
     images = json['images'].cast<String>();
     isAvailable = json['isAvailable'];
+    discountRoom = json['discountRoom'];
     roomOldMrp = json['roomOldMrp'];
     sId = json['_id'];
   }
@@ -342,31 +343,9 @@ class Rooms {
     }
     data['availableUnits'] = availableUnits;
     data['images'] = images;
+    data['isAvailable'] = isAvailable;
     data['discountRoom'] = discountRoom;
     data['roomOldMrp'] = roomOldMrp;
-    data['isAvailable'] = isAvailable;
-    data['_id'] = sId;
-    return data;
-  }
-}
-
-class Amenities {
-  String? name;
-  String? icon;
-  String? sId;
-
-  Amenities({this.name, this.icon, this.sId});
-
-  Amenities.fromJson(Map<String, dynamic> json) {
-    name = json['name'];
-    icon = json['icon'];
-    sId = json['_id'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['name'] = name;
-    data['icon'] = icon;
     data['_id'] = sId;
     return data;
   }
@@ -417,3 +396,25 @@ class Reviews {
     return data;
   }
 }
+class Amenities {
+  String? name;
+  String? icon;
+  String? sId;
+
+  Amenities({this.name, this.icon, this.sId});
+
+  Amenities.fromJson(Map<String, dynamic> json) {
+    name = json['name'];
+    icon = json['icon'];
+    sId = json['_id'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['name'] = name;
+    data['icon'] = icon;
+    data['_id'] = sId;
+    return data;
+  }
+}
+

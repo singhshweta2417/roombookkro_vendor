@@ -136,7 +136,7 @@ Widget buildBookingList(String label, WidgetRef ref) {
               bookingsList = state.bookings.timeWise.cancelled;
             }
             if (bookingsList.isEmpty) {
-              return _buildEmptyState(context, label);
+              return _buildEmptyState(context, label,ref);
             }
             return RefreshIndicator(
               onRefresh: () async {
@@ -152,7 +152,7 @@ Widget buildBookingList(String label, WidgetRef ref) {
               ),
             );
           } else {
-            return _buildEmptyState(context, "");
+            return _buildEmptyState(context, "",ref);
           }
         },
       );
@@ -160,7 +160,7 @@ Widget buildBookingList(String label, WidgetRef ref) {
   );
 }
 
-Widget _buildEmptyState(BuildContext context, String label) {
+Widget _buildEmptyState(BuildContext context, String label,ref) {
   IconData icon;
   String title;
   String subtitle;
@@ -193,7 +193,7 @@ Widget _buildEmptyState(BuildContext context, String label) {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
+            color: AppColors.background(ref).withValues(alpha: 0.5),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, size: 64, color: Colors.grey.shade400),

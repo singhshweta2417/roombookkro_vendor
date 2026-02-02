@@ -56,7 +56,6 @@ class _FinalEditScreenPropertyState
     });
   }
 
-
   void _initializeFormData(Map args) {
     if (_isInitialized) return;
 
@@ -74,7 +73,6 @@ class _FinalEditScreenPropertyState
 
       if (existingData.rooms != null && existingData.rooms!.isNotEmpty) {
         roomsList = existingData.rooms!.map((room) {
-
           final roomIndex = existingData.rooms!.indexOf(room);
           List<String> roomExistingImages = [];
           if (room.images != null && room.images!.isNotEmpty) {
@@ -88,12 +86,13 @@ class _FinalEditScreenPropertyState
             roomTypeName: room.roomType ?? '',
             roomType: room.roomTypeId?.toString() ?? '',
             furnished: room.furnished ?? '',
-            roomOldMrp: room.roomOldMrp??"",
+            roomOldMrp: room.roomOldMrp ?? "",
             occupancy: room.occupancy?.toString() ?? '1',
             price: room.price?.toString() ?? '0',
             availableUnits: room.availableUnits?.toString() ?? '0',
             discountRoom: room.discountRoom?.toString() ?? "0",
-            amenitiesIds: room.amenities?.map((a) => a.sId ?? '').toList() ?? [],
+            amenitiesIds:
+                room.amenities?.map((a) => a.sId ?? '').toList() ?? [],
             roomImages: [],
             roomPricePerDay: room.roomPricePerDay?.toString() ?? '0',
             isAvailable: true,
@@ -139,9 +138,9 @@ class _FinalEditScreenPropertyState
   }
 
   Future<void> _selectTime(
-      BuildContext context,
-      TextEditingController controller,
-      ) async {
+    BuildContext context,
+    TextEditingController controller,
+  ) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
@@ -230,8 +229,6 @@ class _FinalEditScreenPropertyState
     super.dispose();
   }
 
-// Replace the build method and related widget methods in FinalEditScreenProperty
-
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)!.settings.arguments as Map;
@@ -301,8 +298,7 @@ class _FinalEditScreenPropertyState
         middle: AppText(
           text: "Edit Rooms & Contact Details",
           fontType: FontType.bold,
-          fontSize: AppConstants.twentyTwo,
-          color: Colors.black,
+          fontSize: AppConstants.eighteen,
         ),
       ),
       child: Container(
@@ -310,112 +306,112 @@ class _FinalEditScreenPropertyState
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [AppColors.background(ref), Colors.grey.shade50],
+            colors: [
+              AppColors.background(ref),
+              AppColors.background(ref).withValues(alpha: 0.2),
+            ],
           ),
         ),
         child: roomTypeState is GetRoomTypeLoading
             ? const Center(child: CircularProgressIndicator())
             : roomTypeState is GetRoomTypeError
             ? Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red.shade400,
-              ),
-              const SizedBox(height: 16),
-              AppText(
-                text: roomTypeState.error,
-                fontType: FontType.regular,
-                color: Colors.red,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () {
-                  ref
-                      .read(getRoomTypeProvider.notifier)
-                      .roomTypeApi(selectedPropertyType.toString());
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary(ref),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red.shade400,
+                    ),
+                    const SizedBox(height: 16),
+                    AppText(
+                      text: roomTypeState.error,
+                      fontType: FontType.regular,
+                      color: Colors.red,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        ref
+                            .read(getRoomTypeProvider.notifier)
+                            .roomTypeApi(selectedPropertyType.toString());
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondary(ref),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        )
+              )
             : ListView(
-          padding: EdgeInsets.symmetric(
-            horizontal: context.sw * 0.04,
-            vertical: context.sh * 0.015,
-          ),
-          children: [
-            _buildPropertySummaryCard(
-              propertyTitle,
-              city,
-              state,
-              pincode,
-            ),
-            const SizedBox(height: 24),
+                padding: EdgeInsets.symmetric(
+                  horizontal: context.sw * 0.04,
+                  vertical: context.sh * 0.015,
+                ),
+                children: [
+                  _buildPropertySummaryCard(
+                    propertyTitle,
+                    city,
+                    state,
+                    pincode,
+                  ),
+                  const SizedBox(height: 24),
 
-            _buildContactInformationSection(),
-            const SizedBox(height: 24),
+                  _buildContactInformationSection(),
+                  const SizedBox(height: 24),
 
-            _buildYourRoomsSection(
-              selectedPropertyType,
-              subTypeList,
-            ),
-            const SizedBox(height: 24),
+                  _buildYourRoomsSection(selectedPropertyType, subTypeList),
+                  const SizedBox(height: 24),
 
-            _buildActionButtons(
-              context,
-              selectedPropertyType,
-              subTypeList,
-              args,
-              mainAmenitiesList,
-              mainImage,
-              propertyImages,
-              propertyTitle,
-              address,
-              city,
-              state,
-              pincode,
-              coordinates,
-              propertyMonthPrice,
-              propertyDayPrice,
-              propertyNightPrice,
-              website,
-              description,
-              oldMrp,
-              tax,
-              discount,
-              flatNo,
-              additionalAddress,
-              depositAmount,
-              propertyRules,
-              propertyId,
-            ),
-            const SizedBox(height: 40),
-          ],
-        ),
+                  _buildActionButtons(
+                    context,
+                    selectedPropertyType,
+                    subTypeList,
+                    args,
+                    mainAmenitiesList,
+                    mainImage,
+                    propertyImages,
+                    propertyTitle,
+                    address,
+                    city,
+                    state,
+                    pincode,
+                    coordinates,
+                    propertyMonthPrice,
+                    propertyDayPrice,
+                    propertyNightPrice,
+                    website,
+                    description,
+                    oldMrp,
+                    tax,
+                    discount,
+                    flatNo,
+                    additionalAddress,
+                    depositAmount,
+                    propertyRules,
+                    propertyId,
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
       ),
     );
   }
 
   Widget _buildPropertySummaryCard(
-      String? propertyTitle,
-      String? city,
-      String? state,
-      dynamic pincode,
-      ) {
+    String? propertyTitle,
+    String? city,
+    String? state,
+    dynamic pincode,
+  ) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -500,7 +496,7 @@ class _FinalEditScreenPropertyState
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.background(ref),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -519,11 +515,7 @@ class _FinalEditScreenPropertyState
                   value: "${roomsList.length}",
                   color: Colors.green,
                 ),
-                Container(
-                  height: 50,
-                  width: 1,
-                  color: Colors.grey.shade300,
-                ),
+                Container(height: 50, width: 1, color: Colors.grey.shade300),
                 _buildStatItem(
                   icon: Icons.meeting_room_outlined,
                   label: "Available Units",
@@ -541,8 +533,11 @@ class _FinalEditScreenPropertyState
   Widget _buildContactInformationSection() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background(ref),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.borderColor(ref).withValues(alpha: 0.2),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
@@ -570,11 +565,12 @@ class _FinalEditScreenPropertyState
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: AppText(
                   text: "Contact Information",
                   fontType: FontType.bold,
                   fontSize: 18,
+                  color: AppColors.text(ref),
                 ),
               ),
             ],
@@ -583,7 +579,7 @@ class _FinalEditScreenPropertyState
           AppText(
             text: "Property manager or owner details",
             fontSize: 13,
-            color: Colors.grey.shade600,
+            color: AppColors.text(ref),
           ),
           const SizedBox(height: 20),
           CustomTextField(
@@ -591,7 +587,8 @@ class _FinalEditScreenPropertyState
             controller: userNameController,
             hintText: "Enter full name",
             labelText: "Name",
-            suffixIcon: const Icon(Icons.person),
+            suffixIcon: Icon(Icons.person, color: AppColors.iconColor(ref)),
+            fillColor: AppColors.background(ref),
           ),
           const SizedBox(height: 16),
           CustomTextField(
@@ -600,15 +597,23 @@ class _FinalEditScreenPropertyState
             maxLines: 1,
             hintText: "e.g., Owner, Manager",
             labelText: "Role",
-            suffixIcon: const Icon(Icons.work_outline),
+            suffixIcon: Icon(
+              Icons.work_outline,
+              color: AppColors.iconColor(ref),
+            ),
+            fillColor: AppColors.background(ref),
           ),
           const SizedBox(height: 16),
           CustomTextField(
             controller: userEmailController,
             hintText: "Enter email address",
             labelText: "Email",
-            prefixIcon: const Icon(Icons.email_outlined),
+            prefixIcon: Icon(
+              Icons.email_outlined,
+              color: AppColors.iconColor(ref),
+            ),
             keyboardType: TextInputType.emailAddress,
+            fillColor: AppColors.background(ref),
           ),
           const SizedBox(height: 16),
           CustomTextField(
@@ -616,8 +621,12 @@ class _FinalEditScreenPropertyState
             hintText: "Enter phone number",
             maxLength: 10,
             labelText: "Phone Number",
-            prefixIcon: const Icon(Icons.phone_outlined),
+            prefixIcon: Icon(
+              Icons.phone_outlined,
+              color: AppColors.iconColor(ref),
+            ),
             keyboardType: TextInputType.phone,
+            fillColor: AppColors.background(ref),
           ),
           const SizedBox(height: 24),
 
@@ -655,6 +664,7 @@ class _FinalEditScreenPropertyState
                       controller: checkInController,
                       hintText: "Select time",
                       labelText: "Check-in Time",
+                      fillColor: AppColors.background(ref),
                       suffixIcon: Icon(
                         Icons.access_time,
                         color: AppColors.secondary(ref),
@@ -669,6 +679,7 @@ class _FinalEditScreenPropertyState
                   onTap: () => _selectTime(context, checkOutController),
                   child: AbsorbPointer(
                     child: CustomTextField(
+                      fillColor: AppColors.background(ref),
                       maxLines: 1,
                       controller: checkOutController,
                       hintText: "Select time",
@@ -735,8 +746,12 @@ class _FinalEditScreenPropertyState
                 ),
                 Switch(
                   value: payAtProperty,
-                  inactiveThumbColor: AppColors.secondary(ref).withValues(alpha: 0.3),
-                  inactiveTrackColor: AppColors.secondary(ref).withValues(alpha: 0.1),
+                  inactiveThumbColor: AppColors.secondary(
+                    ref,
+                  ).withValues(alpha: 0.3),
+                  inactiveTrackColor: AppColors.secondary(
+                    ref,
+                  ).withValues(alpha: 0.1),
                   activeColor: AppColors.secondary(ref),
                   onChanged: (value) {
                     setState(() {
@@ -753,9 +768,9 @@ class _FinalEditScreenPropertyState
   }
 
   Widget _buildYourRoomsSection(
-      dynamic selectedPropertyType,
-      Map<int, List<String>> subTypeList,
-      ) {
+    dynamic selectedPropertyType,
+    Map<int, List<String>> subTypeList,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -785,10 +800,7 @@ class _FinalEditScreenPropertyState
               ],
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.secondary(ref).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
@@ -822,40 +834,37 @@ class _FinalEditScreenPropertyState
               ? "Add rooms to showcase your property"
               : "Select one room that will be visible to users",
           fontSize: 13,
-          color: Colors.grey.shade600,
+          color: AppColors.text(ref).withValues(alpha: 0.5),
         ),
         const SizedBox(height: 16),
         roomsList.isEmpty
             ? _buildEmptyRoomsState(selectedPropertyType, subTypeList)
             : Column(
-          children: roomsList.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final r = entry.value;
-            return _buildEnhancedRoomCard(
-              idx,
-              r,
-              selectedPropertyType,
-              subTypeList,
-            );
-          }).toList(),
-        ),
+                children: roomsList.asMap().entries.map((entry) {
+                  final idx = entry.key;
+                  final r = entry.value;
+                  return _buildEnhancedRoomCard(
+                    idx,
+                    r,
+                    selectedPropertyType,
+                    subTypeList,
+                  );
+                }).toList(),
+              ),
       ],
     );
   }
 
   Widget _buildEmptyRoomsState(
-      dynamic selectedPropertyType,
-      Map<int, List<String>> subTypeList,
-      ) {
+    dynamic selectedPropertyType,
+    Map<int, List<String>> subTypeList,
+  ) {
     return Container(
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 2,
-        ),
+        border: Border.all(color: Colors.grey.shade300, width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -899,33 +908,33 @@ class _FinalEditScreenPropertyState
   }
 
   Widget _buildActionButtons(
-      BuildContext context,
-      dynamic selectedPropertyType,
-      Map<int, List<String>> subTypeList,
-      Map args,
-      List<String> mainAmenitiesList,
-      List<File> mainImage,
-      List<File> propertyImages,
-      String? propertyTitle,
-      String? address,
-      String? city,
-      String? state,
-      dynamic pincode,
-      dynamic coordinates,
-      dynamic propertyMonthPrice,
-      dynamic propertyDayPrice,
-      dynamic propertyNightPrice,
-      dynamic website,
-      dynamic description,
-      dynamic oldMrp,
-      dynamic tax,
-      dynamic discount,
-      dynamic flatNo,
-      dynamic additionalAddress,
-      dynamic depositAmount,
-      List<String> propertyRules,
-      dynamic propertyId,
-      ) {
+    BuildContext context,
+    dynamic selectedPropertyType,
+    Map<int, List<String>> subTypeList,
+    Map args,
+    List<String> mainAmenitiesList,
+    List<File> mainImage,
+    List<File> propertyImages,
+    String? propertyTitle,
+    String? address,
+    String? city,
+    String? state,
+    dynamic pincode,
+    dynamic coordinates,
+    dynamic propertyMonthPrice,
+    dynamic propertyDayPrice,
+    dynamic propertyNightPrice,
+    dynamic website,
+    dynamic description,
+    dynamic oldMrp,
+    dynamic tax,
+    dynamic discount,
+    dynamic flatNo,
+    dynamic additionalAddress,
+    dynamic depositAmount,
+    List<String> propertyRules,
+    dynamic propertyId,
+  ) {
     return Column(
       children: [
         SizedBox(
@@ -934,59 +943,59 @@ class _FinalEditScreenPropertyState
             onPressed: subTypeList.isEmpty
                 ? null
                 : () async {
-              final newRoom = await showModalBottomSheet<RoomData>(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => Container(
-                  height: MediaQuery.of(context).size.height * 0.9,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                  ),
-                  child: EditRoomBottomSheet(
-                    propertyType: selectedPropertyType,
-                    subTypeList: subTypeList,
-                  ),
-                ),
-              );
+                    final newRoom = await showModalBottomSheet<RoomData>(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => Container(
+                        height: MediaQuery.of(context).size.height * 0.9,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(24),
+                          ),
+                        ),
+                        child: EditRoomBottomSheet(
+                          propertyType: selectedPropertyType,
+                          subTypeList: subTypeList,
+                        ),
+                      ),
+                    );
 
-              if (newRoom != null) {
-                setState(() {
-                  roomsList.add(newRoom);
-                  if (roomsList.length == 1) {
-                    selectedRoomForUser = 0;
-                  }
-                });
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle,
-                            color: Colors.white,
+                    if (newRoom != null) {
+                      setState(() {
+                        roomsList.add(newRoom);
+                        if (roomsList.length == 1) {
+                          selectedRoomForUser = 0;
+                        }
+                      });
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 12),
+                                AppText(
+                                  text: "Room added successfully!",
+                                  fontType: FontType.semiBold,
+                                  color: Colors.white,
+                                ),
+                              ],
+                            ),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          const SizedBox(width: 12),
-                          AppText(
-                            text: "Room added successfully!",
-                            fontType: FontType.semiBold,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  );
-                }
-              }
-            },
+                        );
+                      }
+                    }
+                  },
             icon: const Icon(Icons.add_circle_outline, size: 22),
             label: const AppText(
               text: "Add New Room",
@@ -1014,109 +1023,110 @@ class _FinalEditScreenPropertyState
             onPressed: ref.watch(addPropertyProvider).isLoading
                 ? null
                 : () {
-              if (roomsList.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const Icon(
-                          Icons.warning_amber,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 12),
-                        AppText(
-                          text: "Please add at least one room",
-                          fontType: FontType.semiBold,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ),
-                    backgroundColor: Colors.orange,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              if (selectedRoomForUser == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const Icon(
-                          Icons.warning_amber,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: AppText(
-                            text: "Please select one room for user view",
-                            fontType: FontType.semiBold,
-                            color: Colors.white,
+                    if (roomsList.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(
+                                Icons.warning_amber,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 12),
+                              AppText(
+                                text: "Please add at least one room",
+                                fontType: FontType.semiBold,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                          backgroundColor: Colors.orange,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                      ],
-                    ),
-                    backgroundColor: Colors.orange,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
-                return;
-              }
+                      );
+                      return;
+                    }
 
-              ref.read(addPropertyProvider.notifier).updatePropertyApi(
-                residenceId: propertyId.toString(),
-                userName: userNameController.text.toString(),
-                role: roleController.text.toString(),
-                userEmail: userEmailController.text.toString(),
-                phone: phoneController.text.toString(),
-                checkIn: checkInController.text.toString(),
-                checkOut: checkOutController.text.toString(),
-                payAtProperty: payAtProperty,
-                rules: propertyRules,
-                name: propertyTitle ?? "",
-                propertyType: selectedPropertyType.toString(),
-                landmark: flatNo.toString(),
-                additionalAddress: additionalAddress,
-                selectedRoomPrice: selectedRoomForUser.toString(),
-                address: address ?? "",
-                city: city ?? "",
-                state: state ?? "",
-                pincode: pincode?.toString() ?? "",
-                coordinates: coordinates ?? {"lat": 0.0, "lng": 0.0},
-                mainImage: mainImage,
-                propertyImages: propertyImages,
-                pricePerMonth: propertyMonthPrice?.toString() ?? "",
-                depositAmount: depositAmount?.toString() ?? "0",
-                amenitiesMain: mainAmenitiesList,
-                website: website?.toString() ?? "",
-                pricePerDay: propertyDayPrice?.toString() ?? "",
-                availableRooms: _getTotalAvailableUnits(),
-                description: description?.toString() ?? "",
-                oldMrp: oldMrp?.toString() ?? "",
-                tax: tax?.toString() ?? "",
-                isAvailable: isAvailable,
-                pricePerNight: propertyNightPrice?.toString() ?? "",
-                discount: discount?.toString() ?? "",
-                rooms: roomsList,
-                context: context,
-              );
-            },
+                    if (selectedRoomForUser == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(
+                                Icons.warning_amber,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: AppText(
+                                  text: "Please select one room for user view",
+                                  fontType: FontType.semiBold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                          backgroundColor: Colors.orange,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+
+                    ref
+                        .read(addPropertyProvider.notifier)
+                        .updatePropertyApi(
+                          residenceId: propertyId.toString(),
+                          userName: userNameController.text.toString(),
+                          role: roleController.text.toString(),
+                          userEmail: userEmailController.text.toString(),
+                          phone: phoneController.text.toString(),
+                          checkIn: checkInController.text.toString(),
+                          checkOut: checkOutController.text.toString(),
+                          payAtProperty: payAtProperty,
+                          rules: propertyRules,
+                          name: propertyTitle ?? "",
+                          propertyType: selectedPropertyType.toString(),
+                          landmark: flatNo.toString(),
+                          additionalAddress: additionalAddress,
+                          selectedRoomPrice: selectedRoomForUser.toString(),
+                          address: address ?? "",
+                          city: city ?? "",
+                          state: state ?? "",
+                          pincode: pincode?.toString() ?? "",
+                          coordinates: coordinates ?? {"lat": 0.0, "lng": 0.0},
+                          mainImage: mainImage,
+                          propertyImages: propertyImages,
+                          pricePerMonth: propertyMonthPrice?.toString() ?? "",
+                          depositAmount: depositAmount?.toString() ?? "0",
+                          amenitiesMain: mainAmenitiesList,
+                          website: website?.toString() ?? "",
+                          pricePerDay: propertyDayPrice?.toString() ?? "",
+                          availableRooms: _getTotalAvailableUnits(),
+                          description: description?.toString() ?? "",
+                          tax: tax?.toString() ?? "",
+                          isAvailable: isAvailable,
+                          pricePerNight: propertyNightPrice?.toString() ?? "",
+                          discount: discount?.toString() ?? "",
+                          rooms: roomsList,
+                          context: context,
+                        );
+                  },
             icon: ref.watch(addPropertyProvider).isLoading
                 ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : const Icon(Icons.check_circle, size: 22),
             label: AppText(
               text: ref.watch(addPropertyProvider).isLoading
@@ -1159,24 +1169,29 @@ class _FinalEditScreenPropertyState
           child: Icon(icon, color: color, size: 28),
         ),
         const SizedBox(height: 8),
-        AppText(text: value, fontType: FontType.bold, fontSize: 20),
+        AppText(
+          text: value,
+          fontType: FontType.bold,
+          fontSize: 20,
+          color: AppColors.text(ref),
+        ),
         const SizedBox(height: 2),
         AppText(
           text: label,
           fontType: FontType.regular,
           fontSize: 12,
-          color: Colors.grey.shade600,
+          color: AppColors.text(ref).withValues(alpha: 0.7),
         ),
       ],
     );
   }
 
   Widget _buildEnhancedRoomCard(
-      int idx,
-      RoomData r,
-      dynamic selectedPropertyType,
-      Map<int, List<String>> subTypeList,
-      ) {
+    int idx,
+    RoomData r,
+    dynamic selectedPropertyType,
+    Map<int, List<String>> subTypeList,
+  ) {
     final existingImages = _getExistingRoomImages(idx);
     final hasExistingImages = existingImages.isNotEmpty;
     final hasNewImages = r.roomImages.isNotEmpty;
@@ -1186,7 +1201,7 @@ class _FinalEditScreenPropertyState
       padding: const EdgeInsets.only(bottom: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.background(ref),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelectedForUser
@@ -1214,7 +1229,10 @@ class _FinalEditScreenPropertyState
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: isSelectedForUser
                       ? AppColors.secondary(ref).withValues(alpha: 0.1)
@@ -1316,47 +1334,51 @@ class _FinalEditScreenPropertyState
                     borderRadius: BorderRadius.zero,
                     child: hasNewImages
                         ? Image.file(
-                      r.roomImages.first,
-                      width: double.infinity,
-                      height: 180,
-                      fit: BoxFit.cover,
-                    )
+                            r.roomImages.first,
+                            width: double.infinity,
+                            height: 180,
+                            fit: BoxFit.cover,
+                          )
                         : hasExistingImages
                         ? CachedNetworkImage(
-                      imageUrl: existingImages.first,
-                      width: double.infinity,
-                      height: 180,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 180,
-                        color: Colors.grey.shade200,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.secondary(ref),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        height: 180,
-                        color: Colors.grey.shade200,
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey,
-                          size: 50,
-                        ),
-                      ),
-                    )
+                            imageUrl: existingImages.first,
+                            width: double.infinity,
+                            height: 180,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              height: 180,
+                              color: AppColors.background(ref),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.secondary(ref),
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              height: 180,
+                              color: AppColors.background(
+                                ref,
+                              ).withValues(alpha: 0.5),
+                              child: const Icon(
+                                Icons.image_not_supported,
+                                color: Colors.grey,
+                                size: 50,
+                              ),
+                            ),
+                          )
                         : Container(
-                      height: 180,
-                      color: Colors.grey.shade200,
-                      child: const Center(
-                        child: Icon(
-                          Icons.image,
-                          color: Colors.grey,
-                          size: 50,
-                        ),
-                      ),
-                    ),
+                            height: 180,
+                            color: AppColors.background(
+                              ref,
+                            ).withValues(alpha: 0.5),
+                            child: const Center(
+                              child: Icon(
+                                Icons.image,
+                                color: Colors.grey,
+                                size: 50,
+                              ),
+                            ),
+                          ),
                   ),
                   Positioned(
                     top: 12,
@@ -1367,14 +1389,14 @@ class _FinalEditScreenPropertyState
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: AppColors.background(ref).withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                           Icon(
                             Icons.image,
-                            color: Colors.white,
+                            color:  AppColors.iconColor(ref),
                             size: 16,
                           ),
                           const SizedBox(width: 4),
@@ -1384,7 +1406,7 @@ class _FinalEditScreenPropertyState
                                 : hasExistingImages
                                 ? "${existingImages.length}"
                                 : "0",
-                            color: Colors.white,
+                            color: AppColors.text(ref),
                             fontType: FontType.semiBold,
                             fontSize: 12,
                           ),
@@ -1397,9 +1419,7 @@ class _FinalEditScreenPropertyState
             else
               Container(
                 height: 180,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                ),
+                decoration: BoxDecoration(color: Colors.grey.shade100),
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1556,13 +1576,16 @@ class _FinalEditScreenPropertyState
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const AppText(
-                                text: "Main Price",
+                              AppText(
+                                text: selectedPropertyType.toString() == "1"
+                                    ? "Per Night"
+                                    : "Month",
                                 fontType: FontType.bold,
                                 fontSize: 14,
-                                color: Colors.green,
+                                color: Colors.indigo,
                               ),
-                              if (r.discountRoom != "0" && r.discountRoom.isNotEmpty) ...[
+                              if (r.discountRoom != "0" &&
+                                  r.discountRoom.isNotEmpty) ...[
                                 const SizedBox(height: 2),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
@@ -1592,13 +1615,13 @@ class _FinalEditScreenPropertyState
                             const Icon(
                               Icons.currency_rupee,
                               size: 16,
-                              color: Colors.green,
+                              color: Colors.indigo,
                             ),
                             AppText(
                               text: r.price,
                               fontType: FontType.bold,
                               fontSize: 18,
-                              color: Colors.green.shade700,
+                              color: Colors.indigo.shade700,
                             ),
                           ],
                         ),
@@ -1606,8 +1629,9 @@ class _FinalEditScreenPropertyState
                     ),
                   ),
 
-                  // Per Day Price if different
-                  if (r.roomPricePerDay != r.price && r.roomPricePerDay.isNotEmpty)
+                  if (r.roomPricePerDay.isNotEmpty &&
+                      r.roomPricePerDay != "0" &&
+                      r.roomPricePerDay != r.price)
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(14),
@@ -1710,9 +1734,7 @@ class _FinalEditScreenPropertyState
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: color.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Icon(icon, color: color, size: 20),
       ),
@@ -1729,9 +1751,7 @@ class _FinalEditScreenPropertyState
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1749,7 +1769,6 @@ class _FinalEditScreenPropertyState
     );
   }
 
-  // ✅ ADDED: Delete confirmation dialog
   void _showDeleteConfirmation(int index) {
     showDialog(
       context: context,
@@ -1774,7 +1793,8 @@ class _FinalEditScreenPropertyState
             ],
           ),
           content: const AppText(
-            text: "Are you sure you want to delete this room? This action cannot be undone.",
+            text:
+                "Are you sure you want to delete this room? This action cannot be undone.",
             fontSize: 14,
             color: Colors.black87,
           ),
@@ -1793,7 +1813,8 @@ class _FinalEditScreenPropertyState
                   // Update selectedRoomForUser index after deletion
                   if (selectedRoomForUser == index) {
                     selectedRoomForUser = roomsList.length > 1 ? 0 : null;
-                  } else if (selectedRoomForUser != null && selectedRoomForUser! > index) {
+                  } else if (selectedRoomForUser != null &&
+                      selectedRoomForUser! > index) {
                     selectedRoomForUser = selectedRoomForUser! - 1;
                   }
                   roomsList.removeAt(index);
@@ -1839,15 +1860,12 @@ class _FinalEditScreenPropertyState
     );
   }
 
-
   Future<void> _editRoom(
-      int index,
-      selectedPropertyType,
-      Map<int, List<String>> subTypeList,
-      ) async {
+    int index,
+    selectedPropertyType,
+    Map<int, List<String>> subTypeList,
+  ) async {
     final existing = roomsList[index];
-
-    // ✅ DEBUG: Print existing room data before opening bottom sheet
     print("\n🔧 Editing Room #$index:");
     print("Room Type: ${existing.roomTypeName}");
     print("Price: ${existing.price}");
@@ -1856,7 +1874,6 @@ class _FinalEditScreenPropertyState
     print("Existing Images: ${existing.existingImages?.length ?? 0}");
     print("New Images: ${existing.roomImages.length}");
     print("Amenities: ${existing.amenitiesIds.length}");
-
     final editedRoom = await showModalBottomSheet<RoomData>(
       context: context,
       isScrollControlled: true,
@@ -1868,20 +1885,21 @@ class _FinalEditScreenPropertyState
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: EditRoomBottomSheet(
-          propertyType: selectedPropertyType.toString(),
+          propertyType: selectedPropertyType,
           subTypeList: subTypeList,
           initialRoom: existing,
         ),
       ),
     );
-
     if (editedRoom != null) {
       setState(() => roomsList[index] = editedRoom);
 
       print("\n✅ Room Updated:");
       print("Price: ${editedRoom.price}");
       print("Discount: ${editedRoom.discountRoom}%");
-      print("Images: ${(editedRoom.existingImages?.length ?? 0) + editedRoom.roomImages.length}");
+      print(
+        "Images: ${(editedRoom.existingImages?.length ?? 0) + editedRoom.roomImages.length}",
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

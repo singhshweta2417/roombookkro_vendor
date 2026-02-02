@@ -35,7 +35,6 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
           text: "My Properties",
           fontType: FontType.bold,
           fontSize: AppConstants.twentyTwo,
-          color: Colors.black,
         ),
       ),
       child: Consumer(
@@ -326,11 +325,11 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background(ref),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.background(ref).withValues(alpha: 0.04),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -357,7 +356,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
           AppText(
             text: label,
             fontSize: 11,
-            color: Colors.grey.shade600,
+            color: AppColors.text(ref),
             textAlign: TextAlign.center,
           ),
         ],
@@ -660,7 +659,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                       overflow: TextOverflow.ellipsis,
                       fontSize: context.sh * 0.03,
                       fontType: FontType.bold,
-                      color: Colors.black87,
+                      color: AppColors.text(ref),
                     ),
 
                     SizedBox(height: context.sh * 0.01),
@@ -705,14 +704,14 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                         Icon(
                           Icons.location_on_rounded,
                           size: 13,
-                          color: Colors.grey.shade500,
+                          color: AppColors.text(ref),
                         ),
                         SizedBox(width: 4),
                         Expanded(
                           child: AppText(
                             text: hotel.city ?? "Unknown Location",
                             fontSize: context.sh * 0.015,
-                            color: Colors.grey.shade600,
+                            color: AppColors.text(ref),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -728,14 +727,14 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                         Icon(
                           Icons.meeting_room_rounded,
                           size: 13,
-                          color: Colors.grey.shade500,
+                          color: AppColors.text(ref),
                         ),
                         SizedBox(width: 4),
                         AppText(
                           text: "${hotel.availableRooms ?? 0}",
                           fontSize: 11,
                           fontType: FontType.semiBold,
-                          color: Colors.grey.shade700,
+                          color: AppColors.borderColor(ref),
                         ),
                         SizedBox(width: 3),
                         AppText(
@@ -755,7 +754,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                         horizontal: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade50,
+                          color: AppColors.secondary(ref).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.green.shade200),
                       ),
@@ -776,7 +775,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                                             : hotel.pricePerDay.toString()}",
                                     fontSize: 16,
                                     fontType: FontType.bold,
-                                    color: Colors.green.shade700,
+                                    color: AppColors.secondary(ref),
                                   ),
                                   if ((hotel.oldMrp ?? 0) > 0) ...[
                                     SizedBox(width: 6),
@@ -784,7 +783,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                                       text: "₹${hotel.oldMrp.toString()}",
                                       decoration: TextDecoration.lineThrough,
                                       fontSize: 10,
-                                      color: Colors.grey.shade500,
+                                      color: AppColors.text(ref),
                                     ),
                                   ],
                                 ],
@@ -796,7 +795,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                                     ? "/month"
                                     : "/day",
                                 fontSize: 9,
-                                color: Colors.grey.shade600,
+                                color: AppColors.text(ref),
                               ),
                             ],
                           ),

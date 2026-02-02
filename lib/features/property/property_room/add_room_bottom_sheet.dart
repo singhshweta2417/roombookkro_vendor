@@ -32,7 +32,6 @@ class AddRoomBottomSheet extends ConsumerStatefulWidget {
 
 class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
   final ImagePicker picker = ImagePicker();
-
   String? selectedSubType;
   String? selectedSubTypeId;
   String selectedFurnished = "";
@@ -42,7 +41,6 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
   List<File> roomImages = [];
   Map<String, String> selectedRoomAmenities = {};
   Map<String, PricingData> durationPricing = {};
-  // Duration pricing data
   Map<String, TextEditingController> mrpControllers = {};
   Map<String, TextEditingController> discountControllers = {};
   Map<String, TextEditingController> priceControllers = {};
@@ -50,6 +48,11 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
   @override
   void initState() {
     super.initState();
+
+    final int propertyTypeId = widget.propertyType is int
+        ? widget.propertyType
+        : int.tryParse(widget.propertyType.toString()) ?? 0;
+
     if (widget.initialRoom != null) {
       final r = widget.initialRoom!;
       selectedSubType = r.roomTypeName;
@@ -64,13 +67,104 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
           selectedRoomAmenities[amenityId] = amenityId;
         }
       }
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final int propertyTypeId = widget.propertyType is int
-          ? widget.propertyType
-          : int.tryParse(widget.propertyType.toString()) ?? 0;
 
+      // ✅ FIX: Property Type ke according pricing load karo
       if (propertyTypeId == 1) {
+        // Property Type 1 (Hotel) - Only Night pricing
+        if (r.price.isNotEmpty && r.price != "0") {
+          _addDuration('Night');
+          final finalPrice = double.tryParse(r.price) ?? 0;
+          final discount = double.tryParse(r.discountRoom) ?? 0;
+          String calculatedMrp = r.roomOldMrp.isNotEmpty ? r.roomOldMrp : r.price;
+
+          if (discount > 0 && finalPrice > 0 && (r.roomOldMrp.isEmpty || r.roomOldMrp == "0")) {
+            final mrp = finalPrice / (1 - (discount / 100));
+            calculatedMrp = mrp.toStringAsFixed(2);
+          }
+
+          mrpControllers['Night']?.text = calculatedMrp;
+          discountControllers['Night']?.text = r.discountRoom;
+          priceControllers['Night']?.text = r.price;
+          durationPricing['Night'] = PricingData(
+            mrp: calculatedMrp,
+            discount: r.discountRoom,
+            finalPrice: r.price,
+          );
+        }
+      } else if (propertyTypeId == 3) {
+        // Property Type 3 - Only Month pricing
+        if (r.price.isNotEmpty && r.price != "0") {
+          _addDuration('Month');
+          final finalPrice = double.tryParse(r.price) ?? 0;
+          final discount = double.tryParse(r.discountRoom) ?? 0;
+          String calculatedMrp = r.roomOldMrp.isNotEmpty ? r.roomOldMrp : r.price;
+
+          if (discount > 0 && finalPrice > 0 && (r.roomOldMrp.isEmpty || r.roomOldMrp == "0")) {
+            final mrp = finalPrice / (1 - (discount / 100));
+            calculatedMrp = mrp.toStringAsFixed(2);
+          }
+
+          mrpControllers['Month']?.text = calculatedMrp;
+          discountControllers['Month']?.text = r.discountRoom;
+          priceControllers['Month']?.text = r.price;
+          durationPricing['Month'] = PricingData(
+            mrp: calculatedMrp,
+            discount: r.discountRoom,
+            finalPrice: r.price,
+          );
+        }
+      } else {
+        // Other Property Types - Month and Day pricing
+
+        // Load Month pricing (main price)
+        if (r.price.isNotEmpty && r.price != "0") {
+          _addDuration('Month');
+          final finalPrice = double.tryParse(r.price) ?? 0;
+          final discount = double.tryParse(r.discountRoom) ?? 0;
+          String calculatedMrp = r.roomOldMrp.isNotEmpty ? r.roomOldMrp : r.price;
+
+          if (discount > 0 && finalPrice > 0 && (r.roomOldMrp.isEmpty || r.roomOldMrp == "0")) {
+            final mrp = finalPrice / (1 - (discount / 100));
+            calculatedMrp = mrp.toStringAsFixed(2);
+          }
+
+          mrpControllers['Month']?.text = calculatedMrp;
+          discountControllers['Month']?.text = r.discountRoom;
+          priceControllers['Month']?.text = r.price;
+          durationPricing['Month'] = PricingData(
+            mrp: calculatedMrp,
+            discount: r.discountRoom,
+            finalPrice: r.price,
+          );
+        }
+
+        // Load Day pricing if available
+        if (r.roomPricePerDay.isNotEmpty && r.roomPricePerDay != "0") {
+          _addDuration('Day');
+          final finalPriceDay = double.tryParse(r.roomPricePerDay) ?? 0;
+          final discount = double.tryParse(r.discountRoom) ?? 0;
+          String calculatedMrpDay = r.roomOldMrp.isNotEmpty ? r.roomOldMrp : r.roomPricePerDay;
+
+          if (discount > 0 && finalPriceDay > 0 && (r.roomOldMrp.isEmpty || r.roomOldMrp == "0")) {
+            final mrp = finalPriceDay / (1 - (discount / 100));
+            calculatedMrpDay = mrp.toStringAsFixed(2);
+          }
+
+          mrpControllers['Day']?.text = calculatedMrpDay;
+          discountControllers['Day']?.text = r.discountRoom;
+          priceControllers['Day']?.text = r.roomPricePerDay;
+          durationPricing['Day'] = PricingData(
+            mrp: calculatedMrpDay,
+            discount: r.discountRoom,
+            finalPrice: r.roomPricePerDay,
+          );
+        }
+      }
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Add default duration only for new rooms (not editing)
+      if (propertyTypeId == 1 && widget.initialRoom == null) {
         _addDuration('Night');
       }
 
@@ -304,8 +398,8 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                                   .options
                                   ?.firstWhere(
                                     (opt) => opt.label == value,
-                                    orElse: () => RoomTypeOption(),
-                                  );
+                                orElse: () => RoomTypeOption(),
+                              );
                               selectedSubTypeId = matchingOption?.id
                                   ?.toString();
                             }
@@ -327,7 +421,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionLabel("Available Units", true),
+                            _buildSectionLabel("Similar Rooms", true),
                             const SizedBox(height: 8),
                             _buildTextField(
                               controller: _availableUnitsCont,
@@ -342,7 +436,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionLabel("Occupancy", true),
+                            _buildSectionLabel("Person in room", true),
                             const SizedBox(height: 8),
                             // Property Type 4 ke liye locked occupancy
                             propertyTypeId == 4
@@ -372,7 +466,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
                   const SizedBox(height: 16),
                   if (durationPricing.isNotEmpty) ...[
                     ...durationPricing.keys.map(
-                      (duration) => _buildPricingCard(duration),
+                          (duration) => _buildPricingCard(duration),
                     ),
                   ] else ...[
                     Container(
@@ -583,7 +677,6 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
       ),
     );
   }
-// Add this method after _buildTextField method
 
   Widget _buildLockedOccupancyField() {
     return Container(
@@ -634,7 +727,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
       ),
     );
   }
-  // Duration Selector Widget
+
   Widget _buildDurationSelector(int propertyTypeId) {
     final durations = ['Night', 'Day', 'Month'];
     return Wrap(
@@ -642,19 +735,11 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
       runSpacing: 10,
       children: durations.map((duration) {
         final isSelected = durationPricing.containsKey(duration);
-
-        // Property ID = 1: Sirf Night enable
-        // Property ID = 3: Sirf Month enable
-        // Baki IDs: Night aur Day disable, Month enable
         final isDisabled = propertyTypeId.toString() == "1"
             ? duration != 'Night'  // ID=1: Sirf Night enable
             : propertyTypeId.toString() == "3"
             ? duration != 'Month'  // ID=3: Sirf Month enable
             : duration == 'Night'; // Baki IDs: Night disable, Day aur Month enable
-
-        print(propertyTypeId.toString());
-        print("propertyTypeId.toString()");
-
         return InkWell(
           onTap: isDisabled ? null : () {
             if (isSelected) {
@@ -723,7 +808,6 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     );
   }
 
-  // Pricing Card Widget
   Widget _buildPricingCard(String duration) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -917,60 +1001,60 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
         children: furnishedOptions
             .where((option) => option.isActive == true)
             .map((option) {
-              final label = option.label ?? '';
-              final value = option.value ?? '';
-              final icon = _getFurnishedIcon(label);
-              final sel = selectedFurnished == value;
+          final label = option.label ?? '';
+          final value = option.value ?? '';
+          final icon = _getFurnishedIcon(label);
+          final sel = selectedFurnished == value;
 
-              return InkWell(
-                onTap: () => setState(() => selectedFurnished = value),
+          return InkWell(
+            onTap: () => setState(() => selectedFurnished = value),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: sel ? AppColors.secondary(ref) : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: sel ? AppColors.secondary(ref) : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: sel
-                          ? AppColors.secondary(ref)
-                          : Colors.grey.shade300,
-                      width: sel ? 2 : 1,
-                    ),
-                    boxShadow: sel
-                        ? [
-                            BoxShadow(
-                              color: AppColors.secondary(
-                                ref,
-                              ).withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        icon,
-                        size: 20,
-                        color: sel ? Colors.white : Colors.grey.shade700,
-                      ),
-                      const SizedBox(width: 8),
-                      AppText(
-                        text: label,
-                        color: sel ? Colors.white : Colors.grey.shade800,
-                        fontType: sel ? FontType.semiBold : FontType.medium,
-                        fontSize: 14,
-                      ),
-                    ],
-                  ),
+                border: Border.all(
+                  color: sel
+                      ? AppColors.secondary(ref)
+                      : Colors.grey.shade300,
+                  width: sel ? 2 : 1,
                 ),
-              );
-            })
+                boxShadow: sel
+                    ? [
+                  BoxShadow(
+                    color: AppColors.secondary(
+                      ref,
+                    ).withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+                    : [],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 20,
+                    color: sel ? Colors.white : Colors.grey.shade700,
+                  ),
+                  const SizedBox(width: 8),
+                  AppText(
+                    text: label,
+                    color: sel ? Colors.white : Colors.grey.shade800,
+                    fontType: sel ? FontType.semiBold : FontType.medium,
+                    fontSize: 14,
+                  ),
+                ],
+              ),
+            ),
+          );
+        })
             .toList(),
       );
     }
@@ -1293,7 +1377,6 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
         ? widget.propertyType
         : int.tryParse(widget.propertyType.toString()) ?? 0;
 
-    // Validation
     if (selectedSubTypeId == null || selectedSubTypeId!.isEmpty) {
       _showError("Please select a room category");
       return;
@@ -1343,29 +1426,36 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
 
     List<String> selectedAmenitiesIds = selectedRoomAmenities.keys.toList();
 
-    // Backend ke liye sirf 3 fields chahiye:
+    // Backend ke liye fields
     String mainPrice = "0";
     String roomPricePerDay = "0";
     String roomDiscountPercent = "0";
+    String roomOldMrpValue = "0";
 
-    // Logic: Backend format ke according set karo
     if (durationPricing.containsKey('Night')) {
       // Night pricing hai to wo use karo
       mainPrice = durationPricing['Night']!.finalPrice;
       roomDiscountPercent = durationPricing['Night']!.discount;
+      roomOldMrpValue = durationPricing['Night']!.mrp;
     } else if (durationPricing.containsKey('Month')) {
-      // Month pricing hai to wo use karo
       mainPrice = durationPricing['Month']!.finalPrice;
       roomDiscountPercent = durationPricing['Month']!.discount;
+      roomOldMrpValue = durationPricing['Month']!.mrp;
     } else if (durationPricing.containsKey('Day')) {
-      // Day pricing hai to wo use karo
       mainPrice = durationPricing['Day']!.finalPrice;
       roomDiscountPercent = durationPricing['Day']!.discount;
+      roomOldMrpValue = durationPricing['Day']!.mrp;
+      print(roomOldMrpValue);
+      print("roomOldMrpValueshcvjhsavc");
     }
 
     // roomPricePerDay: Agar Day pricing hai to use karo, warna main price
     if (durationPricing.containsKey('Day')) {
       roomPricePerDay = durationPricing['Day']!.finalPrice;
+      // ✅ Agar Day pricing hai aur Night nahi hai, to Day ka MRP use karo
+      if (!durationPricing.containsKey('Night')) {
+        roomOldMrpValue = durationPricing['Day']!.mrp;
+      }
     } else {
       roomPricePerDay = mainPrice;
     }
@@ -1386,11 +1476,11 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
       roomType: selectedSubTypeId!,
       roomTypeName: selectedSubType!,
       furnished: selectedFurnished,
-      roomOldMrp: mrpControllers.toString(),
+      roomOldMrp: roomOldMrpValue, // ✅ FIX: Ab sahi MRP jayega
       occupancy: finalOccupancy,
-      price: mainPrice, // Backend field
-      roomPricePerDay: roomPricePerDay, // Backend field
-      discountRoom: roomDiscountPercent, // Backend field
+      price: mainPrice,
+      roomPricePerDay: roomPricePerDay,
+      discountRoom: roomDiscountPercent,
       isAvailable: isRoomAvailable,
       availableUnits: _availableUnitsCont.text.trim(),
       amenitiesIds: selectedAmenitiesIds,
@@ -1403,7 +1493,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     print("Occupancy: $finalOccupancy");
     print("price: $mainPrice");
     print("roomPricePerDay: $roomPricePerDay");
-    print("sdvchsvdcjhsvchj: ${mrpControllers.toString()}");
+    print("roomOldMrp: $roomOldMrpValue");
     print("discountRoom: $roomDiscountPercent%");
 
     Navigator.of(context).pop(roomData);
@@ -1422,6 +1512,7 @@ class _AddRoomBottomSheetState extends ConsumerState<AddRoomBottomSheet> {
     priceControllers.forEach((_, controller) => controller.dispose());
     super.dispose();
   }
+
 }
 
 extension GetAmenitiesRoomStateExtension on GetAmenitiesRoomState {

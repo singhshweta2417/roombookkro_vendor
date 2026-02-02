@@ -7,6 +7,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:room_book_kro_vendor/core/constants/app_fonts.dart';
+import 'package:room_book_kro_vendor/core/theme/app_colors.dart';
 import 'package:room_book_kro_vendor/core/widgets/primary_button.dart';
 import '../../core/utils/context_extensions.dart';
 import '../../core/widgets/app_text.dart';
@@ -114,7 +115,7 @@ class MapNotifier extends StateNotifier<MapState> {
   }
 
   /// ✅ Check location permission with custom handling
-  Future<bool> checkLocationPermission(BuildContext context) async {
+  Future<bool> checkLocationPermission(BuildContext context,ref) async {
     // Check if location services are enabled
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -130,7 +131,7 @@ class MapNotifier extends StateNotifier<MapState> {
 
     if (permission == LocationPermission.denied) {
       // Show rationale dialog
-      bool? shouldRequest = await _showPermissionRationaleDialog(context);
+      bool? shouldRequest = await _showPermissionRationaleDialog(context,ref);
 
       if (shouldRequest == true) {
         permission = await Geolocator.requestPermission();
@@ -160,7 +161,7 @@ class MapNotifier extends StateNotifier<MapState> {
   }
 
   /// ✅ FIXED: setInitialLocation with moveToLocation
-  Future<void> setInitialLocation(BuildContext context) async {
+  Future<void> setInitialLocation(BuildContext context,ref) async {
     if (_disposed) return;
 
     state = state.copyWith(isLoadingLocation: true);
@@ -169,7 +170,7 @@ class MapNotifier extends StateNotifier<MapState> {
       debugPrint("🔄 Step 1: Checking location permissions...");
 
       // Check and request permission
-      bool hasPermission = await checkLocationPermission(context);
+      bool hasPermission = await checkLocationPermission(context,ref);
 
       if (!hasPermission) {
         debugPrint("❌ Permission not granted");
@@ -270,14 +271,14 @@ class MapNotifier extends StateNotifier<MapState> {
   }
 
   /// ✅ FIXED: setLocation with proper updates
-  Future<void> setLocation(BuildContext context) async {
+  Future<void> setLocation(BuildContext context,ref) async {
     if (_disposed) return;
 
     state = state.copyWith(isLoadingLocation: true);
 
     debugPrint("🔄 FAB: Refreshing location...");
 
-    bool hasPermission = await checkLocationPermission(context);
+    bool hasPermission = await checkLocationPermission(context,ref);
 
     if (!hasPermission) {
       state = state.copyWith(
@@ -365,20 +366,22 @@ class MapNotifier extends StateNotifier<MapState> {
     );
   }
 
-  Future<bool?> _showPermissionRationaleDialog(BuildContext context) {
+  Future<bool?> _showPermissionRationaleDialog(BuildContext context,ref) {
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+          backgroundColor: AppColors.background(ref),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.location_on, color: Colors.green, size: 30),
+            Icon(Icons.location_on, color:  AppColors.secondary(ref), size: 30),
             SizedBox(width: 10),
             AppText(
               text: 'Location Permission',
               fontSize: 18,
               fontType: FontType.bold,
+              color: AppColors.text(ref),
             ),
           ],
         ),
@@ -389,11 +392,12 @@ class MapNotifier extends StateNotifier<MapState> {
             AppText(
               text: 'We need location access to:',
               fontType: FontType.medium,
+              color:   AppColors.text(ref)
             ),
             SizedBox(height: 10),
-            _buildReason(Icons.pin_drop, 'Show your location on map'),
-            _buildReason(Icons.search, 'Find nearby places'),
-            _buildReason(Icons.navigation, 'Provide accurate addresses'),
+            _buildReason(Icons.pin_drop, 'Show your location on map',ref),
+            _buildReason(Icons.search, 'Find nearby places',ref),
+            _buildReason(Icons.navigation, 'Provide accurate addresses',ref),
           ],
         ),
         actions: [
@@ -492,20 +496,19 @@ class MapNotifier extends StateNotifier<MapState> {
     );
   }
 
-  Widget _buildReason(IconData icon, String text) {
+  Widget _buildReason(IconData icon, String text,ref) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
           Icon(icon, color: Colors.green, size: 20),
           SizedBox(width: 10),
-          Expanded(child: AppText(text: text, fontSize: 13)),
+          Expanded(child: AppText(text: text, fontSize: 13,color:  AppColors.text(ref),)),
         ],
       ),
     );
   }
 
-  // ✅ FIXED: moveToLocation with null check
   void moveToLocation(LatLng position) {
     if (_disposed) return;
 
@@ -527,7 +530,6 @@ class MapNotifier extends StateNotifier<MapState> {
     }
   }
 
-  // ✅ addMarker remains same
   void addMarker(LatLng position) {
     if (_disposed) return;
     debugPrint('📍 Adding marker at: ${position.latitude}, ${position.longitude}');
@@ -585,7 +587,6 @@ class MapNotifier extends StateNotifier<MapState> {
     }
   }
 
-  // Rest of methods remain same
   Future<void> getAddressSuggestions(String query) async {
     final response = await http.get(
       Uri.parse(
@@ -634,6 +635,7 @@ class MapNotifier extends StateNotifier<MapState> {
   void updateAddressText(String address) {
     state = state.copyWith(addressText: address);
   }
+
 }
 
 /// ------------------ PROVIDER ------------------

@@ -147,7 +147,6 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen1> {
           text: "Add Property",
           fontType: FontType.bold,
           fontSize: AppConstants.twentyTwo,
-          color: Colors.black,
         ),
       ),
       child: ListView(
@@ -163,7 +162,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen1> {
               if (states.contains(WidgetState.selected)) {
                 return AppColors.secondary(ref);
               }
-              return Colors.grey;
+              return AppColors.background(ref);
             }),
             stepIconBuilder: (index, state) {
               final bool isCompleted = state == StepState.complete;
@@ -173,7 +172,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen1> {
                 decoration: BoxDecoration(
                   color: isCompleted
                       ? AppColors.secondary(ref)
-                      : Colors.grey.shade300,
+                      : AppColors.background(ref).withValues(alpha: 0.7),
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: isCompleted ? AppColors.secondary(ref) : Colors.grey,
@@ -324,7 +323,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen1> {
                           readOnly: true,
                           "Address",
                           _addressCont,
-                          suffixIcon: Icon(Icons.location_on_outlined),
+                          suffixIcon: Icon(Icons.location_on_outlined,color: AppColors.iconColor(ref)),
                           suffix: true,
                           keyboard: TextInputType.streetAddress,
                         ),
@@ -335,7 +334,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen1> {
                       readOnly: true,
                       "City",
                       _cityController,
-                      suffixIcon: Icon(Icons.location_city_outlined),
+                      suffixIcon: Icon(Icons.location_city_outlined,color: AppColors.iconColor(ref)),
                       suffix: true,
                     ),
 
@@ -343,7 +342,7 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen1> {
                       readOnly: true,
                       "State",
                       _stateController,
-                      suffixIcon: Icon(Icons.map_outlined),
+                      suffixIcon: Icon(Icons.map_outlined,color: AppColors.iconColor(ref)),
                       suffix: true,
                     ),
 
@@ -351,13 +350,13 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen1> {
                       readOnly: true,
                       "Pincode",
                       _pincodeController,
-                      suffixIcon: Icon(Icons.pin_outlined),
+                      suffixIcon: Icon(Icons.pin_outlined,color: AppColors.iconColor(ref)),
                       suffix: true,
                     ),
                     field(
                       "Additional Address (Optional)",
                       _additionalController,
-                      suffixIcon: Icon(Icons.flag_circle_outlined),
+                      suffixIcon: Icon(Icons.flag_circle_outlined,color: AppColors.iconColor(ref)),
                       suffix: true,
                     ),
 
@@ -429,9 +428,10 @@ class _AddPropertyScreenState extends ConsumerState<AddPropertyScreen1> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
+        dropdownColor: AppColors.background(ref),
         decoration: InputDecoration(
           labelText: title,
-          labelStyle: TextStyle(color: Colors.grey),
+          labelStyle: TextStyle(color: AppColors.text(ref),),
           filled: true,
           border: OutlineInputBorder(
             borderSide: const BorderSide(color: Colors.grey, width: 1.4),

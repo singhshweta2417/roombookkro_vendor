@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:room_book_kro_vendor/core/routes/app_routes.dart';
-import 'package:room_book_kro_vendor/features/property/property_room/add_room_bottom_sheet.dart';
 import '../../../core/utils/utils.dart';
 import '../../auth/data/user_view.dart';
 import '../../bottom/bottom_screen.dart';
@@ -47,7 +46,6 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
     required String additionalAddress,
     required String landmark,
     required String description,
-    required String oldMrp,
     required bool payAtProperty,
     required String checkIn,
     required String checkOut,
@@ -91,7 +89,6 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
         "role": role,
         "description": description,
         "discount": discount,
-        "oldMrp": oldMrp,
         "tax": tax,
         "pricePerNight": pricePerNight,
       };
@@ -146,6 +143,9 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
           MapEntry("isAvailable[$r]", room.isAvailable.toString()),
         );
         formData.fields.add(
+          MapEntry("roomOldMrp[$r]", room.roomOldMrp),
+        );
+        formData.fields.add(
           MapEntry("roomAmenityIds[$r]", room.amenitiesIds.join(",")),
         );
         formData.fields.add(
@@ -174,7 +174,6 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
       }
       final response = await _addPropertyRepo.addPropertyApi(formData);
       if (response["success"] == true) {
-        print("sdkjbskdjbc");
         super.state = AddPropertySuccess(
           message: response["message"].toString(),
         );
@@ -191,18 +190,12 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
           Future.delayed(const Duration(milliseconds: 100), () {
             ref.read(bottomNavProvider.notifier).setIndex(2);
           });}
-        // await Future.delayed(Duration(milliseconds: 100));
-        // ref.read(bottomNavProvider.notifier).setIndex(2);
-        // if (context.mounted) {
-        //   Navigator.of(context).popUntil((route) => route.isFirst);
-        // }
+
       } else {
-        print("sdbfcjsd");
         super.state = AddPropertyError(response["message"].toString());
         Utils.show(response["message"].toString(), context);
       }
     } catch (e) {
-      print("sdbjsdbks");
       super.state = AddPropertyError(e.toString());
       Utils.show(e.toString(), context);
       print(e.toString());
@@ -237,7 +230,6 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
     required String additionalAddress,
     required String landmark,
     required String description,
-    required String oldMrp,
     required String tax,
     required String checkIn,
     required String checkOut,
@@ -270,16 +262,15 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
         "checkOut": checkOut,
         "pricePerMonth": pricePerMonth,
         "depositAmount": depositAmount,
-        "contactNumber": phone ?? '',
-        "email": userEmail ?? '',
+        "contactNumber": phone,
+        "email": userEmail,
         "website": website,
         "pricePerDay": pricePerDay,
         "availableRooms": availableRooms,
-        "owner": userName ?? '',
-        "role": role ?? '',
+        "owner": userName,
+        "role": role,
         "description": description,
         "discount": discount,
-        "oldMrp": oldMrp,
         "tax": tax,
         "pricePerNight": pricePerNight,
       };
@@ -322,6 +313,9 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
         formData.fields.add(MapEntry("price[$r]", room.price));
         formData.fields.add(
           MapEntry("roomPricePerDay[$r]", room.roomPricePerDay),
+        );
+        formData.fields.add(
+          MapEntry("roomOldMrp[$r]", room.roomOldMrp),
         );
         formData.fields.add(
           MapEntry("discountRoom[$r]", room.discountRoom),
@@ -388,11 +382,6 @@ class AddPropertyViewModel extends StateNotifier<AddPropertyState> {
           Future.delayed(const Duration(milliseconds: 100), () {
             ref.read(bottomNavProvider.notifier).setIndex(2);
           });}
-        // await Future.delayed(Duration(milliseconds: 100));
-        // ref.read(bottomNavProvider.notifier).setIndex(2);
-        // if (context.mounted) {
-        //   Navigator.of(context).popUntil((route) => route.isFirst);
-        // }
       } else {
         super.state = AddPropertyError(response["message"].toString());
         Utils.show(response["message"].toString(), context);
@@ -450,7 +439,6 @@ class RoomData {
   }
 }
 
-// PricingData class sirf UI ke liye hai (backend ko nahi jaata)
 class PricingData {
   final String mrp;
   final String discount;
@@ -495,7 +483,6 @@ class AddPropertyError extends AddPropertyState {
   const AddPropertyError(this.error) : super(isLoading: false);
 }
 
-// ✅ Provider
 final addPropertyProvider =
     StateNotifierProvider<AddPropertyViewModel, AddPropertyState>((ref) {
       final addPropRepo = ref.read(addPropertyRepoProvider);

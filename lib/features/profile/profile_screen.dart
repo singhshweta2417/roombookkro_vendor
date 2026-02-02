@@ -156,13 +156,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               arguments: {"id": "3", "title": "Terms&Conditions"},
             );
           }, "Terms&Conditions"),
-          _menuTile(ref, Icons.contact_phone_outlined, () {
-            Navigator.pushNamed(
-              context,
-              AppRoutes.policyScreen,
-              arguments: {"id": "4", "title": "Contact Us"},
-            );
-          }, "Contact Us"),
+          // _menuTile(ref, Icons.contact_phone_outlined, () {
+          //   Navigator.pushNamed(
+          //     context,
+          //     AppRoutes.policyScreen,
+          //     arguments: {"id": "4", "title": "Contact Us"},
+          //   );
+          // }, "Contact Us"),
           _menuTile(
             ref,
             Icons.logout,

@@ -4,6 +4,7 @@ import 'package:room_book_kro_vendor/features/home/bank/bank_list_screen.dart';
 import 'package:room_book_kro_vendor/features/home/bank/edit_bank_screen.dart';
 import 'package:room_book_kro_vendor/features/home/wallet_screen/ticket_screen.dart';
 import 'package:room_book_kro_vendor/features/home/wallet_screen/withdraw_screen.dart';
+import 'package:room_book_kro_vendor/features/profile/policy_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/otp_view.dart';
 import '../../features/auth/register_screen.dart';
@@ -33,7 +34,10 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       return MaterialPageRoute(builder: (_) => const SplashScreen());
     // ---------- Bottom Navigation ----------
     case AppRoutes.bottomNavigationPage:
-      return MaterialPageRoute(builder: (_) => const BottomNavigationPage(),settings: settings);
+      return MaterialPageRoute(
+        builder: (_) => const BottomNavigationPage(),
+        settings: settings,
+      );
     case AppRoutes.onboarding:
       return MaterialPageRoute(builder: (_) => const OnboardingScreen());
     case AppRoutes.login:
@@ -46,58 +50,75 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         builder: (_) => const RegisterScreen(),
         settings: settings,
       );
-    case AppRoutes.oTPFields:return MaterialPageRoute(
+    case AppRoutes.oTPFields:
+      return MaterialPageRoute(
         builder: (_) => const OTPFields(),
         settings: settings,
       );
-    case AppRoutes.addRoomProperty:return MaterialPageRoute(
+    case AppRoutes.addRoomProperty:
+      return MaterialPageRoute(
         builder: (_) => const AddRoomProperty(),
         settings: settings,
       );
-    case AppRoutes.bookingDetailsScreen:return MaterialPageRoute(
+    case AppRoutes.bookingDetailsScreen:
+      return MaterialPageRoute(
         builder: (_) => const BookingDetailsScreen(),
         settings: settings,
       );
     case AppRoutes.propertyDetailsScreen:
       return MaterialPageRoute(
-        builder: (_) =>  PropertyDetailsScreen(),
+        builder: (_) => PropertyDetailsScreen(),
         settings: settings,
       );
-    case AppRoutes.chooseLocation:return MaterialPageRoute(
+    case AppRoutes.policyScreen:
+      return MaterialPageRoute(
+        builder: (_) => PolicyScreen(),
+        settings: settings,
+      );
+    case AppRoutes.chooseLocation:
+      return MaterialPageRoute(
         builder: (_) => const ChooseLocation(),
         settings: settings,
       );
-    case AppRoutes.topUpWalletPage:return MaterialPageRoute(
+    case AppRoutes.topUpWalletPage:
+      return MaterialPageRoute(
         builder: (_) => const TopUpWalletPage(),
         settings: settings,
       );
 
-    case AppRoutes.walletScreen:return MaterialPageRoute(
+    case AppRoutes.walletScreen:
+      return MaterialPageRoute(
         builder: (_) => const WalletScreen(),
         settings: settings,
       );
-    case AppRoutes.addRoom:return MaterialPageRoute(
+    case AppRoutes.addRoom:
+      return MaterialPageRoute(
         builder: (_) => AddPropertyScreen1(),
         settings: settings,
       );
-    case AppRoutes.editBankAccountScreen:return MaterialPageRoute(
+    case AppRoutes.editBankAccountScreen:
+      return MaterialPageRoute(
         builder: (_) => EditBankAccountScreen(),
         settings: settings,
       );
-    case AppRoutes.withdrawScreen:return MaterialPageRoute(
+    case AppRoutes.withdrawScreen:
+      return MaterialPageRoute(
         builder: (_) => WithdrawScreen(),
         settings: settings,
       );
 
-    case AppRoutes.addPropertyRoom2:return MaterialPageRoute(
+    case AppRoutes.addPropertyRoom2:
+      return MaterialPageRoute(
         builder: (_) => AddPropertyRoom2(),
         settings: settings,
       );
-    case AppRoutes.addBankAccountScreen:return MaterialPageRoute(
+    case AppRoutes.addBankAccountScreen:
+      return MaterialPageRoute(
         builder: (_) => AddBankAccountScreen(),
         settings: settings,
       );
-    case AppRoutes.bankListScreen:return MaterialPageRoute(
+    case AppRoutes.bankListScreen:
+      return MaterialPageRoute(
         builder: (_) => BankListScreen(),
         settings: settings,
       );
@@ -111,28 +132,32 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         builder: (_) => const PersonalProfileScreen(),
         settings: settings,
       );
-    case AppRoutes.offerScreen:return MaterialPageRoute(
+    case AppRoutes.offerScreen:
+      return MaterialPageRoute(
         builder: (_) => const OffersScreen(),
         settings: settings,
       );
     //edit
-    case AppRoutes.editPropertyScreen1:return MaterialPageRoute(
+    case AppRoutes.editPropertyScreen1:
+      return MaterialPageRoute(
         builder: (_) => const EditPropertyScreen1(),
         settings: settings,
       );
-    case AppRoutes.editPropertyScreen2:return MaterialPageRoute(
+    case AppRoutes.editPropertyScreen2:
+      return MaterialPageRoute(
         builder: (_) => const EditPropertyScreen2(),
         settings: settings,
       );
-    case AppRoutes.finalEditScreenProperty:return MaterialPageRoute(
+    case AppRoutes.finalEditScreenProperty:
+      return MaterialPageRoute(
         builder: (_) => const FinalEditScreenProperty(),
         settings: settings,
       );
-    case AppRoutes.noInternetConnection:return MaterialPageRoute(
+    case AppRoutes.noInternetConnection:
+      return MaterialPageRoute(
         builder: (_) => const NoInternetConnection(),
         settings: settings,
       );
-
 
     default:
       return MaterialPageRoute(

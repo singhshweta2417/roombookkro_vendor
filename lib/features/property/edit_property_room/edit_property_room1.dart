@@ -18,7 +18,8 @@ class EditPropertyScreen1 extends ConsumerStatefulWidget {
   const EditPropertyScreen1({super.key});
 
   @override
-  ConsumerState<EditPropertyScreen1> createState() => _EditPropertyScreen1State();
+  ConsumerState<EditPropertyScreen1> createState() =>
+      _EditPropertyScreen1State();
 }
 
 class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
@@ -49,10 +50,8 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     if (propertyData == null) {
       final args = ModalRoute.of(context)?.settings.arguments;
-
       if (args != null && args is AddPropertyListData) {
         setState(() {
           propertyData = args;
@@ -77,11 +76,10 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
     _cityController.text = propertyData?.city?.toString() ?? '';
     _stateController.text = propertyData?.state?.toString() ?? '';
     _pinCodeController.text = propertyData?.pincode?.toString() ?? '';
-    _additionalController.text = propertyData?.additionalAddress?.toString() ?? '';
-
+    _additionalController.text =
+        propertyData?.additionalAddress?.toString() ?? '';
     latitude = propertyData?.coordinates?.lat?.toString() ?? '';
     longitude = propertyData?.coordinates?.lng?.toString() ?? '';
-
     setState(() {
       _isFormInitialized = true;
     });
@@ -168,10 +166,14 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
   void _submitForm() {
     if (_validateStep(1)) {
       final coordinates = {
-        "lat": double.tryParse(latitude ?? '') ??
-            propertyData?.coordinates?.lat ?? 30.076,
-        "lng": double.tryParse(longitude ?? '') ??
-            propertyData?.coordinates?.lng ?? 75.8777,
+        "lat":
+            double.tryParse(latitude ?? '') ??
+            propertyData?.coordinates?.lat ??
+            30.076,
+        "lng":
+            double.tryParse(longitude ?? '') ??
+            propertyData?.coordinates?.lng ??
+            75.8777,
       };
 
       Navigator.pushNamed(
@@ -201,9 +203,7 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
   @override
   Widget build(BuildContext context) {
     if (propertyData == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final propertyTypeState = ref.watch(getPropertyTypeProvider);
@@ -214,22 +214,26 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
         _initializeFormWithData();
 
         // ✅ Match property type with API options
-        final options = propertyTypeState.propertyType.data?.propertyType?.options ?? [];
+        final options =
+            propertyTypeState.propertyType.data?.propertyType?.options ?? [];
 
         // Remove duplicates first
         final seenValues = <String>{};
-        final uniqueOptions = options.where((opt) =>
-        opt.isActive == true &&
-            (opt.value?.isNotEmpty ?? false) &&
-            seenValues.add(opt.value!)
-        ).toList();
+        final uniqueOptions = options
+            .where(
+              (opt) =>
+                  opt.isActive == true &&
+                  (opt.value?.isNotEmpty ?? false) &&
+                  seenValues.add(opt.value!),
+            )
+            .toList();
 
         PropertyTypeOption? matchingOption;
 
         // Try to find by propertyTypeId first
         if (propertyData?.propertyTypeId != null) {
           matchingOption = uniqueOptions.firstWhere(
-                (opt) => opt.id == propertyData?.propertyTypeId,
+            (opt) => opt.id == propertyData?.propertyTypeId,
             orElse: () => PropertyTypeOption(),
           );
         }
@@ -237,7 +241,8 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
         // If not found by ID, try matching by type string (case-insensitive)
         if (matchingOption?.id == null && selectedPropertyType != null) {
           matchingOption = uniqueOptions.firstWhere(
-                (opt) => opt.value?.toLowerCase() == selectedPropertyType?.toLowerCase(),
+            (opt) =>
+                opt.value?.toLowerCase() == selectedPropertyType?.toLowerCase(),
             orElse: () => PropertyTypeOption(),
           );
         }
@@ -247,10 +252,16 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
             selectedPropertyType = matchingOption?.value;
             selectedPropertyTypeId = matchingOption?.id;
           });
-          print("✅ Property type matched: ${matchingOption?.value} (ID: ${matchingOption?.id})");
+          print(
+            "✅ Property type matched: ${matchingOption?.value} (ID: ${matchingOption?.id})",
+          );
         } else {
-          print("⚠️ No matching property type found for: $selectedPropertyType");
-          print("Available types: ${uniqueOptions.map((e) => e.value).toList()}");
+          print(
+            "⚠️ No matching property type found for: $selectedPropertyType",
+          );
+          print(
+            "Available types: ${uniqueOptions.map((e) => e.value).toList()}",
+          );
         }
       });
     }
@@ -261,7 +272,6 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
           text: "Edit Property",
           fontType: FontType.bold,
           fontSize: AppConstants.twentyTwo,
-          color: Colors.black,
         ),
       ),
       child: ListView(
@@ -277,7 +287,7 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
               if (states.contains(WidgetState.selected)) {
                 return AppColors.secondary(ref);
               }
-              return Colors.grey;
+              return AppColors.background(ref);
             }),
             stepIconBuilder: (index, state) {
               final bool isCompleted = state == StepState.complete;
@@ -287,21 +297,23 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
                 decoration: BoxDecoration(
                   color: isCompleted
                       ? AppColors.secondary(ref)
-                      : Colors.grey.shade300,
+                      : AppColors.background(ref).withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isCompleted ? AppColors.secondary(ref) : Colors.grey,
+                    color: isCompleted
+                        ? AppColors.secondary(ref)
+                        : AppColors.background(ref),
                     width: 1,
                   ),
                 ),
                 child: isCompleted
                     ? const Icon(Icons.check, color: Colors.white, size: 16)
                     : Center(
-                  child: AppText(
-                    text: "${index + 1}",
-                    fontSize: AppConstants.twelve,
-                  ),
-                ),
+                        child: AppText(
+                          text: "${index + 1}",
+                          fontSize: AppConstants.twelve,
+                        ),
+                      ),
               );
             },
             controlsBuilder: (context, details) {
@@ -340,12 +352,12 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
                 ),
                 isActive: _currentStep >= 0,
                 stepStyle: StepStyle(color: AppColors.secondary(ref)),
-                state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+                state: _currentStep > 0
+                    ? StepState.complete
+                    : StepState.indexed,
                 content: Column(
                   children: [
                     const SizedBox(height: 10),
-
-                    // ⭐ Property Type Dropdown
                     if (propertyTypeState is GetPropertyTypeLoading)
                       Center(
                         child: CircularProgressIndicator(
@@ -371,25 +383,31 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
                         ],
                       )
                     else if (propertyTypeState is GetPropertyTypeSuccess)
-                        _dropdownWithId(
-                          title: "Select Property Type",
-                          value: selectedPropertyType,
-                          options: propertyTypeState.propertyType.data?.propertyType?.options ?? [],
-                          onChange: (value, id) => setState(() {
-                            selectedPropertyType = value;
-                            selectedPropertyTypeId = id;
-                          }),
-                        )
-                      else
-                        _dropdownWithId(
-                          title: "Select Property Type",
-                          value: selectedPropertyType,
-                          options: [],
-                          onChange: (value, id) => setState(() {
-                            selectedPropertyType = value;
-                            selectedPropertyTypeId = id;
-                          }),
-                        ),
+                      _dropdownWithId(
+                        title: "Select Property Type",
+                        value: selectedPropertyType,
+                        options:
+                            propertyTypeState
+                                .propertyType
+                                .data
+                                ?.propertyType
+                                ?.options ??
+                            [],
+                        onChange: (value, id) => setState(() {
+                          selectedPropertyType = value;
+                          selectedPropertyTypeId = id;
+                        }),
+                      )
+                    else
+                      _dropdownWithId(
+                        title: "Select Property Type",
+                        value: selectedPropertyType,
+                        options: [],
+                        onChange: (value, id) => setState(() {
+                          selectedPropertyType = value;
+                          selectedPropertyTypeId = id;
+                        }),
+                      ),
 
                     // Property Title
                     field(
@@ -399,7 +417,7 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
                       textCapitalization: TextCapitalization.words,
                       suffixIcon: IconButton(
                         onPressed: () {},
-                        icon: const Icon(Icons.home_work_outlined),
+                        icon: Icon(Icons.home_work_outlined),
                       ),
                       suffix: true,
                     ),
@@ -417,7 +435,9 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
                 ),
                 isActive: _currentStep >= 1,
                 stepStyle: StepStyle(color: AppColors.secondary(ref)),
-                state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+                state: _currentStep > 1
+                    ? StepState.complete
+                    : StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -497,15 +517,15 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
   }
 
   Widget field(
-      String label,
-      TextEditingController c, {
-        Widget? suffixIcon,
-        bool multi = false,
-        bool suffix = false,
-        TextInputType keyboard = TextInputType.text,
-        TextCapitalization textCapitalization = TextCapitalization.none,
-        bool readOnly = false,
-      }) {
+    String label,
+    TextEditingController c, {
+    Widget? suffixIcon,
+    bool multi = false,
+    bool suffix = false,
+    TextInputType keyboard = TextInputType.text,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    bool readOnly = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: CustomTextField(
@@ -530,85 +550,77 @@ class _EditPropertyScreen1State extends ConsumerState<EditPropertyScreen1> {
     required List<PropertyTypeOption> options,
     required Function(String?, int?) onChange,
   }) {
-    // ✅ Filter active options and remove duplicates
     final seenValues = <String>{};
     final activeOptions = options
-        .where((opt) =>
-    opt.isActive == true &&
-        (opt.value?.isNotEmpty ?? false) &&
-        seenValues.add(opt.value!)  // Remove duplicates
-    )
+        .where(
+          (opt) =>
+              opt.isActive == true &&
+              (opt.value?.isNotEmpty ?? false) &&
+              seenValues.add(opt.value!),
+        )
         .toList();
-
-    // ✅ Check if current value exists in active options
-    final valueExists = activeOptions.any(
-          (opt) => opt.value == value,
-    );
-
-    // ✅ Use null if value doesn't exist
+    final valueExists = activeOptions.any((opt) => opt.value == value);
     final effectiveValue = valueExists ? value : null;
-
-    // ✅ Debug print
-    if (!valueExists && value != null) {
-      print("⚠️ Value '$value' not found in options");
-      print("Available options: ${activeOptions.map((e) => e.value).toList()}");
-    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
+        dropdownColor:AppColors.background(ref),
         decoration: InputDecoration(
           labelText: title,
-          labelStyle: const TextStyle(color: Colors.grey),
+          labelStyle: TextStyle(color: AppColors.text(ref)),
           filled: true,
-          border: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 1.4),
-          ),
-          fillColor: AppColors.background(ref),
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey, width: 1.4),
-          ),
-          focusedBorder: OutlineInputBorder(
+          border: OutlineInputBorder(
             borderSide: BorderSide(
-              color: AppColors.secondary(ref),
+              color: AppColors.borderColor(ref),
               width: 1.4,
             ),
+          ),
+          fillColor: AppColors.background(ref),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: AppColors.borderColor(ref),
+              width: 1.4,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.secondary(ref), width: 1.4),
           ),
         ),
         value: effectiveValue,
         items: activeOptions.isEmpty
             ? null
             : activeOptions
-            .map(
-              (option) => DropdownMenuItem<String>(
-            value: option.value,
-            child: Row(
-              children: [
-                Icon(
-                  Icons.home_work_outlined,
-                  size: 18,
-                  color: AppColors.secondary(ref),
-                ),
-                const SizedBox(width: 8),
-                AppText(
-                  text: option.label ?? option.value ?? '',
-                  fontSize: AppConstants.fourteen,
-                ),
-              ],
-            ),
-          ),
-        )
-            .toList(),
+                  .map(
+                    (option) => DropdownMenuItem<String>(
+                      value: option.value,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.home_work_outlined,
+                            size: 18,
+                            color: AppColors.secondary(ref),
+                          ),
+                          const SizedBox(width: 8),
+                          AppText(
+                            text: option.label ?? option.value ?? '',
+                            fontSize: AppConstants.fourteen,
+                            color: AppColors.text(ref),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
         onChanged: activeOptions.isEmpty
             ? null
             : (selectedValue) {
-          final selectedOption = activeOptions.firstWhere(
-                (option) => option.value == selectedValue,
-            orElse: () => PropertyTypeOption(),
-          );
-          onChange(selectedValue, selectedOption.id);
-          print("✅ Selected: ${selectedOption.label} (ID: ${selectedOption.id})");
-        },
+                final selectedOption = activeOptions.firstWhere(
+                  (option) => option.value == selectedValue,
+                  orElse: () => PropertyTypeOption(),
+                );
+                onChange(selectedValue, selectedOption.id);
+              },
         hint: activeOptions.isEmpty
             ? const AppText(text: "Loading...")
             : const AppText(text: "Choose property type"),

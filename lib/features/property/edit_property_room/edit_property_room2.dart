@@ -21,7 +21,8 @@ class EditPropertyScreen2 extends ConsumerStatefulWidget {
   const EditPropertyScreen2({super.key});
 
   @override
-  ConsumerState<EditPropertyScreen2> createState() => _EditPropertyScreen2State();
+  ConsumerState<EditPropertyScreen2> createState() =>
+      _EditPropertyScreen2State();
 }
 
 class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
@@ -63,11 +64,14 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
       if (args != null && args is Map<String, dynamic>) {
         setState(() {
           arguments = args;
-          existingPropertyData = args['existingPropertyData'] as AddPropertyListData?;
+          existingPropertyData =
+              args['existingPropertyData'] as AddPropertyListData?;
           selectedPropertyType = args["selectedPropertyTypeId"] ?? 2;
         });
       }
-      ref.read(getAmenitiesPropertyProvider.notifier).getAmenitiesPropertyViewApi();
+      ref
+          .read(getAmenitiesPropertyProvider.notifier)
+          .getAmenitiesPropertyViewApi();
     });
   }
 
@@ -79,7 +83,8 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
       if (args != null && args is Map<String, dynamic>) {
         setState(() {
           arguments = args;
-          existingPropertyData = args['existingPropertyData'] as AddPropertyListData?;
+          existingPropertyData =
+              args['existingPropertyData'] as AddPropertyListData?;
           selectedPropertyType = args["selectedPropertyTypeId"] ?? 2;
         });
       }
@@ -90,16 +95,23 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     if (existingPropertyData == null || _isFormInitialized) return;
 
     _websiteController.text = existingPropertyData?.website?.toString() ?? '';
-    _descriptionController.text = existingPropertyData?.description?.toString() ?? '';
+    _descriptionController.text =
+        existingPropertyData?.description?.toString() ?? '';
     _discountCont.text = existingPropertyData?.discount?.toString() ?? '';
     _oldMrpController.text = existingPropertyData?.oldMrp?.toString() ?? '';
     _depositCont.text = existingPropertyData?.depositAmount?.toString() ?? '';
-    _propertyMonthController.text = existingPropertyData?.pricePerMonth?.toString() ?? '';
-    _propertyNightController.text = existingPropertyData?.pricePerNight?.toString() ?? '';
-    _propertyDayController.text = existingPropertyData?.pricePerDay?.toString() ?? '';
+    _propertyMonthController.text =
+        existingPropertyData?.pricePerMonth?.toString() ?? '';
+    _propertyNightController.text =
+        existingPropertyData?.pricePerNight?.toString() ?? '';
+    _propertyDayController.text =
+        existingPropertyData?.pricePerDay?.toString() ?? '';
 
-    if (existingPropertyData?.rules != null && existingPropertyData!.rules!.isNotEmpty) {
-      propertyRules = existingPropertyData!.rules!.map((rule) => rule.toString()).toList();
+    if (existingPropertyData?.rules != null &&
+        existingPropertyData!.rules!.isNotEmpty) {
+      propertyRules = existingPropertyData!.rules!
+          .map((rule) => rule.toString())
+          .toList();
     }
 
     isAvailable = existingPropertyData?.isAvailable ?? false;
@@ -115,7 +127,8 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
         _showSnackBar("Please select a main image");
         return false;
       }
-      if (propertyImages.isEmpty && (existingPropertyData?.images?.isEmpty ?? true)) {
+      if (propertyImages.isEmpty &&
+          (existingPropertyData?.images?.isEmpty ?? true)) {
         _showSnackBar("Please add at least one property image");
         return false;
       }
@@ -146,7 +159,11 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: AppText(text: message, fontType: FontType.medium,color: Colors.white,),
+        content: AppText(
+          text: message,
+          fontType: FontType.medium,
+          color: Colors.white,
+        ),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.red.shade700,
       ),
@@ -176,7 +193,9 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
           ),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           duration: const Duration(seconds: 1),
         ),
       );
@@ -313,7 +332,6 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
           text: "Edit Property",
           fontType: FontType.bold,
           fontSize: AppConstants.twentyTwo,
-          color: Colors.black,
         ),
       ),
       child: ListView(
@@ -374,7 +392,9 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                   fontType: FontType.semiBold,
                 ),
                 isActive: _currentStep >= 0,
-                state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+                state: _currentStep > 0
+                    ? StepState.complete
+                    : StepState.indexed,
                 content: Column(
                   children: [
                     const SizedBox(height: 10),
@@ -389,7 +409,9 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                   fontType: FontType.semiBold,
                 ),
                 isActive: _currentStep >= 1,
-                state: _currentStep > 1 ? StepState.complete : StepState.indexed,
+                state: _currentStep > 1
+                    ? StepState.complete
+                    : StepState.indexed,
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -413,7 +435,8 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                         ),
                       ),
                       success: (amenitiesModel, message) {
-                        if (amenitiesModel.data == null || amenitiesModel.data!.isEmpty) {
+                        if (amenitiesModel.data == null ||
+                            amenitiesModel.data!.isEmpty) {
                           return const Center(
                             child: AppText(
                               text: "No facilities available",
@@ -425,41 +448,52 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                           spacing: 10,
                           runSpacing: 10,
                           children: amenitiesModel.data!.map((amenity) {
-                            final isSelected = selectedAmenities.containsKey(amenity.sId ?? '');
+                            final isSelected = selectedAmenities.containsKey(
+                              amenity.sId ?? '',
+                            );
                             return FilterChip(
                               selectedColor: AppColors.secondary(ref),
-                              backgroundColor: Colors.grey.shade100,
+                              backgroundColor: AppColors.background(ref),
                               checkmarkColor: Colors.white,
-                              avatar: amenity.icon != null && amenity.icon!.isNotEmpty
+                              avatar:
+                                  amenity.icon != null &&
+                                      amenity.icon!.isNotEmpty
                                   ? CircleAvatar(
-                                backgroundColor: AppColors.secondary(ref),
-                                child: CachedNetworkImage(
-                                  imageUrl: amenity.icon.toString(),
-                                  height: 24,
-                                  width: 24,
-                                  fit: BoxFit.contain,
-                                  placeholder: (context, url) => const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(strokeWidth: 1),
-                                  ),
-                                  errorWidget: (context, url, error) => const Icon(
-                                    Icons.image_not_supported,
-                                    size: 24,
-                                  ),
-                                ),
-                              )
+                                      backgroundColor: AppColors.secondary(ref),
+                                      child: CachedNetworkImage(
+                                        imageUrl: amenity.icon.toString(),
+                                        height: 24,
+                                        width: 24,
+                                        fit: BoxFit.contain,
+                                        placeholder: (context, url) =>
+                                            const SizedBox(
+                                              height: 24,
+                                              width: 24,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 1,
+                                              ),
+                                            ),
+                                        errorWidget: (context, url, error) =>
+                                            const Icon(
+                                              Icons.image_not_supported,
+                                              size: 24,
+                                            ),
+                                      ),
+                                    )
                                   : null,
                               label: AppText(
                                 text: amenity.name ?? 'Unknown',
-                                color: isSelected ? Colors.white : Colors.black,
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.text(ref),
                                 fontSize: 14,
                               ),
                               selected: isSelected,
                               onSelected: (bool selected) {
                                 setState(() {
                                   if (selected) {
-                                    selectedAmenities[amenity.sId ?? ''] = amenity.name ?? '';
+                                    selectedAmenities[amenity.sId ?? ''] =
+                                        amenity.name ?? '';
                                   } else {
                                     selectedAmenities.remove(amenity.sId);
                                   }
@@ -480,7 +514,10 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.error_outline, color: Colors.red.shade700),
+                                Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red.shade700,
+                                ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: AppText(
@@ -500,7 +537,9 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                             const SizedBox(height: 10),
                             ElevatedButton.icon(
                               onPressed: () {
-                                ref.read(getAmenitiesPropertyProvider.notifier).getAmenitiesPropertyViewApi();
+                                ref
+                                    .read(getAmenitiesPropertyProvider.notifier)
+                                    .getAmenitiesPropertyViewApi();
                               },
                               icon: const Icon(Icons.refresh, size: 18),
                               label: const Text('Retry'),
@@ -518,10 +557,14 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.secondary(ref).withValues(alpha: 0.1),
+                          color: AppColors.secondary(
+                            ref,
+                          ).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: AppColors.secondary(ref).withValues(alpha: 0.3),
+                            color: AppColors.secondary(
+                              ref,
+                            ).withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -533,7 +576,8 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                             ),
                             const SizedBox(width: 8),
                             AppText(
-                              text: "${selectedAmenities.length} facilities selected",
+                              text:
+                                  "${selectedAmenities.length} facilities selected",
                               fontSize: 14,
                               fontType: FontType.medium,
                               color: AppColors.secondary(ref),
@@ -562,7 +606,8 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                     ),
                     const SizedBox(height: 8),
                     AppText(
-                      text: "Example: No smoking, No pets, Quiet hours after 10 PM",
+                      text:
+                          "Example: No smoking, No pets, Quiet hours after 10 PM",
                       fontSize: 13,
                       color: Colors.grey.shade600,
                     ),
@@ -574,26 +619,48 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                             controller: _ruleController,
                             textInputAction: TextInputAction.done,
                             textCapitalization: TextCapitalization.words,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.text(ref),
+                            ),
                             decoration: InputDecoration(
                               labelText: "Enter a rule",
                               hintText: "e.g., No smoking allowed",
-                              labelStyle: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-                              hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+                              labelStyle: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.text(ref),
+                              ),
+                              hintStyle: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.text(ref),
+                              ),
                               border: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.grey.shade400, width: 1.4),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade400,
+                                  width: 1.4,
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.grey.shade400, width: 1.4),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade400,
+                                  width: 1.4,
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: AppColors.secondary(ref), width: 2),
+                                borderSide: BorderSide(
+                                  color: AppColors.secondary(ref),
+                                  width: 2,
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
                               fillColor: AppColors.background(ref),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                             ),
                             onSubmitted: (_) => _addRule(),
                           ),
@@ -605,7 +672,9 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                             borderRadius: BorderRadius.circular(8),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.secondary(ref).withValues(alpha: 0.3),
+                                color: AppColors.secondary(
+                                  ref,
+                                ).withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -624,14 +693,21 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                       Container(
                         padding: const EdgeInsets.all(30),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: AppColors.background(ref),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                          border: Border.all(
+                            color: Colors.grey.shade300,
+                            style: BorderStyle.solid,
+                          ),
                         ),
                         child: Center(
                           child: Column(
                             children: [
-                              Icon(Icons.rule_outlined, size: 48, color: Colors.grey.shade400),
+                              Icon(
+                                Icons.rule_outlined,
+                                size: 48,
+                                color: Colors.grey.shade400,
+                              ),
                               const SizedBox(height: 12),
                               AppText(
                                 text: "No rules added yet",
@@ -641,7 +717,8 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                               ),
                               const SizedBox(height: 4),
                               AppText(
-                                text: "Add rules to inform guests about property guidelines",
+                                text:
+                                    "Add rules to inform guests about property guidelines",
                                 fontSize: 13,
                                 color: Colors.grey.shade500,
                                 textAlign: TextAlign.center,
@@ -657,15 +734,23 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.secondary(ref).withValues(alpha: 0.1),
+                              color: AppColors.secondary(
+                                ref,
+                              ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: AppColors.secondary(ref).withValues(alpha: 0.3),
+                                color: AppColors.secondary(
+                                  ref,
+                                ).withValues(alpha: 0.3),
                               ),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.check_circle, color: AppColors.secondary(ref), size: 20),
+                                Icon(
+                                  Icons.check_circle,
+                                  color: AppColors.secondary(ref),
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 AppText(
                                   text: "${propertyRules.length} rules added",
@@ -684,7 +769,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color:  AppColors.background(ref),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: Colors.grey.shade300),
                                 boxShadow: [
@@ -700,7 +785,9 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: AppColors.secondary(ref).withValues(alpha: 0.1),
+                                      color: AppColors.secondary(
+                                        ref,
+                                      ).withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Icon(
@@ -746,6 +833,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
     return Card(
       margin: const EdgeInsets.all(16),
       elevation: 2,
+      color: AppColors.background(ref),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -756,10 +844,11 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
               children: [
                 Icon(Icons.info_outline, color: AppColors.secondary(ref)),
                 const SizedBox(width: 8),
-                const AppText(
+                AppText(
                   text: 'Editing Property',
                   fontType: FontType.bold,
                   fontSize: 16,
+                  color: AppColors.text(ref),
                 ),
               ],
             ),
@@ -767,7 +856,10 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
             _infoRow('Property Name', arguments?['name'] ?? 'N/A'),
             _infoRow('Type', arguments?['selectedPropertyType'] ?? 'N/A'),
             _infoRow('City', arguments?['city'] ?? 'N/A'),
-            _infoRow('Available Rooms', existingPropertyData?.availableRooms?.toString() ?? 'N/A'),
+            _infoRow(
+              'Available Rooms',
+              existingPropertyData?.availableRooms?.toString() ?? 'N/A',
+            ),
           ],
         ),
       ),
@@ -784,7 +876,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
             child: AppText(
               text: '$label:',
               fontType: FontType.medium,
-              color: Colors.grey[700],
+              color: AppColors.text(ref).withValues(alpha: 0.6),
               fontSize: 13,
             ),
           ),
@@ -793,6 +885,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
               text: value,
               fontType: FontType.regular,
               fontSize: 13,
+              color: AppColors.text(ref),
             ),
           ),
         ],
@@ -843,25 +936,27 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
           onTap: selectMainImage,
           child: TCustomContainer(
             padding: const EdgeInsets.all(8),
+            lightColor: AppColors.background(ref),
             height: 180,
             width: double.infinity,
-            border: Border.all(),
+            border: Border.all(color: AppColors.borderColor(ref)),
             borderRadius: BorderRadius.circular(8),
             child: mainImage.isEmpty
                 ? Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.add_a_photo),
-                AppText(text: "Select Image", color: Colors.grey),
-              ],
-            )
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.add_a_photo),
+                      AppText(text: "Select Image", color: Colors.grey),
+                    ],
+                  )
                 : Image.file(mainImage.first, fit: BoxFit.cover),
           ),
         ),
         const SizedBox(height: 10),
         const AppText(text: "Property Images", fontType: FontType.bold),
         const SizedBox(height: 10),
-        if (propertyImages.isEmpty && existingPropertyData?.images?.isNotEmpty == true)
+        if (propertyImages.isEmpty &&
+            existingPropertyData?.images?.isNotEmpty == true)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -910,7 +1005,7 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
           spacing: 10,
           children: [
             ...propertyImages.map(
-                  (file) => Stack(
+              (file) => Stack(
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -932,7 +1027,11 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
                       child: CircleAvatar(
                         backgroundColor: AppColors.secondary(ref),
                         radius: 10,
-                        child: const Icon(Icons.close, size: 12, color: Colors.white),
+                        child: const Icon(
+                          Icons.close,
+                          size: 12,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -942,12 +1041,19 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
             GestureDetector(
               onTap: pickPropertyImages,
               child: TCustomContainer(
+                lightColor: AppColors.background(ref),
                 margin: const EdgeInsets.symmetric(vertical: 10),
                 height: 90,
                 width: 90,
-                border: Border.all(),
+                border: Border.all(color: AppColors.borderColor(ref)),
                 borderRadius: BorderRadius.circular(8),
-                child: const Icon(Icons.add),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add),
+                    AppText(text: "Select Image", fontSize: context.sh * 0.015),
+                  ],
+                ),
               ),
             ),
           ],
@@ -958,12 +1064,12 @@ class _EditPropertyScreen2State extends ConsumerState<EditPropertyScreen2> {
   }
 
   Widget _field(
-      String label,
-      TextEditingController c, {
-        Widget? suffixIcon,
-        bool num = false,
-        bool multi = false,
-      }) {
+    String label,
+    TextEditingController c, {
+    Widget? suffixIcon,
+    bool num = false,
+    bool multi = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: CustomTextField(

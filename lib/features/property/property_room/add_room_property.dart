@@ -25,7 +25,7 @@ class AddRoomProperty extends ConsumerStatefulWidget {
 class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
   final ImagePicker picker = ImagePicker();
   final List<RoomData> roomsList = [];
-  int? selectedRoomForUser=0;
+  int? selectedRoomForUser = 0;
 
   @override
   void initState() {
@@ -96,7 +96,9 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                 dayPeriodColor: AppColors.secondary(ref).withValues(alpha: 0.5),
                 dayPeriodTextColor: AppColors.text(ref),
                 dialHandColor: AppColors.secondary(ref),
-                dialBackgroundColor: AppColors.secondary(ref).withValues(alpha: 0.1),
+                dialBackgroundColor: AppColors.secondary(
+                  ref,
+                ).withValues(alpha: 0.1),
                 dialTextColor: Colors.black87,
                 entryModeIconColor: AppColors.secondary(ref),
                 helpTextStyle: TextStyle(
@@ -200,7 +202,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
         middle: AppText(
           text: "Add Rooms & Contact Details",
           fontType: FontType.bold,
-          fontSize: AppConstants.twentyTwo,
+          fontSize: AppConstants.eighteen,
           color: Colors.black,
         ),
       ),
@@ -268,10 +270,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
             _buildContactInformationSection(),
             const SizedBox(height: 24),
 
-            _buildYourRoomsSection(
-              selectedPropertyType,
-              subTypeList,
-            ),
+            _buildYourRoomsSection(selectedPropertyType, subTypeList),
             const SizedBox(height: 24),
 
             _buildActionButtons(
@@ -417,11 +416,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                   value: "${roomsList.length}",
                   color: Colors.green,
                 ),
-                Container(
-                  height: 50,
-                  width: 1,
-                  color: Colors.grey.shade300,
-                ),
+                Container(height: 50, width: 1, color: Colors.grey.shade300),
                 _buildStatItem(
                   icon: Icons.meeting_room_outlined,
                   label: "Available Units",
@@ -633,8 +628,12 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                 ),
                 Switch(
                   value: payAtProperty,
-                  inactiveThumbColor: AppColors.secondary(ref).withValues(alpha: 0.3),
-                  inactiveTrackColor: AppColors.secondary(ref).withValues(alpha: 0.1),
+                  inactiveThumbColor: AppColors.secondary(
+                    ref,
+                  ).withValues(alpha: 0.3),
+                  inactiveTrackColor: AppColors.secondary(
+                    ref,
+                  ).withValues(alpha: 0.1),
                   activeColor: AppColors.secondary(ref),
                   onChanged: (value) {
                     setState(() {
@@ -683,10 +682,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
               ],
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.secondary(ref).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
@@ -750,10 +746,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 2,
-        ),
+        border: Border.all(color: Colors.grey.shade300, width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -969,11 +962,12 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                 );
                 return;
               }
-
               final List<String> amenitiesForApi = mainAmenitiesList;
               final depositAmount =
                   args["depositAmount"]?.toString() ?? "0";
-              ref.read(addPropertyProvider.notifier).addPropertyApi(
+              ref
+                  .read(addPropertyProvider.notifier)
+                  .addPropertyApi(
                 userName: userNameController.text.toString(),
                 role: roleController.text.toString(),
                 userEmail: userEmailController.text.toString(),
@@ -991,8 +985,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                 state: state ?? "",
                 pincode: pincode?.toString() ?? "",
                 selectedRoomPrice: selectedRoomForUser.toString(),
-                coordinates:
-                coordinates ?? {"lat": 0.0, "lng": 0.0},
+                coordinates: coordinates ?? {"lat": 0.0, "lng": 0.0},
                 mainImage: mainImage,
                 propertyImages: propertyImages,
                 pricePerMonth: propertyMonthPrice?.toString() ?? "",
@@ -1002,7 +995,6 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                 pricePerDay: propertyDayPrice?.toString() ?? "",
                 availableRooms: _getTotalAvailableUnits(),
                 description: description?.toString() ?? "",
-                oldMrp: oldMrp?.toString() ?? "",
                 tax: tax?.toString() ?? "",
                 isAvailable: isAvailable,
                 pricePerNight: propertyNightPrice?.toString() ?? "",
@@ -1010,6 +1002,71 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                 rooms: roomsList,
                 context: context,
               );
+              // Replace your existing print statements with this detailed printing
+              print("=== ROOMS LIST DEBUG ===");
+              print("Total Rooms: ${roomsList.length}");
+              print("");
+
+              for (int i = 0; i < roomsList.length; i++) {
+                final room = roomsList[i];
+
+                print("--- Room ${i + 1} ---");
+                print("Room Type ID: ${room.roomType}");
+                print("Room Type Name: ${room.roomTypeName}");
+                print("Furnished: ${room.furnished}");
+                print("Occupancy: ${room.occupancy}");
+                print("Available Units: ${room.availableUnits}");
+                print("Is Available: ${room.isAvailable}");
+                print("");
+
+                // Pricing Information
+                print("Main Price: ₹${room.price}");
+                print("Room Price Per Day: ₹${room.roomPricePerDay}");
+                print("Room Old MRP: ₹${room.roomOldMrp}");
+                print("Discount Room: ${room.discountRoom}%");
+                print("");
+
+                // Amenities
+                print("Amenities Count: ${room.amenitiesIds.length}");
+                if (room.amenitiesIds.isNotEmpty) {
+                  print("Amenities IDs: ${room.amenitiesIds.join(', ')}");
+                }
+                print("");
+
+                // Images
+                print("Room Images Count: ${room.roomImages.length}");
+                if (room.roomImages.isNotEmpty) {
+                  for (int j = 0; j < room.roomImages.length; j++) {
+                    print("  Image ${j + 1}: ${room.roomImages[j].path}");
+                  }
+                }
+                print("");
+                print("------------------------");
+                print("");
+              }
+
+              print("=== END ROOMS LIST DEBUG ===");
+              print("=== ROOMS LIST AS JSON ===");
+              for (int i = 0; i < roomsList.length; i++) {
+                final room = roomsList[i];
+                print('''
+Room ${i + 1}: {
+  "roomType": "${room.roomType}",
+  "roomTypeName": "${room.roomTypeName}",
+  "furnished": "${room.furnished}",
+  "occupancy": "${room.occupancy}",
+  "availableUnits": "${room.availableUnits}",
+  "isAvailable": ${room.isAvailable},
+  "price": "${room.price}",
+  "roomPricePerDay": "${room.roomPricePerDay}",
+  "roomOldMrp": "${room.roomOldMrp}",
+  "discountRoom": "${room.discountRoom}",
+  "amenitiesIds": [${room.amenitiesIds.map((id) => '"$id"').join(', ')}],
+  "roomImagesCount": ${room.roomImages.length}
+}
+''');
+              }
+              print("=== END ===");
             },
             icon: ref.watch(addPropertyProvider).isLoading
                 ? const SizedBox(
@@ -1074,8 +1131,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
     );
   }
 
-  // ✅ FIX: Replace the pricing details display section in _buildEnhancedRoomCard
-
+  // ✅ FIXED: Display both Night and Month pricing properly
   Widget _buildEnhancedRoomCard(
       int idx,
       RoomData r,
@@ -1116,7 +1172,10 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: isSelectedForUser
                       ? AppColors.secondary(ref).withValues(alpha: 0.1)
@@ -1258,9 +1317,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
             else
               Container(
                 height: 180,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                ),
+                decoration: BoxDecoration(color: Colors.grey.shade100),
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1359,7 +1416,6 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                     ],
                   ),
 
-                  // ✅ FIX: Updated Pricing Section - Using only backend fields
                   const SizedBox(height: 16),
                   Divider(color: Colors.grey.shade200, thickness: 1),
                   const SizedBox(height: 12),
@@ -1381,94 +1437,98 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Display Main Price
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.green.withValues(alpha: 0.05),
-                          Colors.green.withValues(alpha: 0.02),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.green.withValues(alpha: 0.3),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.currency_rupee,
-                            color: Colors.green,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const AppText(
-                                text: "Main Price",
-                                fontType: FontType.bold,
-                                fontSize: 14,
-                                color: Colors.green,
-                              ),
-                              if (r.discountRoom != "0" && r.discountRoom.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.shade50,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(
-                                      color: Colors.orange.shade200,
-                                    ),
-                                  ),
-                                  child: AppText(
-                                    text: "${r.discountRoom}% OFF",
-                                    fontType: FontType.bold,
-                                    fontSize: 10,
-                                    color: Colors.orange.shade700,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.currency_rupee,
-                              size: 16,
-                              color: Colors.green,
-                            ),
-                            AppText(
-                              text: r.price,
-                              fontType: FontType.bold,
-                              fontSize: 18,
-                              color: Colors.green.shade700,
-                            ),
+                  // Display Night Price (Main Price)
+                  if (r.price.isNotEmpty && r.price != "0")
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.indigo.withValues(alpha: 0.05),
+                            Colors.indigo.withValues(alpha: 0.02),
                           ],
                         ),
-                      ],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.indigo.withValues(alpha: 0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.indigo.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.nightlight_round,
+                              color: Colors.indigo,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                 AppText(
+                                  text: selectedPropertyType.toString()=="1"?"Per Night":"Month",
+                                  fontType: FontType.bold,
+                                  fontSize: 14,
+                                  color: Colors.indigo,
+                                ),
+                                if (r.discountRoom != "0" &&
+                                    r.discountRoom.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                        color: Colors.orange.shade200,
+                                      ),
+                                    ),
+                                    child: AppText(
+                                      text: "${r.discountRoom}% OFF",
+                                      fontType: FontType.bold,
+                                      fontSize: 10,
+                                      color: Colors.orange.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.currency_rupee,
+                                size: 16,
+                                color: Colors.indigo,
+                              ),
+                              AppText(
+                                text: r.price,
+                                fontType: FontType.bold,
+                                fontSize: 18,
+                                color: Colors.indigo.shade700,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // Display Per Day Price if different
-                  if (r.roomPricePerDay != r.price && r.roomPricePerDay.isNotEmpty)
+                  // Display Per Day Price
+                  if (r.roomPricePerDay.isNotEmpty &&
+                      r.roomPricePerDay != "0" &&
+                      r.roomPricePerDay != r.price)
                     Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(14),
@@ -1571,9 +1631,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: color.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Icon(icon, color: color, size: 20),
       ),
@@ -1590,9 +1648,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1634,7 +1690,8 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
             ],
           ),
           content: const AppText(
-            text: "Are you sure you want to delete this room? This action cannot be undone.",
+            text:
+            "Are you sure you want to delete this room? This action cannot be undone.",
             fontSize: 14,
             color: Colors.black87,
           ),
@@ -1652,9 +1709,12 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                 setState(() {
                   // Update selectedRoomForUser index after deletion
                   if (selectedRoomForUser == index) {
-                    selectedRoomForUser = null; // Deselect if deleted room was selected
-                  } else if (selectedRoomForUser != null && selectedRoomForUser! > index) {
-                    selectedRoomForUser = selectedRoomForUser! - 1; // Adjust index
+                    selectedRoomForUser =
+                    null; // Deselect if deleted room was selected
+                  } else if (selectedRoomForUser != null &&
+                      selectedRoomForUser! > index) {
+                    selectedRoomForUser =
+                        selectedRoomForUser! - 1; // Adjust index
                   }
                   roomsList.removeAt(index);
                 });

@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:room_book_kro_vendor/core/theme/app_colors.dart';
 
-class AnimatedHintTextField extends StatefulWidget {
+class AnimatedHintTextField extends ConsumerStatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final List<String> hints;
@@ -17,10 +19,11 @@ class AnimatedHintTextField extends StatefulWidget {
   });
 
   @override
-  State<AnimatedHintTextField> createState() => _AnimatedHintTextFieldState();
+  ConsumerState<AnimatedHintTextField> createState() =>
+      _AnimatedHintTextFieldState();
 }
 
-class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
+class _AnimatedHintTextFieldState extends ConsumerState<AnimatedHintTextField> {
   int _currentHintIndex = 0;
   late Timer _timer;
 
@@ -30,8 +33,7 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (widget.controller.text.isEmpty) {
         setState(() {
-          _currentHintIndex =
-              (_currentHintIndex + 1) % widget.hints.length;
+          _currentHintIndex = (_currentHintIndex + 1) % widget.hints.length;
         });
       }
     });
@@ -49,25 +51,34 @@ class _AnimatedHintTextFieldState extends State<AnimatedHintTextField> {
       controller: widget.controller,
       focusNode: widget.focusNode,
       decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.search),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        border: OutlineInputBorder(
+        prefixIcon: Icon(Icons.search, color: AppColors.iconColor(ref)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        border:
+        OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(
+            color: AppColors.borderColor(ref),
+            width: 0.5,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide.none,
         ),
+        hintStyle: TextStyle(color: AppColors.text(ref)),
+        labelStyle: TextStyle(color: AppColors.text(ref)),
         filled: true,
-        fillColor: widget.fillColor,
+        fillColor: AppColors.background(ref),
         hintText: widget.hints[_currentHintIndex],
       ),
-      style: const TextStyle(fontSize: 16),
+      style: TextStyle(fontSize: 16, color: AppColors.text(ref)),
     );
   }
 }

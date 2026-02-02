@@ -190,14 +190,15 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
         int.tryParse(propertyData?.discount?.toString() ?? '0') ?? 0;
 
     final isHotel = propertyData?.propertyTypeId?.toString() == '1';
-
+    print(pricePerNight);
+    print("pricePerNighthh");
     return TCustomContainer(
       padding: const EdgeInsets.all(16),
-      lightColor: Colors.white,
+      lightColor: AppColors.background(ref),
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
         BoxShadow(
-          color: Colors.grey.withValues(alpha: 0.1),
+        color: AppColors.background(ref).withValues(alpha: 0.2),
           blurRadius: 10,
           offset: const Offset(0, 2),
         ),
@@ -210,7 +211,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
             children: [
               AppText(
                 text: 'Starting from',
-                color: Colors.grey[600],
+                color: AppColors.text(ref),
                 fontSize: 12,
               ),
               const SizedBox(height: 4),
@@ -385,7 +386,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
     final isAvailable = room.isAvailable ?? false;
     return TCustomContainer(
       margin: const EdgeInsets.only(bottom: 12),
-      lightColor: Colors.white,
+      lightColor:  AppColors.background(ref),
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
         BoxShadow(
@@ -653,7 +654,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.background(ref),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -736,7 +737,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background(ref),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withValues(alpha: 0.2),
@@ -756,7 +757,7 @@ class _PropertyDetailsScreenState extends ConsumerState<PropertyDetailsScreen> {
                 AppText(
                   text: 'Starting from',
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: AppColors.text(ref),
                 ),
                 Row(
                   children: [

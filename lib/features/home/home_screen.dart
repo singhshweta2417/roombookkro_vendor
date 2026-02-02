@@ -381,7 +381,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           child: CircleAvatar(
             radius: 20,
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: AppColors.background(ref),
             child: ClipOval(
               child: CachedNetworkImage(
                 imageUrl: userImage,

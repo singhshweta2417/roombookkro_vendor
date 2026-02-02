@@ -32,7 +32,7 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
 
     // ✅ Pass context to setInitialLocation
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(mapProvider.notifier).setInitialLocation(context);
+      ref.read(mapProvider.notifier).setInitialLocation(context, ref);
     });
 
     searchAddress.addListener(() {
@@ -70,82 +70,80 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
     return CustomScaffold(
       padding: EdgeInsets.zero,
       backgroundColor: AppColors.background(ref),
-
-      // ✅ Updated FloatingActionButton with loading indicator
       floatingActionButton: FloatingActionButton(
         onPressed: mapState.isLoadingLocation
             ? null
             : () async {
-          await ref.read(mapProvider.notifier).setLocation(context);
-        },
+                await ref.read(mapProvider.notifier).setLocation(context, ref);
+              },
         backgroundColor: mapState.isLoadingLocation
-            ? Colors.grey
+            ? AppColors.background(ref)
             : AppColors.secondary(ref),
         child: mapState.isLoadingLocation
             ? SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Colors.white,
-          ),
-        )
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.iconColor(ref),
+
+                ),
+              )
             : const Icon(Icons.my_location),
       ),
-
       bottomNavigationBar: SizedBox(
         height: context.sh * 0.16,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(height: context.sh * 0.01),
-
-            // ✅ Show loading or city
             AppText(
               text: mapState.isLoadingLocation
                   ? 'Fetching location...'
                   : 'City: ${mapState.cityText.isNotEmpty ? mapState.cityText : "Select location"}',
               fontSize: 16,
               fontType: FontType.bold,
+              color:  AppColors.text(ref),
             ),
-
             SizedBox(height: context.sh * 0.01),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Icon(
                   Icons.location_on,
-                  color: mapState.isLoadingLocation ? Colors.grey : Colors.green,
+                  color: mapState.isLoadingLocation
+                      ? Colors.grey
+                      : Colors.green,
                 ),
                 const SizedBox(width: 8),
                 TCustomContainer(
                   width: context.sw * 0.9,
+                  lightColor:  AppColors.background(ref),
                   padding: EdgeInsets.symmetric(horizontal: context.sw * 0.01),
                   child: mapState.isLoadingLocation
                       ? Center(
-                    child: SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.secondary(ref),
-                      ),
-                    ),
-                  )
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.secondary(ref),
+                            ),
+                          ),
+                        )
                       : AppText(
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                    text: mapState.addressText.isNotEmpty
-                        ? mapState.addressText
-                        : "Tap on map or search location",
-                    fontSize: 16,
-                  ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          text: mapState.addressText.isNotEmpty
+                              ? mapState.addressText
+                              : "Tap on map or search location",
+                          fontSize: 16,
+                    color:  AppColors.text(ref),
+                        ),
                 ),
               ],
             ),
-
             SizedBox(height: context.sh * 0.01),
-
             PrimaryButton(
               isLoading: mapState.isLoadingLocation,
               onTap: () {
@@ -184,7 +182,6 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
       ),
 
       appBar: CustomAppBar(
-        backgroundColor: AppColors.secondary(ref),
         leadingIconColor: Colors.white,
         showActions: true,
         middle: AnimatedHintTextField(
@@ -237,7 +234,7 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
                       title: Text(mapState.addressSuggestions[index]),
                       onTap: () async {
                         String selectedAddress =
-                        mapState.addressSuggestions[index];
+                            mapState.addressSuggestions[index];
 
                         searchAddress.text = selectedAddress;
 
@@ -270,12 +267,12 @@ class _ChooseLocationState extends ConsumerState<ChooseLocation> {
           if (mapState.isLoadingLocation)
             Positioned.fill(
               child: Container(
-                color: Colors.black26,
+                color: AppColors.background(ref),
                 child: Center(
                   child: Container(
                     padding: EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.background(ref),
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Column(

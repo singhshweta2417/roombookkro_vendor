@@ -130,7 +130,7 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
                 padding: EdgeInsets.zero,
                 itemCount: suggestions.length,
                 itemBuilder: (context, i) => ListTile(
-                  title: Text(suggestions[i]),
+                  title: AppText(text: suggestions[i]),
                   onTap: () {
                     _controller.text = suggestions[i];
                     _controller.selection = TextSelection.fromPosition(
@@ -164,8 +164,9 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
         return null;
       case FieldType.email:
         if (val.isEmpty) return "Email is required";
-        if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-            .hasMatch(val)) {
+        if (!RegExp(
+          r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+        ).hasMatch(val)) {
           return "Invalid email format";
         }
         return null;
@@ -173,8 +174,8 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
       case FieldType.password:
         if (val.isEmpty) return "Password required";
         if (!RegExp(
-            r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$')
-            .hasMatch(val)) {
+          r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$',
+        ).hasMatch(val)) {
           return "Weak password";
         }
         return null;
@@ -205,7 +206,8 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
           if (dob.isAfter(now)) return "DOB cannot be in future";
 
           int age = now.year - dob.year;
-          if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+          if (now.month < dob.month ||
+              (now.month == dob.month && now.day < dob.day)) {
             age -= 1;
           }
 
@@ -236,8 +238,9 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
         ? ref.watch(widget.provider!)
         : FieldState();
 
-    final baseStyle =
-    ref.watch(fontProvider)[widget.labelFontType ?? FontType.regular]!;
+    final baseStyle = ref.watch(
+      fontProvider,
+    )[widget.labelFontType ?? FontType.regular]!;
 
     final borderRadius = widget.borderRadius ?? BorderRadius.circular(8);
     final baseBorder = OutlineInputBorder(
@@ -263,6 +266,10 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
         minLines: widget.minLines,
         keyboardType: widget.keyboardType,
         textInputAction: widget.textInputAction,
+        style: TextStyle(
+          color: AppColors.text(ref), // typing text ka color
+          fontSize: 16,
+        ),
         onTap: widget.onTap,
         onChanged: (val) {
           widget.onChanged?.call(val);
@@ -270,7 +277,9 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
           if (widget.provider != null) {
             ref.read(widget.provider!.notifier).updateValue(val);
           } else if (widget.fieldType != null) {
-            setState(() => _inlineError = _getErrorByType(widget.fieldType!, val));
+            setState(
+              () => _inlineError = _getErrorByType(widget.fieldType!, val),
+            );
           }
 
           if (widget.suggestions != null && val.isNotEmpty) {
@@ -291,11 +300,11 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
           hintText: widget.hintText,
           labelStyle: baseStyle.copyWith(
             fontSize: widget.labelFontSize ?? 16,
-            color: widget.labelTextColor ?? Colors.black,
+            color: widget.labelTextColor ?? AppColors.text(ref),
           ),
           hintStyle: baseStyle.copyWith(
             fontSize: widget.labelFontSize ?? 16,
-            color: widget.labelTextColor ?? Colors.black54,
+            color: widget.labelTextColor ?? AppColors.text(ref),
           ),
           prefixIcon: widget.prefixIcon,
           suffixIcon: widget.suffixIcon,
@@ -303,7 +312,8 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
           counterText: "",
           filled: true,
           fillColor: widget.fillColor ?? AppColors.textFieldBg(ref),
-          contentPadding: widget.contentPadding ??
+          contentPadding:
+              widget.contentPadding ??
               const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           border: widget.customBorder ?? baseBorder,
           enabledBorder: widget.customBorder ?? baseBorder,
@@ -311,22 +321,21 @@ class _CustomTextFieldState extends ConsumerState<CustomTextField> {
           errorBorder: widget.customBorder ?? errorBorder,
           focusedErrorBorder: widget.customBorder ?? errorBorder,
         ),
-        textCapitalization: widget.textCapitalization ?? TextCapitalization.none,
+        textCapitalization:
+            widget.textCapitalization ?? TextCapitalization.none,
       ),
     );
   }
 }
 
-
-
 // ================= Generic Helper Functions for Popups =================
 Future<void> showDropdownPopup(
-    BuildContext context,
-    WidgetRef ref,
-    StateNotifierProvider<FieldNotifier, FieldState> provider,
-    List<String> items,
-    String title,
-    ) async {
+  BuildContext context,
+  WidgetRef ref,
+  StateNotifierProvider<FieldNotifier, FieldState> provider,
+  List<String> items,
+  String title,
+) async {
   final notifier = ref.read(provider.notifier);
 
   await showModalBottomSheet(
@@ -340,9 +349,7 @@ Future<void> showDropdownPopup(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppText(text:
-              title,
-            fontSize: 18, fontType: FontType.bold),
+            AppText(text: title, fontSize: 18, fontType: FontType.bold),
 
             const SizedBox(height: 16),
             Flexible(
@@ -366,7 +373,6 @@ Future<void> showDropdownPopup(
     },
   );
 }
-
 
 // ================= Predefined Lists =================
 final List<String> genderList = [
