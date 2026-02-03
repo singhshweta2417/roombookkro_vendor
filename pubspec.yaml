@@ -66,3 +66,8 @@ flutter:
 
 
 
+#  storePassword=12345678
+#  keyPassword=12345678
+#  keyAlias=upload
+#  storeFile=C:/src/jks/roombookkro.jks
+

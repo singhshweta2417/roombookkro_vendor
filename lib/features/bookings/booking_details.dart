@@ -9,7 +9,6 @@ import '../../core/widgets/app_text.dart';
 import '../../core/widgets/custom_app_bar.dart';
 import '../../core/widgets/custom_container.dart';
 import '../../core/widgets/custom_scaffold.dart';
-import '../../core/widgets/primary_button.dart';
 import '../auth/model/order_history_model.dart';
 
 class BookingDetailsScreen extends ConsumerWidget {
@@ -109,7 +108,7 @@ class BookingDetailsScreen extends ConsumerWidget {
                     SizedBox(height: 4),
                     AppText(
                       text: "${DateFormat("dd MMM").format(checkInDate)} - ${DateFormat("dd MMM yyyy").format(checkOutDate)} • $nights ${nights > 1 ? 'nights' : 'night'}",
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha:0.9),
                       fontSize: 14,
                     ),
                   ],
@@ -129,7 +128,7 @@ class BookingDetailsScreen extends ConsumerWidget {
       borderRadius: BorderRadius.circular(16),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.05),
+          color: Colors.black.withValues(alpha:0.05),
           blurRadius: 10,
           offset: Offset(0, 2),
         ),
@@ -173,7 +172,7 @@ class BookingDetailsScreen extends ConsumerWidget {
       borderRadius: BorderRadius.circular(16),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.05),
+          color: Colors.black.withValues(alpha:0.05),
           blurRadius: 10,
           offset: Offset(0, 2),
         ),
@@ -263,7 +262,7 @@ class BookingDetailsScreen extends ConsumerWidget {
       borderRadius: BorderRadius.circular(16),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.05),
+          color: Colors.black.withValues(alpha:0.05),
           blurRadius: 10,
           offset: Offset(0, 2),
         ),
@@ -337,7 +336,7 @@ class BookingDetailsScreen extends ConsumerWidget {
           Divider(height: 1),
           SizedBox(height: 20),
 
-          _buildInfoRow(context, Icons.confirmation_number_rounded, "Booking ID", orderHis.orderId ?? 'N/A'),
+          _buildInfoRow(context, Icons.confirmation_number_rounded, "Booking ID", orderHis.orderId ?? 'N/A',size: context.sh*0.015),
           SizedBox(height: 12),
           _buildInfoRow(context, Icons.meeting_room_rounded, "Room Type", orderHis.roomType ?? 'Classic'),
           SizedBox(height: 12),
@@ -355,7 +354,7 @@ class BookingDetailsScreen extends ConsumerWidget {
       borderRadius: BorderRadius.circular(16),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.05),
+          color: Colors.black.withValues(alpha:0.05),
           blurRadius: 10,
           offset: Offset(0, 2),
         ),
@@ -387,9 +386,7 @@ class BookingDetailsScreen extends ConsumerWidget {
             SizedBox(height: 12),
             _buildPaymentRow(context, "Discount", "- ₹${orderHis.discount}", color: Colors.green),
           ],
-          SizedBox(height: 16),
-          Divider(height: 1),
-          SizedBox(height: 16),
+          SizedBox(height: context.sh*0.015),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -400,14 +397,14 @@ class BookingDetailsScreen extends ConsumerWidget {
               ),
               AppText(
                 text: "₹${orderHis.finalAmount ?? 0}",
-                fontSize: 24,
+                fontSize: context.sh*0.025,
                 fontType: FontType.bold,
                 color: Colors.green.shade700,
               ),
             ],
           ),
           SizedBox(height: 16),
-          _buildInfoRow(context, Icons.payment_rounded, "Payment Method", orderHis.paymentMethod.toString() ?? 'N/A'),
+          _buildInfoRow(context, Icons.payment_rounded, "Payment Method", orderHis.paymentMethod.toString()=="1"?"Online":"Pay at Hotel"),
         ],
       ),
     );
@@ -417,9 +414,9 @@ class BookingDetailsScreen extends ConsumerWidget {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.1),
+        color: accentColor.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accentColor.withOpacity(0.3)),
+        border: Border.all(color: accentColor.withValues(alpha:0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +424,7 @@ class BookingDetailsScreen extends ConsumerWidget {
           AppText(
             text: label,
             fontSize: 12,
-            color: accentColor.withOpacity(0.8),
+            color: accentColor.withValues(alpha:0.8),
             fontType: FontType.semiBold,
           ),
           SizedBox(height: 8),
@@ -452,7 +449,7 @@ class BookingDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value) {
+  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value,{double? size}) {
     return Row(
       children: [
         Icon(icon, size: 18, color: Colors.grey.shade600),
@@ -464,13 +461,11 @@ class BookingDetailsScreen extends ConsumerWidget {
             color: Colors.grey.shade700,
           ),
         ),
-        Flexible(
-          child: AppText(
-            text: value,
-            fontSize: 14,
-            fontType: FontType.semiBold,
-            textAlign: TextAlign.right,
-          ),
+        AppText(
+          text: value,
+          fontSize: size??14,
+          fontType: FontType.semiBold,
+          textAlign: TextAlign.right,
         ),
       ],
     );
@@ -497,9 +492,9 @@ class BookingDetailsScreen extends ConsumerWidget {
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha:0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha:0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
