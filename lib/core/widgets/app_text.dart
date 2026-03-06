@@ -13,7 +13,7 @@ class AppText extends ConsumerWidget {
     this.textAlign,
     this.maxLines,
     this.overflow,
-    this.decoration, // 👈 added
+    this.decoration,
   });
 
   final String text;
@@ -23,7 +23,7 @@ class AppText extends ConsumerWidget {
   final TextAlign? textAlign;
   final int? maxLines;
   final TextOverflow? overflow;
-  final TextDecoration? decoration; // 👈 added new parameter
+  final TextDecoration? decoration;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,7 +37,7 @@ class AppText extends ConsumerWidget {
         fontSize: fontSize ?? AppConstants.sixteen,
         color: color ?? AppColors.text(ref),
         height: 0,
-        decoration: decoration, // 👈 added here
+        decoration: decoration,
       ),
       maxLines: maxLines,
       overflow: overflow,

@@ -6,6 +6,7 @@ class AppTheme {
   final Color background;
   final Color greyText;
   final Color textFieldBg;
+  final Color forBackground;
   final Color iconColor;
   final Color borderColor;
   final Color text;
@@ -21,6 +22,7 @@ class AppTheme {
     required this.background,
     required this.borderColor,
     required this.greyText,
+    required this.forBackground,
     required this.textFieldBg,
     required this.iconColor,
     required this.text,
@@ -38,6 +40,7 @@ const lightTheme = AppTheme(
   secondary: Color(0xFF19b65b),
   borderColor: Color(0xFFEBEBEB),
   background: Colors.white,
+  forBackground: Colors.white,
   greyText: Colors.grey,
   text: Colors.black,
   iconColor: Colors.black26,
@@ -50,15 +53,16 @@ const lightTheme = AppTheme(
 );
 
 // Dark Theme
-const darkTheme = AppTheme(
+final darkTheme = AppTheme(
   primary: Color(0xFF448AFF),
   secondary: Color(0xFF00E676),
   borderColor: Color(0xFFEBEBEB),
   background: Colors.black,
   greyText: Colors.grey,
+  forBackground: Colors.black.withValues(alpha: 0.7),
   iconColor: Colors.white,
   text: Colors.white,
-  textFieldBg: Colors.grey,
+  textFieldBg: Colors.grey.withValues(alpha: 0.3),
   error: Colors.redAccent,
   pending: Colors.orangeAccent,
   shimmerBase: Color(0xFF1C1C1E),

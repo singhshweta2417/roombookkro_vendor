@@ -123,8 +123,8 @@ class _PersonalProfileScreenState extends ConsumerState<PersonalProfileScreen> {
                     backgroundImage: pickedImage != null
                         ? FileImage(pickedImage)
                         : profile?.userImage == null
-                        ? const AssetImage(
-                            Assets.iconMoreVertIcon,
+                        ?  AssetImage(
+                            Assets.icon.moreVertIcon.path,
                           ) // Default asset
                         : CachedNetworkImageProvider(
                             profile!.userImage.toString(),

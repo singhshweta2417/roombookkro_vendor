@@ -289,11 +289,11 @@ Widget _buildBookingCard(
                             ),
                           ),
                           errorWidget: (context, url, error) => Image.asset(
-                            Assets.imagesBedRoom,
+                            Assets.images.bedRoom.path,
                             fit: BoxFit.cover,
                           ),
                         )
-                      : Image.asset(Assets.imagesBedRoom, fit: BoxFit.cover),
+                      : Image.asset(Assets.images.bedRoom.path, fit: BoxFit.cover),
                 ),
               ),
               // Status Badge

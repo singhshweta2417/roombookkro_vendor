@@ -94,16 +94,20 @@ class _GraphScreenState extends ConsumerState<GraphScreen> {
                 primaryXAxis: CategoryAxis(
                   labelRotation: -45,
                   maximumLabels: chartData.length,
-                  labelStyle: const TextStyle(
+                  labelStyle: TextStyle(
                     fontSize: 8,
                     fontWeight: FontWeight.w500,
+                    color: AppColors.text(ref),
                   ),
                   majorGridLines: const MajorGridLines(width: 0),
                   majorTickLines: const MajorTickLines(size: 0),
                 ),
 
                 primaryYAxis: NumericAxis(
-                  labelStyle: const TextStyle(fontSize: 8),
+                  labelStyle: TextStyle(
+                    fontSize: 8,
+                    color: AppColors.text(ref),
+                  ),
                   axisLine: const AxisLine(color: Colors.grey),
                 ),
 
@@ -113,7 +117,7 @@ class _GraphScreenState extends ConsumerState<GraphScreen> {
                     width: 0.6,
                     xValueMapper: (MonthData data, _) => data.key ?? '',
                     yValueMapper: (MonthData data, _) =>
-                    data.details?.vendorRevenue?.toDouble() ?? 0,
+                        data.details?.vendorRevenue?.toDouble() ?? 0,
                     color: AppColors.secondary(ref),
                   ),
                 ],
@@ -139,7 +143,8 @@ class _GraphScreenState extends ConsumerState<GraphScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppText(
-                  text: 'Yearly Summary - ${statics.year ?? DateTime.now().year}',
+                  text:
+                      'Yearly Summary - ${statics.year ?? DateTime.now().year}',
                   fontSize: AppConstants.sixteen,
                   fontType: FontType.semiBold,
                 ),
@@ -161,7 +166,7 @@ class _GraphScreenState extends ConsumerState<GraphScreen> {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

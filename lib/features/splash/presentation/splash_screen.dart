@@ -59,11 +59,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     if (_hasNavigated || _isDisposed || !mounted) return;
 
     _hasNavigated = true;
-
-    // Cancel typing animation before navigation
     _timer?.cancel();
-
-    // Use a slight delay to ensure smooth transition
     Future.microtask(() {
       if (mounted) {
         final navigator = ref.read(navigatorKeyProvider).currentState;
@@ -85,15 +81,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       if (next.isReady && next.nextRoute != null) {
         _navigateToNextScreen(next.nextRoute!);
       }
-
-      // Optional: Handle errors
       if (next.error != null) {
         debugPrint('Splash error: ${next.error}');
       }
     });
-
     final splashState = ref.watch(splashViewModelProvider);
-
     return CustomScaffold(
       padding: EdgeInsets.zero,
       child: Container(
@@ -105,7 +97,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         width: context.sw,
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage(Assets.imagesSplashBg),
+            image: AssetImage(Assets.images.splashBg.path),
             fit: BoxFit.fill,
           ),
         ),

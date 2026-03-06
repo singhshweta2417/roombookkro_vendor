@@ -55,7 +55,6 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
           text: "My Wallet",
           fontType: FontType.bold,
           fontSize: AppConstants.twentyFive,
-          color: Colors.black,
         ),
       ),
       child: FutureBuilder<String?>(

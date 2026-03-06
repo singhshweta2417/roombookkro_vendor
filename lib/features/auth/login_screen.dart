@@ -53,8 +53,8 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
               width: context.sh * 0.15,
               lightColor: AppColors.secondary(ref),
               shape: BoxShape.circle,
-              backgroundImage: const DecorationImage(
-                image: AssetImage(Assets.imagesExcitedWomen),
+              backgroundImage:  DecorationImage(
+                image: AssetImage(Assets.images.excitedWomen.path),
               ),
             ),
             AppText(
@@ -139,7 +139,7 @@ class LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                       )
-                    : Image.asset(Assets.iconGoogleIcon),
+                    : Image.asset(Assets.icon.googleIcon.path),
               ),
             ),
             SizedBox(height: context.sh * 0.01),

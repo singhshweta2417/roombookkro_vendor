@@ -233,8 +233,8 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
             width: context.sh * 0.15,
             lightColor: AppColors.secondary(ref),
             shape: BoxShape.circle,
-            backgroundImage: const DecorationImage(
-              image: AssetImage(Assets.imagesExcitedWomen),
+            backgroundImage: DecorationImage(
+              image: AssetImage(Assets.images.excitedWomen.path),
             ),
           ),
           SizedBox(height: context.sh * 0.01),
@@ -436,7 +436,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                     _imageBox(
                       width: context.sw,
                       imageFile: aadharFront,
-                      assets: Assets.imagesFront,
+                      assets: Assets.images.front.path,
                       onTap: () => pickSingleImage("aadharFront"),
                     ),
                     SizedBox(height: context.sh * 0.01),
@@ -444,7 +444,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                     _imageBox(
                       width: context.sw,
                       imageFile: aadharBack,
-                      assets: Assets.imagesBack,
+                      assets: Assets.images.back.path,
                       onTap: () => pickSingleImage("aadharBack"),
                     ),
                     SizedBox(height: context.sh * 0.015),
@@ -478,7 +478,7 @@ class RegisterScreenState extends ConsumerState<RegisterScreen> {
                     _imageBox(
                       width: context.sw,
                       imageFile: panImage,
-                      assets: Assets.imagesPan,
+                      assets: Assets.images.pan.path,
                       onTap: () => pickSingleImage("pan"),
                     ),
                   ],

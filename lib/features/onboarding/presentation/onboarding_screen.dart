@@ -188,7 +188,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             height: context.sh * 0.45,
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(Assets.imagesBubbleImage),
+                image: AssetImage(Assets.images.bubbleImage.path),
                 fit: BoxFit.contain,
               ),
             ),

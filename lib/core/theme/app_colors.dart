@@ -12,6 +12,7 @@ class AppColors {
   static Color iconColor(WidgetRef ref) => ref.watch(appThemeProvider).iconColor;
   static Color textFieldBg(WidgetRef ref) => ref.watch(appThemeProvider).textFieldBg;
   static Color error(WidgetRef ref) => ref.watch(appThemeProvider).error;
+  static Color forBackground(WidgetRef ref) => ref.watch(appThemeProvider).forBackground;
   static Color pending(WidgetRef ref) => ref.watch(appThemeProvider).pending;
   static Color shimmerBase(WidgetRef ref) => ref.watch(appThemeProvider).shimmerBase;
   static Color shimmerHighLight(WidgetRef ref) => ref.watch(appThemeProvider).shimmerHighLight;

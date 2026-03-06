@@ -15,7 +15,8 @@ class AddBankAccountScreen extends ConsumerStatefulWidget {
   const AddBankAccountScreen({super.key});
 
   @override
-  ConsumerState<AddBankAccountScreen> createState() => _AddBankAccountScreenState();
+  ConsumerState<AddBankAccountScreen> createState() =>
+      _AddBankAccountScreenState();
 }
 
 class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
@@ -27,25 +28,17 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
     final formNotifier = ref.read(bankAccountFormProvider.notifier);
     final accountNumberFormatter = ref.read(accountNumberFormatterProvider);
     final ifscState = ref.watch(getIfscProvider);
-
-    // Listen to IFSC API response and auto-fill
     ref.listen<IfscState>(getIfscProvider, (previous, next) {
       if (next is IfscSuccess && !_hasAutoFilled) {
         final ifscData = next.ifscList.data;
         if (ifscData != null) {
-          // Auto-fill bank name
           if (ifscData.bANK != null && ifscData.bANK!.isNotEmpty) {
             formNotifier.updateBankName(ifscData.bANK!);
           }
-
-          // Auto-fill branch name
           if (ifscData.bRANCH != null && ifscData.bRANCH!.isNotEmpty) {
             formNotifier.updateBranchName(ifscData.bRANCH!);
           }
-
           _hasAutoFilled = true;
-
-          // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
@@ -55,7 +48,10 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
                   Expanded(
                     child: Text(
                       'Bank details fetched: ${ifscData.bANK ?? ""}',
-                      style: const TextStyle(color: Colors.white),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontFamily: "Urbanist",
+                      ),
                     ),
                   ),
                 ],
@@ -76,7 +72,10 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
                 const Expanded(
                   child: Text(
                     'Invalid IFSC code or service unavailable',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: "Urbanist",
+                    ),
                   ),
                 ),
               ],
@@ -96,7 +95,7 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
           text: "Add Bank Account",
           fontType: FontType.bold,
           fontSize: AppConstants.twentyTwo,
-          color: Colors.black,
+          color: AppColors.text(ref),
         ),
         trailing: IconButton(
           onPressed: () {
@@ -108,41 +107,41 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
       child: formState.isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Card
-            _buildHeaderCard(context, ref),
-            const SizedBox(height: 24),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header Card
+                  _buildHeaderCard(context, ref),
+                  const SizedBox(height: 24),
 
-            // Form Fields
-            _buildAccountHolderField(formState, formNotifier, ref),
-            const SizedBox(height: 20),
+                  // Form Fields
+                  _buildAccountHolderField(formState, formNotifier, ref),
+                  const SizedBox(height: 20),
 
-            _buildAccountNumberField(
-              formState,
-              formNotifier,
-              accountNumberFormatter,
-              ref,
+                  _buildAccountNumberField(
+                    formState,
+                    formNotifier,
+                    accountNumberFormatter,
+                    ref,
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildIFSCField(formState, formNotifier, ref, ifscState),
+                  const SizedBox(height: 20),
+
+                  _buildBankNameField(formState, formNotifier, ref),
+                  const SizedBox(height: 20),
+
+                  _buildBranchNameField(formState, formNotifier, ref),
+                  const SizedBox(height: 24),
+
+                  // Submit Button
+                  _buildSubmitButton(formState, formNotifier, context, ref),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
-            const SizedBox(height: 20),
-
-            _buildIFSCField(formState, formNotifier, ref, ifscState),
-            const SizedBox(height: 20),
-
-            _buildBankNameField(formState, formNotifier, ref),
-            const SizedBox(height: 20),
-
-            _buildBranchNameField(formState, formNotifier, ref),
-            const SizedBox(height: 24),
-
-            // Submit Button
-            _buildSubmitButton(formState, formNotifier, context, ref),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
     );
   }
 
@@ -204,10 +203,10 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
   }
 
   Widget _buildAccountHolderField(
-      BankAccountFormState formState,
-      BankAccountFormNotifier formNotifier,
-      WidgetRef ref,
-      ) {
+    BankAccountFormState formState,
+    BankAccountFormNotifier formNotifier,
+    WidgetRef ref,
+  ) {
     final error = formNotifier.getAccountHolderNameError();
 
     return Column(
@@ -221,11 +220,7 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               color: Colors.grey[800],
               fontSize: 15,
             ),
-            const AppText(
-              text: ' *',
-              color: Colors.red,
-              fontSize: 15,
-            ),
+            const AppText(text: ' *', color: Colors.red, fontSize: 15),
           ],
         ),
         const SizedBox(height: 8),
@@ -242,6 +237,7 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
             hintStyle: TextStyle(
               color: Colors.grey[400],
               fontSize: 14,
+              fontFamily: "Urbanist",
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -267,15 +263,23 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor:AppColors.textFieldBg(ref),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
             errorText: error,
-            errorStyle: const TextStyle(fontSize: 12, height: 0.8),
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              height: 0.8,
+              fontFamily: "Urbanist",
+            ),
           ),
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            fontFamily: "Urbanist",
+          ),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
             LengthLimitingTextInputFormatter(50),
@@ -305,11 +309,11 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
   }
 
   Widget _buildAccountNumberField(
-      BankAccountFormState formState,
-      BankAccountFormNotifier formNotifier,
-      TextInputFormatter formatter,
-      WidgetRef ref,
-      ) {
+    BankAccountFormState formState,
+    BankAccountFormNotifier formNotifier,
+    TextInputFormatter formatter,
+    WidgetRef ref,
+  ) {
     final error = formNotifier.getAccountNumberError();
 
     return Column(
@@ -323,11 +327,7 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               color: Colors.grey[800],
               fontSize: 15,
             ),
-            const AppText(
-              text: ' *',
-              color: Colors.red,
-              fontSize: 15,
-            ),
+            const AppText(text: ' *', color: Colors.red, fontSize: 15),
           ],
         ),
         const SizedBox(height: 8),
@@ -344,6 +344,7 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
             hintStyle: TextStyle(
               color: Colors.grey[400],
               fontSize: 14,
+              fontFamily: "Urbanist",
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -369,18 +370,23 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppColors.textFieldBg(ref),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
             errorText: error,
-            errorStyle: const TextStyle(fontSize: 12, height: 0.8),
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              height: 0.8,
+              fontFamily: "Urbanist",
+            ),
           ),
           style: const TextStyle(
             fontSize: 15,
             letterSpacing: 1.5,
             fontWeight: FontWeight.w500,
+            fontFamily: "Urbanist",
           ),
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
@@ -395,11 +401,11 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
   }
 
   Widget _buildIFSCField(
-      BankAccountFormState formState,
-      BankAccountFormNotifier formNotifier,
-      WidgetRef ref,
-      IfscState ifscState,
-      ) {
+    BankAccountFormState formState,
+    BankAccountFormNotifier formNotifier,
+    WidgetRef ref,
+    IfscState ifscState,
+  ) {
     final error = formNotifier.getIfscCodeError();
     final isLoadingIfsc = ifscState is IfscLoading;
 
@@ -414,11 +420,7 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               color: Colors.grey[800],
               fontSize: 15,
             ),
-            const AppText(
-              text: ' *',
-              color: Colors.red,
-              fontSize: 15,
-            ),
+            const AppText(text: ' *', color: Colors.red, fontSize: 15),
             if (isLoadingIfsc) ...[
               const SizedBox(width: 8),
               const SizedBox(
@@ -439,21 +441,19 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               size: 22,
             ),
             suffixIcon: formState.ifscCode.length == 11
-                ? Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 22,
-            )
+                ? Icon(Icons.check_circle, color: Colors.green, size: 22)
                 : null,
             hintText: 'e.g., SBIN0000123',
             hintStyle: TextStyle(
               color: Colors.grey[400],
               fontSize: 14,
+              fontFamily: "Urbanist",
             ),
             helperText: 'Bank details will auto-fill after entering valid IFSC',
             helperStyle: TextStyle(
               color: Colors.blue[700],
               fontSize: 11,
+              fontFamily: "Urbanist",
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -479,18 +479,23 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppColors.textFieldBg(ref),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
             errorText: error,
-            errorStyle: const TextStyle(fontSize: 12, height: 0.8),
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              height: 0.8,
+              fontFamily: "Urbanist",
+            ),
           ),
           style: const TextStyle(
             fontSize: 15,
             letterSpacing: 1.2,
             fontWeight: FontWeight.w600,
+            fontFamily: "Urbanist",
           ),
           inputFormatters: [
             UpperCaseTextFormatter(),
@@ -514,10 +519,10 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
   }
 
   Widget _buildBankNameField(
-      BankAccountFormState formState,
-      BankAccountFormNotifier formNotifier,
-      WidgetRef ref,
-      ) {
+    BankAccountFormState formState,
+    BankAccountFormNotifier formNotifier,
+    WidgetRef ref,
+  ) {
     final error = formNotifier.getBankNameError();
 
     return Column(
@@ -531,11 +536,7 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               color: Colors.grey[800],
               fontSize: 15,
             ),
-            const AppText(
-              text: ' *',
-              color: Colors.red,
-              fontSize: 15,
-            ),
+            const AppText(text: ' *', color: Colors.red, fontSize: 15),
           ],
         ),
         const SizedBox(height: 8),
@@ -553,6 +554,7 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
             hintStyle: TextStyle(
               color: Colors.grey[400],
               fontSize: 14,
+              fontFamily: "Urbanist",
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -578,18 +580,24 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppColors.textFieldBg(ref),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
             errorText: error,
-            errorStyle: const TextStyle(fontSize: 12, height: 0.8),
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              height: 0.8,
+              fontFamily: "Urbanist",
+            ),
           ),
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-          inputFormatters: [
-            LengthLimitingTextInputFormatter(100),
-          ],
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            fontFamily: "Urbanist",
+          ),
+          inputFormatters: [LengthLimitingTextInputFormatter(100)],
           onTap: () => formNotifier.markBankNameTouched(),
           onChanged: formNotifier.updateBankName,
         ),
@@ -598,10 +606,10 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
   }
 
   Widget _buildBranchNameField(
-      BankAccountFormState formState,
-      BankAccountFormNotifier formNotifier,
-      WidgetRef ref,
-      ) {
+    BankAccountFormState formState,
+    BankAccountFormNotifier formNotifier,
+    WidgetRef ref,
+  ) {
     final error = formNotifier.getBranchNameError();
 
     return Column(
@@ -615,11 +623,7 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               color: Colors.grey[800],
               fontSize: 15,
             ),
-            const AppText(
-              text: ' *',
-              color: Colors.red,
-              fontSize: 15,
-            ),
+            const AppText(text: ' *', color: Colors.red, fontSize: 15),
           ],
         ),
         const SizedBox(height: 8),
@@ -637,6 +641,7 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
             hintStyle: TextStyle(
               color: Colors.grey[400],
               fontSize: 14,
+              fontFamily: "Urbanist",
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -662,18 +667,24 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
               borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor:AppColors.textFieldBg(ref),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
             errorText: error,
-            errorStyle: const TextStyle(fontSize: 12, height: 0.8),
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              height: 0.8,
+              fontFamily: "Urbanist",
+            ),
           ),
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-          inputFormatters: [
-            LengthLimitingTextInputFormatter(100),
-          ],
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            fontFamily: "Urbanist",
+          ),
+          inputFormatters: [LengthLimitingTextInputFormatter(100)],
           onTap: () => formNotifier.markBranchNameTouched(),
           onChanged: formNotifier.updateBranchName,
         ),
@@ -682,11 +693,11 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
   }
 
   Widget _buildSubmitButton(
-      BankAccountFormState formState,
-      BankAccountFormNotifier formNotifier,
-      BuildContext context,
-      WidgetRef ref,
-      ) {
+    BankAccountFormState formState,
+    BankAccountFormNotifier formNotifier,
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     final addBankState = ref.watch(addBankProvider);
     final isLoading = addBankState is AddBankLoading;
 
@@ -697,32 +708,36 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
         onPressed: isLoading
             ? null
             : () async {
-          formNotifier.markAccountHolderNameTouched();
-          formNotifier.markAccountNumberTouched();
-          formNotifier.markIfscCodeTouched();
-          formNotifier.markBankNameTouched();
-          formNotifier.markBranchNameTouched();
-          if (!formNotifier.isFormValid()) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Please fill all required fields correctly'),
-                backgroundColor: Colors.red,
-                duration: Duration(seconds: 2),
-              ),
-            );
-            return;
-          }
+                formNotifier.markAccountHolderNameTouched();
+                formNotifier.markAccountNumberTouched();
+                formNotifier.markIfscCodeTouched();
+                formNotifier.markBankNameTouched();
+                formNotifier.markBranchNameTouched();
+                if (!formNotifier.isFormValid()) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Please fill all required fields correctly',
+                      ),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  return;
+                }
 
-          await ref.read(addBankProvider.notifier).addBankApi(
-            formState.accountHolderName,
-            formState.accountNumber.replaceAll(' ', ''),
-            formState.ifscCode,
-            formState.bankName,
-            formState.branchName,
-            formState.isDefault,
-            context,
-          );
-        },
+                await ref
+                    .read(addBankProvider.notifier)
+                    .addBankApi(
+                      formState.accountHolderName,
+                      formState.accountNumber.replaceAll(' ', ''),
+                      formState.ifscCode,
+                      formState.bankName,
+                      formState.branchName,
+                      formState.isDefault,
+                      context,
+                    );
+              },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.secondary(ref),
           disabledBackgroundColor: Colors.grey[300],
@@ -733,26 +748,30 @@ class _AddBankAccountScreenState extends ConsumerState<AddBankAccountScreen> {
         ),
         child: isLoading
             ? const SizedBox(
-          height: 24,
-          width: 24,
-          child: CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 2.5,
-          ),
-        )
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
             : const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_circle_outline, color: Colors.white, size: 22),
-            SizedBox(width: 10),
-            AppText(
-              text: 'Add Bank Account',
-              fontSize: 16,
-              fontType: FontType.semiBold,
-              color: Colors.white,
-            ),
-          ],
-        ),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  SizedBox(width: 10),
+                  AppText(
+                    text: 'Add Bank Account',
+                    fontSize: 16,
+                    fontType: FontType.semiBold,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
       ),
     );
   }

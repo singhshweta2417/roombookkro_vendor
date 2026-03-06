@@ -105,7 +105,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                   fontSize: context.sh * 0.025,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
-                  fontFamily: Assets.fontsNotoSansRegular,
+                  fontFamily: Assets.fonts.notoSansRegular,
                 ),
               ),
               textButtonTheme: TextButtonThemeData(
@@ -113,7 +113,7 @@ class _AddPropertyScreenState extends ConsumerState<AddRoomProperty> {
                   textStyle: TextStyle(
                     fontSize: context.sh * 0.015,
                     fontWeight: FontWeight.w600,
-                    fontFamily: Assets.fontsNotoSansRegular,
+                    fontFamily: Assets.fonts.notoSansRegular,
                   ),
                 ),
               ),

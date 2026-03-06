@@ -122,7 +122,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                 child: Container(
                   padding: EdgeInsets.all(40),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color:AppColors.forBackground(ref),
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(color: Colors.grey.shade200),
                   ),
@@ -162,7 +162,7 @@ class _PropertyScreenState extends ConsumerState<PropertyScreen> {
                           if (vendorVerify) {
                             Navigator.pushNamed(context, AppRoutes.addRoom);
                           } else {
-                            _showVerificationDialog(); // ✨ Beautiful Dialog
+                            _showVerificationDialog(); 
                           }
                         },
                         icon: Icon(Icons.add_rounded),

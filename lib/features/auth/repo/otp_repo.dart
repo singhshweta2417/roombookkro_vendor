@@ -11,7 +11,7 @@ class OtpRepository {
 
   Future<dynamic> sentOtpApi(dynamic phoneNumber) async {
     final response = await apiServices.getGetApiResponse(
-      "${apiUrl.sendOtp!}mode=test&digit=4&mobile=$phoneNumber",
+      "${apiUrl.sendOtp!}mode=live&digit=4&mobile=$phoneNumber",
     );
     return response;
   }
