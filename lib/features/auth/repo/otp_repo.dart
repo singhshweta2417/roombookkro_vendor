@@ -9,22 +9,19 @@ class OtpRepository {
 
   OtpRepository(this.apiServices, this.apiUrl);
 
-  Future<dynamic> sentOtpApi(dynamic phoneNumber) async {
-    final response = await apiServices.getGetApiResponse(
-      "${apiUrl.sendOtp!}mode=live&digit=4&mobile=$phoneNumber",
+  Future<dynamic> sentOtpApi(dynamic data) async {
+    final response = await apiServices.getPostApiResponse(
+      apiUrl.sendOtp!,data
+    );
+    return response;
+  }
+  Future<dynamic> verifyOtpApi(dynamic data) async {
+    final response = await apiServices.getPostApiResponse(
+      apiUrl.verifyOtp!,data
     );
     return response;
   }
 
-  Future<dynamic> verifyOtpApi(
-    dynamic phoneNumber,
-    dynamic myControllers,
-  ) async {
-    final response = await apiServices.getGetApiResponse(
-      "${apiUrl.verifyOtp!}$phoneNumber&otp=$myControllers",
-    );
-    return response;
-  }
 }
 
 final otpProvider = Provider<OtpRepository>((ref) {

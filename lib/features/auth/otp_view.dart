@@ -223,17 +223,16 @@ class _OTPFieldsState extends ConsumerState<OTPFields> {
 
         debugPrint("OTP API Response: $response");
 
-        if (response["error"] == "200") {
+        if (response["status"] == "success") {
           setState(() {
             isOtpVerified = true;
           });
-          // ✅ Timer यहाँ cancel नहीं करना है - यह continue button पर होगा
           debugPrint("✅ OTP verified successfully");
         } else {
           setState(() {
             isOtpVerified = false;
           });
-          debugPrint("❌ OTP verification failed: ${response["error"]}");
+          debugPrint("❌ OTP verification failed: ${response["status"]}");
         }
       } catch (e, stackTrace) {
         debugPrint("❌ Error calling OTP API: $e");

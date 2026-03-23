@@ -12,23 +12,22 @@ class OtpViewModel extends StateNotifier<OtpState> {
 
   OtpViewModel(this._otpRepo, this.ref) : super(const OtpInitial());
 
-  Future<void> sentOtpApi(context,String? phone) async {
+  Future<void> sentOtpApi(context, String? phone) async {
     state = const OtpLoading();
+    final data = {"mobile_no": phone};
     try {
-      final response = await _otpRepo.sentOtpApi(phone);
-      if (response["error"] == "200") {
-        state = OtpSuccess(
-          message: response["msg"] ?? 'Success',
-        );
-        Utils.show(response["msg"], context);
+      final response = await _otpRepo.sentOtpApi(data);
+      if (response["status"] == "success") {
+        state = OtpSuccess(message: response["message"] ?? 'Success');
+        Utils.show(response["message"], context);
         Navigator.pushReplacementNamed(
           ref.read(navigatorKeyProvider).currentContext!,
           AppRoutes.oTPFields,
           arguments: {"phone": phone},
         );
       } else {
-        state = OtpError(response["msg"] ?? 'Something went wrong');
-        Utils.show(response["msg"], context);
+        state = OtpError(response["message"] ?? 'Something went wrong');
+        Utils.show(response["message"], context);
         Navigator.pushReplacementNamed(
           ref.read(navigatorKeyProvider).currentContext!,
           AppRoutes.registerScreen,
@@ -39,25 +38,31 @@ class OtpViewModel extends StateNotifier<OtpState> {
       state = OtpError('Exception: ${e.toString()}');
     }
   }
-  Future<Map<String, dynamic>> verifyOtpApi(BuildContext context, dynamic phoneNumber, dynamic myControllers) async {
+
+  Future<dynamic> verifyOtpApi(
+    BuildContext context,
+    dynamic phoneNumber,
+    dynamic myControllers,
+  ) async {
+    Map data = {"mobile_no": phoneNumber, "otp": myControllers};
+    print(data);
+    print("sdkvbshj");
     try {
-      final response = await _otpRepo.verifyOtpApi(phoneNumber, myControllers);
-      if (response["error"] == "200") {
-        state = OtpSuccess(
-          message: response["msg"] ?? 'Success',
-        );
-        Utils.show(response["msg"], context);
+      final response = await _otpRepo.verifyOtpApi(data);
+      if (response["status"] == "success") {
+        print("sdkvjbdjfvb");
+        state = OtpSuccess(message: response["message"] ?? 'Success');
+        Utils.show(response["message"], context);
       } else {
-        state = OtpError(response["msg"] ?? 'Something went wrong');
-        Utils.show(response["msg"], context);
+        state = OtpError(response["message"] ?? 'Something went wrong');
+        Utils.show(response["message"], context);
       }
-      return response; // ✅ RETURN RESPONSE
+      return response;
     } catch (e) {
       state = OtpError('Exception: ${e.toString()}');
-      return {"error": "500", "msg": e.toString()}; // ✅ RETURN fallback map
+      return {"status": "error", "message": e.toString()};
     }
   }
-
 }
 
 abstract class OtpState {
@@ -76,9 +81,7 @@ class OtpLoading extends OtpState {
 class OtpSuccess extends OtpState {
   final String message;
 
-  const OtpSuccess({
-    required this.message,
-  }) : super(isLoading: false);
+  const OtpSuccess({required this.message}) : super(isLoading: false);
 }
 
 class OtpError extends OtpState {

@@ -15,29 +15,21 @@ class $AssetsIconGen {
   const $AssetsIconGen();
 
   final AssetGenImage driverLicenseIcon = const AssetGenImage(
-    'assets/icon/driver_license_icon.png',
-  );
+      'assets/icon/driver_license_icon.png');
   final AssetGenImage facebookIcon = const AssetGenImage(
-    'assets/icon/facebook_icon.png',
-  );
+      'assets/icon/facebook_icon.png');
   final AssetGenImage filterIcon = const AssetGenImage(
-    'assets/icon/filter_icon.png',
-  );
+      'assets/icon/filter_icon.png');
   final AssetGenImage googleIcon = const AssetGenImage(
-    'assets/icon/google_icon.png',
-  );
+      'assets/icon/google_icon.png');
   final AssetGenImage identityIcon = const AssetGenImage(
-    'assets/icon/identity_icon.png',
-  );
+      'assets/icon/identity_icon.png');
   final AssetGenImage instaIcon = const AssetGenImage(
-    'assets/icon/insta_icon.png',
-  );
+      'assets/icon/insta_icon.png');
   final AssetGenImage moreVertIcon = const AssetGenImage(
-    'assets/icon/more_vert_icon.png',
-  );
+      'assets/icon/more_vert_icon.png');
   final AssetGenImage passportIcon = const AssetGenImage(
-    'assets/icon/passport_icon.png',
-  );
+      'assets/icon/passport_icon.png');
 }
 
 class $AssetsLogoGen {
@@ -55,11 +47,9 @@ class $AssetsFontsGen {
   final String urbanistBold = 'assets/fonts/Urbanist-Bold.ttf';
   final String urbanistBoldItalic = 'assets/fonts/Urbanist-BoldItalic.ttf';
   final String urbanistExtraBold = 'assets/fonts/Urbanist-ExtraBold.ttf';
-  final String urbanistExtraBoldItalic =
-      'assets/fonts/Urbanist-ExtraBoldItalic.ttf';
+  final String urbanistExtraBoldItalic = 'assets/fonts/Urbanist-ExtraBoldItalic.ttf';
   final String urbanistExtraLight = 'assets/fonts/Urbanist-ExtraLight.ttf';
-  final String urbanistExtraLightItalic =
-      'assets/fonts/Urbanist-ExtraLightItalic.ttf';
+  final String urbanistExtraLightItalic = 'assets/fonts/Urbanist-ExtraLightItalic.ttf';
   final String urbanistItalic = 'assets/fonts/Urbanist-Italic.ttf';
   final String urbanistLight = 'assets/fonts/Urbanist-Light.ttf';
   final String urbanistLightItalic = 'assets/fonts/Urbanist-LightItalic.ttf';
@@ -67,8 +57,7 @@ class $AssetsFontsGen {
   final String urbanistMediumItalic = 'assets/fonts/Urbanist-MediumItalic.ttf';
   final String urbanistRegular = 'assets/fonts/Urbanist-Regular.ttf';
   final String urbanistSemiBold = 'assets/fonts/Urbanist-SemiBold.ttf';
-  final String urbanistSemiBoldItalic =
-      'assets/fonts/Urbanist-SemiBoldItalic.ttf';
+  final String urbanistSemiBoldItalic = 'assets/fonts/Urbanist-SemiBoldItalic.ttf';
   final String urbanistThin = 'assets/fonts/Urbanist-Thin.ttf';
   final String urbanistThinItalic = 'assets/fonts/Urbanist-ThinItalic.ttf';
 }
@@ -78,28 +67,24 @@ class $AssetsImagesGen {
 
   final AssetGenImage back = const AssetGenImage('assets/images/back.png');
   final AssetGenImage bedRoom = const AssetGenImage(
-    'assets/images/bed_room.png',
-  );
+      'assets/images/bed_room.png');
   final AssetGenImage bubbleImage = const AssetGenImage(
-    'assets/images/bubble_image.png',
-  );
+      'assets/images/bubble_image.png');
   final AssetGenImage excitedWomen = const AssetGenImage(
-    'assets/images/excited_women.png',
-  );
+      'assets/images/excited_women.png');
   final AssetGenImage front = const AssetGenImage('assets/images/front.png');
   final AssetGenImage pan = const AssetGenImage('assets/images/pan.png');
   final AssetGenImage splashBg = const AssetGenImage(
-    'assets/images/splash_bg.png',
-  );
+      'assets/images/splash_bg.png');
   final AssetGenImage verifyBg = const AssetGenImage(
-    'assets/images/verify_bg.png',
-  );
+      'assets/images/verify_bg.png');
 }
 
 class AssetGenImage {
   const AssetGenImage(this._assetName, {this.size, this.flavors = const {}});
 
   final String _assetName;
+
 
   final Size? size;
   final Set<String> flavors;
@@ -157,8 +142,15 @@ class AssetGenImage {
     );
   }
 
-  ImageProvider provider({AssetBundle? bundle, String? package}) {
-    return AssetImage(_assetName, bundle: bundle, package: package);
+  ImageProvider provider({
+    AssetBundle? bundle,
+    String? package,
+  }) {
+    return AssetImage(
+      _assetName,
+      bundle: bundle,
+      package: package,
+    );
   }
 
   Widget custom({
@@ -176,42 +168,3 @@ class AssetGenImage {
   String get keyName => _assetName;
 }
 
-class SvgGenImage {
-  const SvgGenImage(this._assetName);
-
-  final String _assetName;
-
-  Widget custom({
-    Key? key,
-    required Widget Function(BuildContext context, String assetPath) builder,
-  }) {
-    return Builder(
-      key: key,
-      builder: (context) => builder(context, _assetName),
-    );
-  }
-
-  String get path => _assetName;
-
-  String get keyName => _assetName;
-}
-
-class LottieGenImage {
-  const LottieGenImage(this._assetName);
-
-  final String _assetName;
-
-  Widget custom({
-    Key? key,
-    required Widget Function(BuildContext context, String assetPath) builder,
-  }) {
-    return Builder(
-      key: key,
-      builder: (context) => builder(context, _assetName),
-    );
-  }
-
-  String get path => _assetName;
-
-  String get keyName => _assetName;
-}

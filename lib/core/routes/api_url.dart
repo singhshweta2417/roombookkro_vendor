@@ -100,7 +100,7 @@ final apiUrlProvider = Provider<ApiUrl>((ref) {
     depositHistory: "${base}history/",
     withdrawHistory: "${base}withdraw/history/",
     updateProperty: "${base}updateproperty/",
-    sendOtp: 'https://otp.fctechteam.org/send_otp.php?',
-    verifyOtp: 'https://otp.fctechteam.org/verifyotp.php?mobile=',
+    sendOtp: '${base}otp-send',
+    verifyOtp: '${base}otp-verify',
   );
 });
